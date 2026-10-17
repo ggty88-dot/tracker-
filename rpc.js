@@ -78,6 +78,23 @@ async function adminData(role) {
   };
 }
 
+/* ---------- today feed + check-in helpers ---------- */
+const TZ = 'Asia/Bangkok';
+const dayOf = t => new Date(t).toLocaleDateString('sv-SE', { timeZone: TZ });
+const timeOf = t => new Date(t).toLocaleTimeString('sv-SE', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+const ciKey = a => 'checkin:' + a.toLowerCase();
+
+async function checkinData(account, fresh) {
+  const days = ((await cmd('SMEMBERS', ciKey(account))) || []).sort();
+  const set = new Set(days);
+  const today = dayOf(Date.now());
+  const d = new Date(today + 'T00:00:00Z');
+  if (!set.has(today)) d.setUTCDate(d.getUTCDate() - 1);
+  let streak = 0;
+  while (set.has(d.toISOString().slice(0, 10))) { streak++; d.setUTCDate(d.getUTCDate() - 1); }
+  return { ok: true, account, days, today, streak, fresh: !!fresh };
+}
+
 /* ---------- actions ---------- */
 const actions = {
   async submitVote(acc, app, cnt) {
@@ -101,6 +118,28 @@ const actions = {
     const account = cleanAcc(acc);
     if (account !== SPECIAL) return bad('Not available.');
     return { ok: true, summary: summaryFor(await loadAll(), account) };
+  },
+
+  async getTodayFeed() {
+    const today = dayOf(Date.now());
+    const items = [...latestMap(await loadAll()).values()]
+      .filter(v => dayOf(v.t) === today)
+      .sort((a, b) => a.t - b.t || a.id - b.id)
+      .map(v => ({ id: v.id, account: v.account, app: v.app, time: timeOf(v.t) }));
+    return { ok: true, items };
+  },
+
+  async checkIn(acc) {
+    const account = cleanAcc(acc);
+    if (!/^[A-Za-z0-9_]{1,40}$/.test(account)) return bad('Invalid Twitter account.');
+    const added = Number(await cmd('SADD', ciKey(account), dayOf(Date.now())));
+    return checkinData(account, added === 1);
+  },
+
+  async getCheckins(acc) {
+    const account = cleanAcc(acc);
+    if (!/^[A-Za-z0-9_]{1,40}$/.test(account)) return bad('Invalid Twitter account.');
+    return checkinData(account, false);
   },
 
   async getAdminData(pw) {
