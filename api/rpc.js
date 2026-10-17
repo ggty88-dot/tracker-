@@ -146,6 +146,23 @@ const actions = {
     return { ok: true, items };
   },
 
+  async getOverview() {
+    const list = await loadAll(); // newest first
+    const now = Date.now();
+    const days = [0, 1, 2].map(i => dayOf(now - i * 86400000)); // today, yesterday, 2 days ago
+    const everyone = new Set(), todayPeople = new Set();
+    for (const v of list) {
+      const a = v.account.toLowerCase();
+      everyone.add(a);
+      if (dayOf(v.t) === days[0]) todayPeople.add(a);
+    }
+    const history = list
+      .filter(v => days.includes(dayOf(v.t)))
+      .slice(0, 600)
+      .map(v => ({ id: v.id, account: v.account, app: v.app, day: dayOf(v.t), time: timeOf(v.t) }));
+    return { ok: true, today: todayPeople.size, total: everyone.size, days, history };
+  },
+
   async checkIn(acc) {
     const account = cleanAcc(acc);
     if (!/^[A-Za-z0-9_]{1,40}$/.test(account)) return bad('Invalid Twitter account.');
