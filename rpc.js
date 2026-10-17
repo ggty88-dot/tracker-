@@ -1,7 +1,12 @@
 const crypto = require('node:crypto');
 
-const URL_ = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
-const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
+/* Redis env vars: works with UPSTASH_REDIS_REST_*, KV_REST_API_*, or any custom prefix (e.g. STORAGE_KV_REST_API_URL) */
+const envBy = suffix => {
+  const k = Object.keys(process.env).find(n => n.endsWith(suffix) && process.env[n]);
+  return k ? process.env[k] : undefined;
+};
+const URL_ = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || envBy('KV_REST_API_URL') || envBy('UPSTASH_REDIS_REST_URL');
+const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || envBy('KV_REST_API_TOKEN') || envBy('UPSTASH_REDIS_REST_TOKEN');
 
 const APPS = ['IDOLCHAMP', 'LINC / TIN', 'MUBEAT', 'COOGOONG', 'HIGHER', 'MUNIVERSE'];
 const SPECIAL = '10694';
@@ -27,9 +32,11 @@ const same = (a, b) => {
   const x = Buffer.from(String(a)), y = Buffer.from(String(b));
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 };
-const roleOf = pw =>
-  same(pw, process.env.ADMIN_PASSWORD) ? 'admin' :
-  same(pw, process.env.FAN_PASSWORD) ? 'fan' : null;
+const roleOf = pw => {
+  pw = String(pw || '').trim();
+  return same(pw, (process.env.ADMIN_PASSWORD || '').trim()) ? 'admin' :
+         same(pw, (process.env.FAN_PASSWORD || '').trim()) ? 'fan' : null;
+};
 
 const fmtTs = t => new Date(t).toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' });
 const key = v => v.account.toLowerCase() + '|' + v.app;
@@ -85,14 +92,26 @@ const timeOf = t => new Date(t).toLocaleTimeString('sv-SE', { timeZone: TZ, hour
 const ciKey = a => 'checkin:' + a.toLowerCase();
 
 async function checkinData(account, fresh) {
-  const days = ((await cmd('SMEMBERS', ciKey(account))) || []).sort();
+  const [rawDays, all] = await Promise.all([cmd('SMEMBERS', ciKey(account)), loadAll()]);
+  const days = (rawDays || []).sort();
   const set = new Set(days);
   const today = dayOf(Date.now());
   const d = new Date(today + 'T00:00:00Z');
   if (!set.has(today)) d.setUTCDate(d.getUTCDate() - 1);
   let streak = 0;
   while (set.has(d.toISOString().slice(0, 10))) { streak++; d.setUTCDate(d.getUTCDate() - 1); }
-  return { ok: true, account, days, today, streak, fresh: !!fresh };
+
+  // which apps this account updated on each day (used by the energy bar + history)
+  const byDay = {};
+  const me = account.toLowerCase();
+  for (const v of all) {
+    if (v.account.toLowerCase() !== me) continue;
+    (byDay[dayOf(v.t)] = byDay[dayOf(v.t)] || new Set()).add(v.app);
+  }
+  const history = {};
+  for (const k of Object.keys(byDay)) history[k] = [...byDay[k]];
+
+  return { ok: true, account, days, today, streak, fresh: !!fresh, apps: history[today] || [], history };
 }
 
 /* ---------- actions ---------- */
@@ -180,6 +199,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json(out);
   } catch (e) {
     console.error(e);
-    return res.status(500).json(bad('Server error'));
+    // shows the real reason on screen while you debug; delete ": " + ... later if you prefer
+    return res.status(500).json(bad('Server error: ' + (e && e.message ? e.message : e)));
   }
 };
