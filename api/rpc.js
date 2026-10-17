@@ -84,6 +84,20 @@ const dayOf = t => new Date(t).toLocaleDateString('sv-SE', { timeZone: TZ });
 const timeOf = t => new Date(t).toLocaleTimeString('sv-SE', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
 const ciKey = a => 'checkin:' + a.toLowerCase();
 
+// apps this account has updated, grouped by day (YYYY-MM-DD, Bangkok time)
+async function appsByDay(account) {
+  const list = await loadAll();
+  const acc = account.toLowerCase();
+  const sets = {};
+  for (const v of list) {
+    if (v.account.toLowerCase() !== acc) continue;
+    (sets[dayOf(v.t)] = sets[dayOf(v.t)] || new Set()).add(v.app);
+  }
+  const history = {};
+  for (const d of Object.keys(sets)) history[d] = APPS.filter(a => sets[d].has(a));
+  return history;
+}
+
 async function checkinData(account, fresh) {
   const days = ((await cmd('SMEMBERS', ciKey(account))) || []).sort();
   const set = new Set(days);
@@ -92,7 +106,10 @@ async function checkinData(account, fresh) {
   if (!set.has(today)) d.setUTCDate(d.getUTCDate() - 1);
   let streak = 0;
   while (set.has(d.toISOString().slice(0, 10))) { streak++; d.setUTCDate(d.getUTCDate() - 1); }
-  return { ok: true, account, days, today, streak, fresh: !!fresh };
+
+  const history = await appsByDay(account);
+  const apps = history[today] || [];
+  return { ok: true, account, days, today, streak, fresh: !!fresh, apps, history };
 }
 
 /* ---------- actions ---------- */
