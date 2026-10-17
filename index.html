@@ -1318,3 +1318,290 @@ input:focus,.dd-btn:focus,.dd.open .dd-btn{border-color:var(--blue)!important}
   transform:rotate(-10deg);
 }
 </style>
+<style>
+/* ===== New dashboard layout ===== */
+.topbar{display:none!important}
+.wrap{padding-top:6px!important;padding-bottom:104px}
+body:not([data-tab="home"]) h1,body:not([data-tab="home"]) .sub-line{display:none}
+body:not([data-tab="home"]) .wrap{padding-top:22px!important}
+.hv-hide{display:none!important}
+.hv-view[hidden]{display:none}
+.hv-ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.hv-h{font-family:var(--display);font-weight:400;font-size:1.5rem;margin:0;line-height:1.2}
+.hv-s{margin:3px 0 14px;color:var(--muted);font-weight:700;font-size:.85rem}
+
+.hv-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hv-stat{position:relative;display:flex;flex-direction:column;align-items:flex-start;text-align:left;min-height:156px;padding:14px 14px 12px;border:1px solid rgba(36,71,214,.22);border-radius:24px;font:inherit;color:var(--ink);cursor:pointer}
+.hv-stat.a{background:linear-gradient(160deg,#e1eaff,#f4f8ff)}
+.hv-stat.b{background:linear-gradient(160deg,#e9e4ff,#f8f5ff)}
+.hv-ico{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.8);color:var(--blue);display:flex;align-items:center;justify-content:center}
+.hv-stat .t{font-family:var(--display);font-weight:400;font-size:1.02rem;margin-top:10px;line-height:1.2}
+.hv-sub{font-size:.72rem;font-weight:700;color:#4b4f63;margin-top:2px}
+.hv-stat .n{font-family:var(--display);font-size:2.4rem;line-height:1.1;margin-top:auto}
+.hv-go{position:absolute;right:12px;bottom:12px;width:30px;height:30px;border-radius:50%;background:rgba(36,71,214,.14);color:var(--blue);display:flex;align-items:center;justify-content:center}
+.hv-go .hv-ic{width:16px;height:16px;stroke-width:2.2}
+
+.hv-sec{display:flex;align-items:center;gap:8px;margin:22px 2px 10px;font-family:var(--display);font-size:1.15rem}
+.hv-sec .hv-ic{color:var(--blue)}
+.hv-q{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hv-qb{display:flex;align-items:center;gap:10px;text-align:left;min-height:68px;padding:12px;background:#fff;border:1px solid rgba(20,20,20,.14);border-radius:20px;font:inherit;color:var(--ink);cursor:pointer}
+.hv-qb:active{transform:scale(.98)}
+.hv-qb .c{flex:none;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.hv-qb:nth-child(1) .c{background:#ffe3e8;color:#d6475b}
+.hv-qb:nth-child(2) .c{background:#dcf5e1;color:#2a8f4a}
+.hv-qb:nth-child(3) .c{background:#fff1b3;color:#b9831a}
+.hv-qb:nth-child(4) .c{background:#dde5ff;color:var(--blue)}
+.hv-qb b{display:block;font-weight:800;font-size:.88rem;line-height:1.2}
+.hv-qb small{display:block;font-weight:700;font-size:.68rem;color:var(--muted);margin-top:2px}
+#hvBoard{margin-top:16px}
+
+.hv-app{background:#fff;border:1px solid rgba(20,20,20,.14);border-radius:22px;padding:12px 14px;margin-bottom:10px}
+.hv-app .r{display:flex;align-items:center;gap:12px}
+.hv-app .r img{width:44px;height:44px;border-radius:13px;border:1px solid rgba(20,20,20,.2);flex:none}
+.hv-app .x{flex:1;min-width:0}
+.hv-app .x b{display:block;font-weight:800;font-size:.95rem}
+.hv-st{display:inline-block;margin-top:3px;padding:1px 9px;border-radius:99px;font-size:.68rem;font-weight:800;background:var(--sun-l);color:#7a5a00}
+.hv-st.ok{background:#dcf5e1;color:#14391f}
+.hv-btn{display:inline-block;padding:7px 16px 8px;border:1px solid var(--ink);border-radius:99px;background:var(--blue);color:#fff;font-family:var(--display);font-size:.92rem;cursor:pointer;text-decoration:none;flex:none}
+.hv-btn.alt{background:#fff;color:var(--ink);margin-top:8px}
+.hv-app details{margin-top:10px;border-top:1px dotted rgba(20,20,20,.3);padding-top:8px}
+.hv-app summary{list-style:none;cursor:pointer;font-weight:800;font-size:.8rem;color:var(--blue)}
+.hv-app summary::-webkit-details-marker{display:none}
+.hv-app summary::after{content:' ▾'}
+.hv-app details[open] summary::after{content:' ▴'}
+.hv-info{margin-top:8px;font-weight:700;font-size:.85rem;line-height:1.5;color:#3c3f4d;white-space:pre-line}
+
+.hv-search{border-radius:99px!important}
+.hv-day{display:flex;justify-content:space-between;align-items:baseline;margin:16px 2px 8px;font-family:var(--display);font-size:1.02rem}
+.hv-day small{font-family:'Nunito',sans-serif;font-weight:800;font-size:.72rem;color:var(--muted)}
+.hv-row{display:flex;align-items:center;gap:9px;margin-bottom:6px;padding:5px 13px 5px 6px;background:#fff;border:1px solid rgba(20,20,20,.12);border-radius:99px;font-weight:800;font-size:.82rem}
+.hv-row.me{background:var(--sun-l)}
+.hv-row img{width:26px;height:26px;border-radius:8px;flex:none}
+.hv-row .w{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--blue)}
+.hv-row .a{color:#3c3f4d;font-size:.72rem;white-space:nowrap}
+.hv-row .tm{color:var(--muted);font-size:.72rem;font-variant-numeric:tabular-nums}
+.hv-none{padding:8px 4px;color:var(--muted);font-weight:700;font-size:.82rem}
+
+.hv-me{display:flex;align-items:center;gap:14px;padding:16px;background:linear-gradient(160deg,#e1eaff,#f4f8ff);border:1px solid rgba(36,71,214,.22);border-radius:26px}
+.hv-av{flex:none;width:64px;height:64px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;border:1px solid rgba(36,71,214,.25)}
+.hv-av img{width:46px;height:auto}
+.hv-me b{display:block;font-family:var(--display);font-weight:400;font-size:1.2rem;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:220px}
+.hv-me small{display:block;margin-top:2px;font-weight:700;font-size:.78rem;color:var(--muted)}
+.hv-tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.hv-t{background:#fff;border:1px solid rgba(20,20,20,.14);border-radius:20px;padding:12px 14px}
+.hv-t:nth-child(2){background:#fffaf0}
+.hv-t span{display:block;font-weight:800;font-size:.74rem;color:var(--muted)}
+.hv-t b{display:block;font-family:var(--display);font-weight:400;font-size:1.7rem;line-height:1.2}
+.hv-list{background:#fff;border:1px solid rgba(20,20,20,.14);border-radius:22px;overflow:hidden}
+.hv-li{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;border:0;border-bottom:1px solid rgba(20,20,20,.08);background:none;font:inherit;text-align:left;color:var(--ink);cursor:pointer}
+.hv-li:last-child{border-bottom:0}
+.hv-li:active{background:var(--blue-l)}
+.hv-li .hv-ic{color:var(--blue)}
+.hv-li .x{flex:1;min-width:0}
+.hv-li b{display:block;font-weight:800;font-size:.92rem}
+.hv-li small{display:block;font-weight:700;font-size:.72rem;color:var(--muted)}
+.hv-li .chv{color:#9a9dab}
+.hv-li .chv .hv-ic{width:16px;height:16px;color:#9a9dab}
+
+.hv-steps{margin:16px 0 4px;padding-left:22px;font-weight:700;font-size:.9rem;line-height:1.55}
+.hv-steps li{margin-bottom:10px}
+
+.hv-tabs{position:fixed;z-index:20;left:50%;bottom:0;transform:translateX(-50%);width:min(440px,100%);display:flex;background:#fff;border:1px solid rgba(20,20,20,.14);border-bottom:0;border-radius:24px 24px 0 0;padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 20px rgba(36,71,214,.08)}
+.hv-tabs button{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 9px;border:0;background:none;font:inherit;font-weight:800;font-size:.7rem;color:#8a8d9c;cursor:pointer}
+.hv-tabs button.on{color:var(--blue)}
+.hv-tabs button.on::after{content:'';position:absolute;bottom:0;width:26px;height:3px;border-radius:3px;background:var(--blue)}
+</style>
+<script>
+(function(){
+  /* ===== แก้ข้อความตรงนี้ได้ ===== */
+  const INFO = {
+    'IDOLCHAMP':  {text:'ใส่วิธีโหวต IDOLCHAMP ตรงนี้', link:''},
+    'LINC / TIN': {text:'ใส่วิธีโหวต LINC / TIN ตรงนี้', link:''},
+    'MUBEAT':     {text:'ใส่วิธีโหวต MUBEAT ตรงนี้', link:''},
+    'COOGOONG':   {text:'ใส่วิธีโหวต COOGOONG ตรงนี้', link:''},
+    'HIGHER':     {text:'ใส่วิธีโหวต HIGHER ตรงนี้', link:''},
+    'MUNIVERSE':  {text:'ใส่วิธีโหวต MUNIVERSE ตรงนี้', link:''}
+  };
+  const GUIDE = [
+    'โหวตในแต่ละแอปตามปกติ',
+    'กด Quick Update เลือกแอป แล้วกรอกยอดโหวตรวมล่าสุด (ยอดใหม่จะแทนที่ยอดเก่า ไม่ได้บวกเพิ่ม)',
+    'เช็คอินทุกวัน และอัปเดตให้ครบทั้ง 6 แอปเพื่อเติมหลอดพลัง',
+    'ทำใบ Certificate เก็บไว้โพสต์ได้ที่หน้า My'
+  ];
+  /* ================================ */
+
+  const root = document.querySelector('.wrap');
+  const oldCard = root.querySelector('section.card');
+  const live = root.querySelector('.live');
+  const anchor = root.querySelector('.sub-line');
+  const svg = p => '<svg class="hv-ic" viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
+  const IC = {
+    home:  svg('<path d="M4 11l8-7 8 7v8.5a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>'),
+    vote:  svg('<rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.5 2.5 4.5-5"/>'),
+    hist:  svg('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
+    me:    svg('<circle cx="12" cy="8.5" r="3.8"/><path d="M4.5 20c.6-3.8 3.6-6 7.5-6s6.9 2.2 7.5 6"/>'),
+    mega:  svg('<path d="M4 10v4h3l7 4V6L7 10z"/><path d="M17 9.5a4 4 0 0 1 0 5"/>'),
+    users: svg('<circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17.5" cy="9" r="2.4"/><path d="M17 14c2.4 0 4.2 1.6 4.2 4"/>'),
+    doc:   svg('<path d="M7 3h7l4 4v14H7z"/><path d="M14 3v4h4M10 12h5M10 16h5"/>'),
+    cal:   svg('<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M8 3v4M16 3v4M4 10h16M9 15l2 2 4-4"/>'),
+    bolt:  svg('<path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/>'),
+    arrow: svg('<path d="M5 12h14M13 6l6 6-6 6"/>'),
+    chev:  svg('<path d="M9 6l6 6-6 6"/>'),
+    cert:  svg('<circle cx="12" cy="9" r="5"/><path d="M8.5 13.5L7 21l5-3 5 3-1.5-7.5"/>'),
+    eye:   svg('<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+    lock:  svg('<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
+    swap:  svg('<path d="M4 8h13M13 4l4 4-4 4M20 16H7M11 12l-4 4 4 4"/>')
+  };
+  const qb = (k, ic, t, s) => '<button class="hv-qb" type="button" data-q="' + k + '"><span class="c">' + ic + '</span><span><b>' + t + '</b><small>' + s + '</small></span></button>';
+  const li = (k, ic, t, s) => '<button class="hv-li" type="button" data-m="' + k + '">' + ic + '<span class="x"><b>' + t + '</b><small>' + s + '</small></span><span class="chv">' + IC.chev + '</span></button>';
+
+  const app = document.createElement('div');
+  app.id = 'hvApp';
+  app.innerHTML =
+  '<div class="hv-view" data-v="home">' +
+    '<div class="hv-stats">' +
+      '<button class="hv-stat a" type="button" data-go="history"><span class="hv-ico">' + IC.mega + '</span><b class="t">Today’s Participants</b><span class="hv-sub">ผู้เข้าร่วมวันนี้</span><span class="n" id="hvToday">–</span><span class="hv-go">' + IC.arrow + '</span></button>' +
+      '<button class="hv-stat b" type="button" data-go="history"><span class="hv-ico">' + IC.users + '</span><b class="t">All Participants</b><span class="hv-sub">ผู้เข้าร่วมทั้งหมดตั้งแต่เริ่ม</span><span class="n" id="hvTotal">–</span><span class="hv-go">' + IC.arrow + '</span></button>' +
+    '</div>' +
+    '<div class="hv-sec">' + IC.bolt + '<span>Quick Access</span></div>' +
+    '<div class="hv-q">' +
+      qb('vote', IC.vote, 'App Vote', 'โหวตผ่านแอปต่างๆ') +
+      qb('guide', IC.doc, 'Voting Guide', 'วิธีการโหวต & คู่มือ') +
+      qb('ci', IC.cal, 'Daily Check-in', 'เช็คอินประจำวัน') +
+      qb('upd', IC.bolt, 'Quick Update', 'อัปเดตยอดโหวต') +
+    '</div>' +
+    '<section class="card" id="hvBoard"></section>' +
+  '</div>' +
+  '<div class="hv-view" data-v="vote" hidden><h2 class="hv-h">App <mark>Vote</mark></h2><p class="hv-s">โหวตผ่านแอปต่างๆ · แตะ Voting info เพื่อดูวิธีโหวต</p><div id="hvApps"></div></div>' +
+  '<div class="hv-view" data-v="history" hidden><h2 class="hv-h"><mark>History</mark></h2><p class="hv-s">อัปเดตของทุกคน ย้อนหลัง 3 วัน</p>' +
+    '<input class="hv-search" id="hvSearch" type="text" placeholder="Search Twitter account" autocomplete="off" autocapitalize="none" spellcheck="false"><div id="hvHist"></div></div>' +
+  '<div class="hv-view" data-v="me" hidden>' +
+    '<div class="hv-me"><span class="hv-av"><img id="hvAv" alt=""></span><div><b id="hvMeName">Not set yet</b><small>Together for Mark Lee ♡</small></div></div>' +
+    '<div class="hv-tiles"><div class="hv-t"><span>Updated today</span><b id="hvMeApps">0/6</b></div><div class="hv-t"><span>Check-ins this month</span><b id="hvMeCi">0</b></div></div>' +
+    '<div class="hv-list">' +
+      li('upd', IC.bolt, 'Update votes', 'อัปเดตยอดโหวตของฉัน') +
+      li('ci', IC.cal, 'Daily Check-in', 'เช็คอินประจำวัน') +
+      li('cert', IC.cert, 'Certificate', 'ทำใบประกาศประจำวัน') +
+      li('fan', IC.eye, 'View data', 'ดูข้อมูลทั้งหมด') +
+      li('admin', IC.lock, 'Admin', 'สำหรับผู้ดูแล') +
+      li('sw', IC.swap, 'Switch account', 'เปลี่ยนบัญชี Twitter') +
+    '</div>' +
+  '</div>';
+  anchor.after(app);
+  $('hvBoard').appendChild(live);
+  oldCard.classList.add('hv-hide');
+  $('hvAv').src = document.querySelector('.mascot').src;
+
+  const nav = document.createElement('nav');
+  nav.className = 'hv-tabs';
+  nav.innerHTML = [['home','Home','home'],['vote','App Vote','vote'],['history','History','hist'],['me','My','me']]
+    .map((t, k) => '<button type="button" data-t="' + t[0] + '" class="' + (k ? '' : 'on') + '">' + IC[t[2]] + '<span>' + t[1] + '</span></button>').join('');
+  document.body.appendChild(nav);
+
+  const gov = document.createElement('div');
+  gov.className = 'ov'; gov.id = 'hvGuideOv';
+  gov.innerHTML = '<div class="modal ci"><div class="ci-head"><h2>Voting <mark>Guide</mark></h2><button class="xbtn" type="button" id="hvGuideClose" aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><ol class="hv-steps">' + GUIDE.map(s => '<li>' + esc(s) + '</li>').join('') + '</ol></div>';
+  document.body.appendChild(gov);
+  $('hvGuideClose').addEventListener('click', () => gov.classList.remove('show'));
+  gov.addEventListener('click', e => { if(e.target === gov) gov.classList.remove('show'); });
+
+  /* ----- data ----- */
+  let O = null, CK = null, busy = false;
+  const accName = () => normAcc($('account').value) || normAcc(store.get('fv_account'));
+  const mineToday = () => {
+    const a = accName().toLowerCase();
+    return new Set(O ? O.history.filter(h => h.day === O.days[0] && h.account.toLowerCase() === a).map(h => h.app) : []);
+  };
+
+  function drawApps(){
+    const done = mineToday();
+    const box = $('hvApps');
+    const open = new Set([].map.call(box.querySelectorAll('details[open]'), d => d.dataset.app));
+    box.innerHTML = APPS.map(a => {
+      const i = INFO[a.name] || {}, d = done.has(a.name);
+      const link = i.link && /^https?:\/\//.test(i.link) ? '<a class="hv-btn alt" href="' + esc(i.link) + '" target="_blank" rel="noopener">Open app</a>' : '';
+      return '<div class="hv-app"><div class="r"><img src="' + a.icon + '" alt=""><div class="x"><b>' + esc(a.name) + '</b><span class="hv-st' + (d ? ' ok' : '') + '">' + (d ? 'Updated today ✓' : 'Not updated today') + '</span></div>' +
+        '<button class="hv-btn" type="button" data-upd="' + esc(a.name) + '">Update</button></div>' +
+        '<details data-app="' + esc(a.name) + '"' + (open.has(a.name) ? ' open' : '') + '><summary>Voting info</summary><div class="hv-info">' + esc(i.text || '') + link + '</div></details></div>';
+    }).join('');
+  }
+  function drawHist(){
+    const q = $('hvSearch').value.trim().replace(/^@+/, '').toLowerCase(), me = accName().toLowerCase();
+    const list = O.history.filter(h => !q || h.account.toLowerCase().indexOf(q) >= 0);
+    const names = ['Today', 'Yesterday', '2 days ago'];
+    $('hvHist').innerHTML = O.days.map((d, i) => {
+      const rows = list.filter(h => h.day === d);
+      const dt = new Date(d + 'T00:00:00Z').toLocaleDateString('en-GB', {day:'numeric', month:'short', timeZone:'UTC'});
+      return '<div class="hv-day"><span>' + names[i] + '</span><small>' + dt + ' · ' + rows.length + ' updates</small></div>' +
+        (rows.length ? rows.map(h => '<div class="hv-row' + (h.account.toLowerCase() === me ? ' me' : '') + '"><img src="' + iconOf(h.app) + '" alt=""><span class="w">@' + esc(h.account) + '</span><span class="a">' + esc(h.app) + '</span><span class="tm">' + esc(h.time) + '</span></div>').join('') : '<div class="hv-none">No updates</div>');
+    }).join('');
+  }
+  function drawMe(){
+    const a = accName();
+    $('hvMeName').textContent = a ? '@' + a : 'Not set yet';
+    $('hvMeApps').textContent = mineToday().size + '/' + APPS.length;
+    if(CK && a && CK.account.toLowerCase() === a.toLowerCase()){
+      const ym = CK.today.slice(0, 7);
+      $('hvMeCi').textContent = CK.days.filter(d => d.indexOf(ym) === 0).length;
+    } else $('hvMeCi').textContent = '–';
+  }
+  function render(){
+    if(!O) return;
+    $('hvToday').textContent = fmt(O.today);
+    $('hvTotal').textContent = fmt(O.total);
+    drawApps(); drawHist(); drawMe();
+  }
+  function load(){
+    if(busy) return; busy = true;
+    rpc('getOverview').then(r => { if(r && r.ok){ O = r; render(); } }).catch(() => {}).then(() => { busy = false; });
+  }
+  function loadMe(){
+    const a = accName();
+    if(!/^[A-Za-z0-9_]{1,40}$/.test(a)) return;
+    rpc('getCheckins', a).then(r => { if(r && r.ok){ CK = r; drawMe(); } }).catch(() => {});
+  }
+
+  /* ----- navigation ----- */
+  function go(t){
+    document.body.dataset.tab = t;
+    [].forEach.call(app.querySelectorAll('.hv-view'), v => { v.hidden = v.dataset.v !== t; });
+    [].forEach.call(nav.querySelectorAll('button'), b => b.classList.toggle('on', b.dataset.t === t));
+    window.scrollTo(0, 0);
+    if(t === 'me') loadMe();
+    render();
+  }
+  document.body.dataset.tab = 'home';
+  nav.addEventListener('click', e => { const b = e.target.closest('button'); if(b) go(b.dataset.t); });
+
+  const ACT = {
+    upd:   () => $('updOpen').click(),
+    ci:    () => $('ciOpen').click(),
+    cert:  () => { location.href = 'certificate.html'; },
+    fan:   () => $('fanOpen').click(),
+    admin: () => $('adminOpen').click(),
+    sw:    () => $('switchAcc').click(),
+    vote:  () => go('vote'),
+    guide: () => gov.classList.add('show')
+  };
+  app.addEventListener('click', e => {
+    const g = e.target.closest('[data-go]'); if(g) return go(g.dataset.go);
+    const q = e.target.closest('[data-q]'); if(q) return ACT[q.dataset.q]();
+    const m = e.target.closest('[data-m]'); if(m) return ACT[m.dataset.m]();
+    const u = e.target.closest('[data-upd]');
+    if(u){
+      appDD.set(u.dataset.upd); store.set('fv_app', u.dataset.upd);
+      $('updOpen').click();
+      setTimeout(() => $('count').focus({preventScroll:true}), 60);
+    }
+  });
+  $('hvSearch').addEventListener('input', () => { if(O) drawHist(); });
+  $('gateOk').addEventListener('click', () => setTimeout(() => { CK = null; render(); loadMe(); }, 150));
+
+  /* ----- refresh ----- */
+  const pf = window.pollFeed;
+  window.pollFeed = function(){ if(pf) pf(); load(); };
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) load(); });
+  setInterval(() => { if(!document.hidden) load(); }, 25000);
+  load();
+})();
+</script>
