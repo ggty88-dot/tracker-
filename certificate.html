@@ -226,3 +226,14 @@ draw();
 </script>
 </body>
 </html>
+<style>
+.tile{border:1px solid #c9d4f5!important}
+.tile.on{border:1px solid var(--ink)!important}
+</style>
+<script>
+function cover(c,im,x,y,w,h){
+  const k=Math.min(w/im.width,h/im.height),dw=im.width*k,dh=im.height*k;
+  c.drawImage(im,x+(w-dw)/2,y+(h-dh)/2,dw,dh);
+}
+draw();
+</script>
