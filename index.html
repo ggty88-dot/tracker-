@@ -1287,3 +1287,27 @@ input:focus,.dd-btn:focus,.dd.open .dd-btn{border-color:var(--blue)!important}
   load();
 })();
 </script>
+<style>
+.pill{position:relative}
+.pill .crown{
+  position:absolute;
+  left:33px;
+  top:1px;
+  width:14px;
+  height:11px;
+  margin:0;
+  flex:none;
+  transform:rotate(-14deg);
+  transform-origin:50% 100%;
+  pointer-events:none;
+  z-index:2;
+}
+.pill .crown svg{
+  position:absolute;
+  left:-1.2px;
+  top:-2.3px;
+  width:16.5px;
+  height:16.5px;
+  display:block;
+}
+</style>
