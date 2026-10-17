@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vote Tracker For MOLO2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#243b6b; --muted:#7f93b5; --line:#e1ecfb; --line-2:#d3e3f8;
+  --ice:#f1f8ff; --powder:#dfeeff;
+  --sky:#bfe3ff; --sky-d:#6db8f5;
+  --peri:#d2d9ff; --peri-d:#8e9cf0;
+  --cyan:#c9f1f7; --cyan-d:#5ccbe0;
+  --lav:#e1dcff; --accent:#4a78d8; --red:#ff7f8e;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{
+  font-family:'Nunito','Noto Sans Thai',system-ui,sans-serif;color:var(--ink);min-height:100vh;
+  background:
+    radial-gradient(440px 340px at 0% 0%,#eaf4ff 0,transparent 70%),
+    radial-gradient(400px 320px at 100% 6%,#f1efff 0,transparent 70%),
+    radial-gradient(440px 340px at 92% 100%,#eafafd 0,transparent 70%),
+    radial-gradient(360px 300px at 0% 92%,#f2f7ff 0,transparent 70%),#fcfdff;
+  background-attachment:fixed;padding:28px 16px 48px;-webkit-font-smoothing:antialiased
+}
+.wrap{max-width:440px;margin:0 auto}
+h1{font-size:1.55rem;font-weight:800;letter-spacing:-.02em;margin:10px 0 24px;text-align:center;color:var(--ink)}
+h1::after{content:'';display:block;width:46px;height:6px;border-radius:6px;margin:12px auto 0;background:linear-gradient(90deg,var(--sky-d),var(--peri-d),var(--cyan-d))}
+.card{background:rgba(255,255,255,.92);border-radius:30px;padding:24px 18px;border:1.5px solid #e6f0fd;box-shadow:0 14px 40px rgba(109,150,230,.16)}
+label{display:block;font-weight:700;font-size:.85rem;color:var(--ink);margin:18px 0 7px}
+label:first-child{margin-top:0}
+.field{position:relative}
+input[type=text],input[type=number],input[type=password]{
+  width:100%;font:inherit;font-weight:600;font-size:1rem;color:var(--ink);background:var(--ice);
+  border:1.5px solid transparent;border-radius:18px;padding:13px 16px;outline:none;transition:.18s
+}
+input::placeholder{color:#a9b9d3;font-weight:500}
+input:focus{background:#fff;border-color:var(--sky-d);box-shadow:0 0 0 4px rgba(109,184,245,.22)}
+.at{padding-left:34px!important}
+.at-sign{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--peri-d);font-weight:800}
+.hint{font-size:.78rem;color:var(--muted);margin-top:7px;line-height:1.5;font-weight:500}
+
+/* dropdown */
+.dd{position:relative}
+.dd-btn{
+  width:100%;display:flex;align-items:center;gap:11px;text-align:left;font:inherit;font-weight:600;font-size:1rem;color:var(--ink);
+  background:var(--ice);border:1.5px solid transparent;border-radius:18px;padding:8px 14px;cursor:pointer;min-height:54px;transition:.18s
+}
+.dd.sm .dd-btn{min-height:48px;padding:6px 12px}
+.dd-btn:focus,.dd.open .dd-btn{background:#fff;border-color:var(--peri-d);outline:none;box-shadow:0 0 0 4px rgba(142,156,240,.22)}
+.dd-btn .ph{color:#a9b9d3;font-weight:500}
+.dd-btn .chev{margin-left:auto;color:var(--peri-d);transition:transform .2s;display:flex}
+.dd.open .chev{transform:rotate(180deg)}
+.ico{width:32px;height:32px;border-radius:10px;object-fit:cover;flex:none;box-shadow:0 2px 8px rgba(109,150,230,.28)}
+.allico{display:flex;align-items:center;justify-content:center;background:var(--peri);color:var(--accent);box-shadow:none}
+.dd-list{
+  position:absolute;z-index:30;left:0;right:0;top:calc(100% + 8px);margin:0;padding:6px;list-style:none;
+  background:#fff;border:1.5px solid var(--line);border-radius:20px;box-shadow:0 18px 44px rgba(109,150,230,.28);display:none;
+  max-height:340px;overflow:auto
+}
+.dd.open .dd-list{display:block}
+.dd-list li{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:14px;cursor:pointer;font-weight:700;font-size:.95rem}
+.dd-list li:hover,.dd-list li.act{background:var(--ice)}
+.dd-list li[aria-selected=true]{background:var(--powder);color:var(--accent)}
+
+.btn{
+  width:100%;border:0;font:inherit;font-weight:800;font-size:1.02rem;cursor:pointer;color:#1d3566;
+  padding:15px;border-radius:20px;margin-top:22px;background:linear-gradient(135deg,#a6d8ff,#bcc4ff);
+  box-shadow:0 8px 20px rgba(142,156,240,.32);transition:.18s
+}
+.btn:hover{filter:brightness(1.04);transform:translateY(-1px)}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.6;cursor:wait;transform:none}
+.btn.ghost{background:#fff;color:var(--accent);border:1.5px solid var(--line-2);box-shadow:none;margin-top:0;padding:10px 18px;width:auto;font-size:.9rem;font-weight:700;border-radius:99px}
+.btn.ghost:hover{background:var(--ice);transform:none}
+.btn.sm{margin-top:0;width:auto;padding:10px 18px;font-size:.9rem;border-radius:99px}
+.btn.danger{background:linear-gradient(135deg,#ffa3ae,#ff8896);color:#5a1f2a;box-shadow:0 8px 18px rgba(255,127,142,.3)}
+.msg{margin-top:14px;padding:11px 15px;border-radius:16px;font-size:.88rem;font-weight:600;display:none}
+.msg.ok{display:block;background:var(--cyan);color:#1d6b7c}
+.msg.err{display:block;background:#ffe6e9;color:#c0455a}
+
+.summary{margin-top:18px;display:none;background:linear-gradient(135deg,#e6f3ff,#e8e8ff);border-radius:22px;padding:16px}
+.summary.show{display:block}
+.summary h3{margin:0 0 4px;font-size:.8rem;color:var(--muted);font-weight:700}
+.big{font-size:2.2rem;font-weight:800;letter-spacing:-.03em;line-height:1.15;
+  background:linear-gradient(90deg,#4aa3f0,#7d8cf0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{display:flex;align-items:center;gap:7px;background:#fff;border-radius:999px;padding:4px 13px 4px 5px;font-size:.8rem;font-weight:700}
+.chip img{width:22px;height:22px;border-radius:7px}
+.foot{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:20px}
+
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(236,243,255,.6);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center;padding:14px;z-index:50}
+.ov.show{display:flex}
+.ov.top{z-index:60}
+.modal{background:#fff;border-radius:30px;padding:24px 20px;width:100%;max-width:350px;box-shadow:0 24px 60px rgba(80,110,190,.3)}
+.modal h2{margin:0 0 6px;font-size:1.1rem;font-weight:800;display:flex;align-items:center}
+.row{display:flex;gap:10px;margin-top:16px}
+.row .btn{margin-top:0}
+.dash{border:1.5px solid var(--line-2);max-width:980px;max-height:92vh;overflow:auto;padding:24px 18px}
+.dash-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.dash-head .acts{display:flex;gap:8px;align-items:center}
+.xbtn{width:38px;height:38px;border-radius:50%;border:2px solid #1f3a7a;background:#fff;color:#1f3a7a;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex:none;transition:.15s}
+.xbtn:hover{background:var(--ice)}
+.xbtn:active{transform:scale(.94)}
+.xbtn .i{margin:0;width:18px;height:18px;stroke-width:2.4}
+.filter{max-width:340px}
+.filter label{margin:0 0 7px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:16px 0 4px}
+.stat{background:#e8f4ff;border-radius:20px;padding:14px 12px}
+.stat:nth-child(2){background:#e9ebff}
+.stat:nth-child(3){background:#dff6fa}
+.stat b{display:block;font-size:1.35rem;letter-spacing:-.02em;font-weight:800}
+.stat span{font-size:.76rem;color:var(--muted);font-weight:700}
+.tabs{display:inline-flex;gap:2px;background:var(--ice);border-radius:99px;padding:4px;margin:16px 0 14px}
+.tab{border:0;background:transparent;font:inherit;font-weight:700;padding:8px 20px;border-radius:99px;cursor:pointer;color:var(--muted);font-size:.88rem}
+.tab.on{background:#fff;color:var(--accent);box-shadow:0 3px 10px rgba(109,150,230,.22)}
+.pane{display:none}.pane.on{display:block}
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:640px){.cards{grid-template-columns:repeat(3,1fr);gap:12px}}
+.appcard{display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-width:0;padding:14px 12px;border:2px solid #1f3a7a;border-radius:22px;background:#e8f4ff;cursor:pointer;text-align:left;font:inherit;color:inherit;transition:.18s}
+.appcard:nth-child(6n+2){background:#e9ebff}
+.appcard:nth-child(6n+3){background:#dff6fa}
+.appcard:nth-child(6n+4){background:#eaf0ff}
+.appcard:nth-child(6n+5){background:#e4f3ff}
+.appcard:nth-child(6n+6){background:#ebe8ff}
+.appcard:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(109,150,230,.22)}
+.appcard .ico{width:40px;height:40px;border-radius:12px}
+.appcard .nm{font-weight:700;font-size:.84rem;color:var(--muted)}
+.appcard .v{font-size:1.25rem;font-weight:800;letter-spacing:-.02em;line-height:1.25}
+.appcard .s{font-size:.75rem;color:var(--muted);font-weight:600}
+.tw{overflow-x:auto;border:1.5px solid var(--line);border-radius:20px}
+table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:480px}
+th,td{padding:11px 14px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--line);font-weight:600}
+th{background:var(--ice);position:sticky;top:0;font-size:.74rem;color:var(--muted);font-weight:800;letter-spacing:.04em}
+td.n,th.n{text-align:right}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:#f8fbff}
+tr.old td{color:#9db0cc}
+.empty{text-align:center;color:var(--muted);padding:24px}
+.tools{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.tools .search{flex:1;min-width:170px;margin:0;padding:10px 16px;border-radius:99px}
+.sw{display:flex;align-items:center;gap:8px;margin:0;font-weight:700;font-size:.85rem;cursor:pointer;white-space:nowrap}
+.sw input{accent-color:var(--peri-d);width:17px;height:17px}
+.tag{display:inline-block;font-size:.72rem;font-weight:800;padding:3px 10px;border-radius:99px;background:var(--cyan);color:#1d6b7c}
+.tag.old{background:#eef2f9;color:#8a9bb8}
+.cell-app{display:inline-flex;align-items:center;gap:8px}
+.cell-app img{width:22px;height:22px;border-radius:7px}
+.i{width:1.15em;height:1.15em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.2em;margin-right:7px}
+.chev .i,.allico .i{margin:0}
+.acts-cell{display:flex;gap:6px;align-items:center}
+.iconbtn{width:32px;height:32px;border-radius:50%;border:0;background:var(--ice);color:var(--peri-d);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;transition:.15s}
+.iconbtn:hover{background:var(--peri);color:var(--accent)}
+.iconbtn.danger{color:#f08a98}
+.iconbtn.danger:hover{background:#ffe6e9;color:#e0566c}
+.iconbtn .i{margin:0}
+.del-box{background:var(--ice);border-radius:18px;padding:12px 14px;margin:10px 0 4px;font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:10px}
+.del-box img{width:28px;height:28px;border-radius:8px}
+@media(min-width:520px){body{padding-top:44px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Vote Tracker For MOLO2</h1>
+
+  <div class="card">
+    <label for="account">Twitter Account</label>
+    <div class="field">
+      <span class="at-sign">@</span>
+      <input id="account" class="at" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="your_account" maxlength="40">
+    </div>
+    <div class="hint">Your handle is remembered on this device.</div>
+
+    <label>App</label>
+    <div class="dd" id="dd"></div>
+
+    <label for="count">Latest total votes</label>
+    <input id="count" type="number" inputmode="numeric" min="1" step="1" placeholder="e.g. 1500">
+    <div class="hint">Enter your current total for this app. The latest entry replaces the previous one; it is not added up.</div>
+
+    <button class="btn" id="submit">Submit</button>
+    <div class="msg" id="msg" role="status"></div>
+
+    <div class="summary" id="summary">
+      <h3>Total for this account</h3>
+      <div class="big" id="sumTotal">0</div>
+      <div class="chips" id="sumChips"></div>
+    </div>
+  </div>
+
+  <div class="foot"><button class="btn ghost" id="fanOpen"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>View data</button><button class="btn ghost" id="adminOpen"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Admin</button></div>
+</div>
+
+<!-- Password modal -->
+<div class="ov" id="pwOv">
+  <div class="modal">
+    <h2><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/></svg><span id="pwTitle">Admin access</span></h2>
+    <div class="hint" id="pwHint" style="margin:0 0 12px">Enter the admin password to view and manage all data.</div>
+    <input id="pw" type="password" placeholder="Password" autocomplete="off">
+    <div class="msg" id="pwMsg"></div>
+    <div class="row">
+      <button class="btn ghost" id="pwCancel" style="flex:1">Cancel</button>
+      <button class="btn" id="pwOk" style="flex:1">Sign in</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin dashboard -->
+<div class="ov" id="dashOv">
+  <div class="modal dash">
+    <div class="dash-head">
+      <h2><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg><span id="dashTitle">Admin Dashboard</span></h2>
+      <div class="acts">
+        <button class="btn ghost sm" id="dashRefresh">Refresh</button>
+        <button class="xbtn" id="dashClose" aria-label="Close" title="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+    </div>
+    <div class="filter">
+      <label>Filter by app</label>
+      <div class="dd sm" id="ddFilter"></div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="tabs">
+      <button class="tab on" data-t="p1" id="tab1">Overview</button>
+      <button class="tab" data-t="p3">History</button>
+    </div>
+    <div class="pane on" id="p1"></div>
+    <div class="pane" id="p3"></div>
+  </div>
+</div>
+
+<!-- Edit entry -->
+<div class="ov top" id="editOv">
+  <div class="modal">
+    <h2>Edit entry</h2>
+    <label for="eAcc">Twitter Account</label>
+    <div class="field"><span class="at-sign">@</span><input id="eAcc" class="at" type="text" autocapitalize="none" spellcheck="false" maxlength="40"></div>
+    <label>App</label>
+    <div class="dd" id="ddEdit"></div>
+    <label for="eCount">Votes</label>
+    <input id="eCount" type="number" inputmode="numeric" min="1" step="1">
+    <div class="hint">Changes are written directly to the Google Sheet. The original timestamp is kept.</div>
+    <div class="msg" id="eMsg"></div>
+    <div class="row">
+      <button class="btn ghost" id="eCancel" style="flex:1">Cancel</button>
+      <button class="btn" id="eSave" style="flex:1">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete entry -->
+<div class="ov top" id="delOv">
+  <div class="modal">
+    <h2>Delete this entry?</h2>
+    <div class="del-box" id="delBox"></div>
+    <div class="hint">This removes the row from the sheet and cannot be undone. If it was the counted (latest) entry, the previous entry for the same account and app will be counted instead.</div>
+    <div class="msg" id="dMsg"></div>
+    <div class="row">
+      <button class="btn ghost" id="dCancel" style="flex:1">Cancel</button>
+      <button class="btn danger" id="dOk" style="flex:1">Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const APPS = [
+  {name:'IDOLCHAMP',  icon:'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 400%22%3E%3Cdefs%3E%3CclipPath id=%22c1%22%3E%3Crect width=%22400%22 height=%22400%22 rx=%2288%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path=%22url%28%23c1%29%22%3E%3Crect width=%22400%22 height=%22400%22 fill=%22%23fff%22/%3E%3Cg transform=%22translate%28200 200%29 scale%281.12%29 translate%28-200 -153%29%22%3E%0A%3Ccircle cx=%2277%22 cy=%2295%22 r=%2217%22 fill=%22%231f3a7a%22/%3E%3Ccircle cx=%22323%22 cy=%2295%22 r=%2217%22 fill=%22%231f3a7a%22/%3E%0A%3Cpolygon points=%2290%2C128 150%2C174 150%2C252 106%2C252%22 fill=%22%231f3a7a%22 stroke=%22%231f3a7a%22 stroke-width=%2212%22 stroke-linejoin=%22round%22/%3E%0A%3Cpolygon points=%22308%2C128 248%2C174 248%2C252 292%2C252%22 fill=%22%231f3a7a%22 stroke=%22%231f3a7a%22 stroke-width=%2212%22 stroke-linejoin=%22round%22/%3E%0A%3Cpolygon points=%22200%2C104 110%2C251 290%2C251%22 fill=%22%23fff%22 stroke=%22%23fff%22 stroke-width=%2234%22 stroke-linejoin=%22round%22/%3E%0A%3Cpolygon points=%22200%2C104 110%2C251 290%2C251%22 fill=%22%231f3a7a%22 stroke=%22%231f3a7a%22 stroke-width=%2214%22 stroke-linejoin=%22round%22/%3E%0A%3Ccircle cx=%22200%22 cy=%2265%22 r=%2217%22 fill=%22%231f3a7a%22/%3E%3C/g%3E%3C/g%3E%3Crect x=%221.5%22 y=%221.5%22 width=%22397%22 height=%22397%22 rx=%2287%22 fill=%22none%22 stroke=%22%23d6e3f5%22 stroke-width=%223%22/%3E%3C/svg%3E'},
+  {name:'LINC / TIN', icon:'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 400%22%3E%3Cdefs%3E%3CclipPath id=%22c2%22%3E%3Crect width=%22400%22 height=%22400%22 rx=%2288%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path=%22url%28%23c2%29%22%3E%3Crect width=%22400%22 height=%22400%22 fill=%22%23fff%22/%3E%3Cg fill=%22none%22 stroke=%22%231f3a7a%22 stroke-width=%2218%22 stroke-linejoin=%22round%22%3E%0A%3Cpath d=%22M77 163V229H130%22/%3E%3Cpath d=%22M184 238V175H244V238%22/%3E%3Cpath d=%22M319.1 183.9A27 27 0 1 0 319.1 220.1%22/%3E%3C/g%3E%0A%3Crect x=%22144%22 y=%22163%22 width=%2217%22 height=%2217%22 rx=%224%22 fill=%22%231f3a7a%22/%3E%3Crect x=%22144%22 y=%22190%22 width=%2217%22 height=%2248%22 rx=%223%22 fill=%22%231f3a7a%22/%3E%3C/g%3E%3Crect x=%221.5%22 y=%221.5%22 width=%22397%22 height=%22397%22 rx=%2287%22 fill=%22none%22 stroke=%22%23d6e3f5%22 stroke-width=%223%22/%3E%3C/svg%3E'},
+  {name:'MUBEAT',     icon:'data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http://www.w3.org/2000/svg%22%20viewBox%3D%220%200%20400%20400%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22c3%22%3E%3Crect%20width%3D%22400%22%20height%3D%22400%22%20rx%3D%2288%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg%20clip-path%3D%22url%28%23c3%29%22%3E%3Crect%20width%3D%22400%22%20height%3D%22400%22%20fill%3D%22%23fff%22/%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%231f3a7a%22%20stroke-width%3D%2236%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M116%20247V190A41.5%2041.5%200%200%201%20199%20190V247%22/%3E%3Cpath%20d%3D%22M199%20190A41.5%2041.5%200%200%201%20282%20190V206%22/%3E%3C/g%3E%3Ccircle%20cx%3D%22285%22%20cy%3D%22243%22%20r%3D%2219%22%20fill%3D%22%231f3a7a%22/%3E%3C/g%3E%3Crect%20x%3D%221.5%22%20y%3D%221.5%22%20width%3D%22397%22%20height%3D%22397%22%20rx%3D%2287%22%20fill%3D%22none%22%20stroke%3D%22%23d6e3f5%22%20stroke-width%3D%223%22/%3E%3C/svg%3E'},
+  {name:'COOGOONG',   icon:'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 400%22%3E%3Cdefs%3E%3CclipPath id=%22c4%22%3E%3Crect width=%22400%22 height=%22400%22 rx=%2288%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path=%22url%28%23c4%29%22%3E%3Crect width=%22400%22 height=%22400%22 fill=%22%23fff%22/%3E%3Cg fill=%22none%22 stroke-linecap=%22round%22%3E%0A%3Cpath d=%22M275.4 150A83 83 0 1 0 275.4 238%22 transform=%22translate%28-17 0%29%22 stroke=%22%231f3a7a%22 stroke-width=%2264%22 opacity=%22.22%22/%3E%0A%3Cg stroke=%22%231f3a7a%22 stroke-width=%2216%22 opacity=%22.22%22%3E%3Cpath d=%22M62 150q-12 50 6 100%22/%3E%3Cpath d=%22M343 108q10 25 0 50%22/%3E%3Cpath d=%22M343 235q10 25 0 50%22/%3E%3C/g%3E%0A%3Cpath d=%22M275.4 150A83 83 0 1 0 275.4 238%22 stroke=%22%231f3a7a%22 stroke-width=%2264%22/%3E%3C/g%3E%3C/g%3E%3Crect x=%221.5%22 y=%221.5%22 width=%22397%22 height=%22397%22 rx=%2287%22 fill=%22none%22 stroke=%22%23d6e3f5%22 stroke-width=%223%22/%3E%3C/svg%3E'},
+  {name:'HIGHER',     icon:'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 400%22%3E%3Cdefs%3E%3CclipPath id=%22c5%22%3E%3Crect width=%22400%22 height=%22400%22 rx=%2288%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path=%22url%28%23c5%29%22%3E%3Crect width=%22400%22 height=%22400%22 fill=%22%23fff%22/%3E%3Cg fill=%22%231f3a7a%22 stroke=%22%231f3a7a%22 stroke-width=%2210%22 stroke-linejoin=%22round%22%3E%0A%3Cpolygon points=%22178%2C180 244%2C178 183%2C315 118%2C315%22/%3E%0A%3Cpolygon points=%22214%2C82 284%2C82 283%2C89 213%2C89%22 stroke-width=%228%22/%3E%0A%3Cpolygon points=%22206%2C104 278%2C104 276%2C116 204%2C116%22 stroke-width=%228%22/%3E%0A%3Cpolygon points=%22187%2C134 262%2C134 257%2C159 181%2C159%22 stroke-width=%228%22/%3E%3C/g%3E%3C/g%3E%3Crect x=%221.5%22 y=%221.5%22 width=%22397%22 height=%22397%22 rx=%2287%22 fill=%22none%22 stroke=%22%23d6e3f5%22 stroke-width=%223%22/%3E%3C/svg%3E'},
+  {name:'MUNIVERSE',  icon:'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 400%22%3E%3Cdefs%3E%3CclipPath id=%22c6%22%3E%3Crect width=%22400%22 height=%22400%22 rx=%2288%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path=%22url%28%23c6%29%22%3E%3Crect width=%22400%22 height=%22400%22 fill=%22%23fff%22/%3E%3Cpath d=%22M80 270L170 180%22 stroke=%22%231f3a7a%22 stroke-width=%2252%22 stroke-linecap=%22round%22/%3E%0A%3Cpath d=%22M217 87Q222 120 255 125Q222 130 217 163Q212 130 179 125Q212 120 217 87Z%22 fill=%22%231f3a7a%22/%3E%0A%3Cpath d=%22M208 260L280 175%22 stroke=%22%231f3a7a%22 stroke-width=%2250%22 stroke-linecap=%22round%22/%3E%0A%3Cpath d=%22M283 282V150Q283 125 308 125Q337 125 337 150V282Z%22 fill=%22%231f3a7a%22/%3E%3C/g%3E%3Crect x=%221.5%22 y=%221.5%22 width=%22397%22 height=%22397%22 rx=%2287%22 fill=%22none%22 stroke=%22%23d6e3f5%22 stroke-width=%223%22/%3E%3C/svg%3E'}
+];
+const SPECIAL = '10694';
+let fanMode = false;
+const CHEV = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+const GRID = '<span class="ico allico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></span>';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = n => Number(n || 0).toLocaleString('en-US');
+const iconOf = n => (APPS.find(a => a.name === n) || {}).icon || '';
+const appCell = n => `<span class="cell-app">${iconOf(n) ? `<img src="${iconOf(n)}" alt="">` : ''}${esc(n)}</span>`;
+
+/* ---------- storage (safe) ---------- */
+const mem = {};
+const store = {
+  get(k){ try { return localStorage.getItem(k); } catch(e){ return mem[k] || null; } },
+  set(k,v){ try { localStorage.setItem(k,v); } catch(e){ mem[k] = v; } }
+};
+/* ---------- API (Vercel) ---------- */
+function rpc(action, ...args){
+  return fetch('/api/rpc', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({action, args})
+  }).then(res => res.json().catch(() => ({ok:false, message:'Server error'})));
+}
+const normAcc = v => String(v||'').trim().replace(/^@+/, '');
+
+/* ---------- reusable dropdown ---------- */
+function makeDD(root, items, opts){
+  opts = opts || {};
+  root.innerHTML = '<button type="button" class="dd-btn" aria-haspopup="listbox" aria-expanded="false"></button><ul class="dd-list" role="listbox"></ul>';
+  const btn = root.querySelector('.dd-btn'), list = root.querySelector('.dd-list');
+  let val = opts.value || '', act = -1;
+  const ic = it => it.icon ? `<img class="ico" src="${it.icon}" alt="">` : (it.html || '');
+  function render(){
+    list.innerHTML = items.map((it,i) =>
+      `<li role="option" data-i="${i}" aria-selected="${it.value===val}">${ic(it)}<span>${esc(it.label)}</span></li>`).join('');
+    const cur = items.find(x => x.value === val);
+    btn.innerHTML = (cur ? `${ic(cur)}<span>${esc(cur.label)}</span>` : `<span class="ph">${esc(opts.placeholder||'')}</span>`) +
+      `<span class="chev">${CHEV}</span>`;
+  }
+  function hl(){ [...list.children].forEach((li,i) => li.classList.toggle('act', i === act)); }
+  function open(o){ root.classList.toggle('open', o); btn.setAttribute('aria-expanded', o); act = -1; hl(); }
+  function pick(i){ val = items[i].value; render(); open(false); if(opts.onChange) opts.onChange(val); }
+  btn.addEventListener('click', () => open(!root.classList.contains('open')));
+  list.addEventListener('click', e => { const li = e.target.closest('li'); if(li) pick(+li.dataset.i); });
+  btn.addEventListener('keydown', e => {
+    const o = root.classList.contains('open');
+    if(e.key === 'ArrowDown'){ e.preventDefault(); if(!o) open(true); act = Math.min(items.length-1, act+1); hl(); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); act = Math.max(0, act-1); hl(); }
+    else if(e.key === 'Enter' && o && act >= 0){ e.preventDefault(); pick(act); }
+    else if(e.key === 'Escape'){ open(false); }
+  });
+  document.addEventListener('click', e => { if(!root.contains(e.target)) open(false); });
+  render();
+  return { get: () => val, set: v => { val = v; render(); } };
+}
+
+/* ---------- main form ---------- */
+const appDD = makeDD($('dd'), APPS.map(a => ({value:a.name, label:a.name, icon:a.icon})), {
+  placeholder:'Select an app…',
+  onChange: v => store.set('fv_app', v)
+});
+
+function showSummary(s){
+  $('sumTotal').textContent = fmt(s.total) + ' votes';
+  $('sumChips').innerHTML = APPS.map(a =>
+    `<div class="chip"><img src="${a.icon}" alt="">${esc(a.name)}: ${fmt(s.byApp[a.name])}</div>`).join('');
+  $('summary').classList.add('show');
+}
+let sumTimer;
+function checkSpecial(){
+  clearTimeout(sumTimer);
+  const acc = normAcc($('account').value);
+  if(acc !== SPECIAL){ $('summary').classList.remove('show'); return; }
+  sumTimer = setTimeout(() => {
+    rpc('getAccountSummary', acc).then(r => { if(r && r.ok) showSummary(r.summary); }).catch(() => {});
+  }, 350);
+}
+$('account').addEventListener('input', checkSpecial);
+
+function setMsg(el, text, type){ el.textContent = text; el.className = 'msg ' + (type || ''); }
+$('submit').addEventListener('click', () => {
+  const acc = normAcc($('account').value), app = appDD.get();
+  const cnt = Math.floor(Number($('count').value));
+  const msg = $('msg');
+  if(!acc) return setMsg(msg, 'Please enter your Twitter account.', 'err');
+  if(!app) return setMsg(msg, 'Please select an app.', 'err');
+  if(!isFinite(cnt) || cnt < 1) return setMsg(msg, 'Please enter a valid vote count.', 'err');
+
+  const btn = $('submit'); btn.disabled = true; btn.textContent = 'Submitting…';
+  store.set('fv_account', acc);
+  const done = () => { btn.disabled = false; btn.textContent = 'Submit'; };
+  rpc('submitVote', acc, app, cnt)
+    .then(r => {
+      done();
+      if(!r || !r.ok) return setMsg(msg, (r && r.message) || 'Something went wrong. Please try again.', 'err');
+      setMsg(msg, (r.prev === null || r.prev === undefined)
+        ? `Saved  @${r.account} · ${r.app} · ${fmt(r.count)} votes`
+        : `Updated  @${r.account} · ${r.app} · ${fmt(r.prev)} → ${fmt(r.count)} votes`, 'ok');
+      $('count').value = '';
+      if(r.summary) showSummary(r.summary);
+    })
+    .catch(e => { done(); setMsg(msg, 'Connection error: ' + (e && e.message ? e.message : e), 'err'); });
+});
+
+/* ---------- admin ---------- */
+let adminPw = '', D = null, filterApp = 'ALL';
+const pwOv = $('pwOv'), dashOv = $('dashOv');
+const filterDD = makeDD($('ddFilter'),
+  [{value:'ALL', label:'All apps', html:GRID}].concat(APPS.map(a => ({value:a.name, label:a.name, icon:a.icon}))),
+  { value:'ALL', onChange: v => { filterApp = v; renderDash(); } });
+
+function openPw(mode){
+  $('pwTitle').textContent = mode === 'fan' ? 'Fan access' : 'Admin access';
+  $('pwHint').textContent = mode === 'fan' ? 'Enter the fan password to view the data.' : 'Enter the admin password to view and manage all data.';
+  $('pw').value = ''; setMsg($('pwMsg'), '', ''); pwOv.classList.add('show');
+  setTimeout(() => $('pw').focus(), 50);
+}
+$('adminOpen').addEventListener('click', () => openPw('admin'));
+$('fanOpen').addEventListener('click', () => openPw('fan'));
+$('pwCancel').addEventListener('click', () => pwOv.classList.remove('show'));
+$('pw').addEventListener('keydown', e => { if(e.key === 'Enter') $('pwOk').click(); });
+$('pwOk').addEventListener('click', () => {
+  const pw = $('pw').value;
+  if(!pw) return setMsg($('pwMsg'), 'Please enter the password.', 'err');
+  const b = $('pwOk'); b.disabled = true; b.textContent = 'Checking…';
+  const done = () => { b.disabled = false; b.textContent = 'Sign in'; };
+  rpc('getAdminData', pw)
+    .then(r => {
+      done();
+      if(!r || !r.ok) return setMsg($('pwMsg'), (r && r.message) || 'Incorrect password', 'err');
+      adminPw = pw; fanMode = (r.role === 'fan'); D = r; filterApp = 'ALL'; filterDD.set('ALL'); ui.rq = ''; ui.q = ''; ui.only = true;
+      pwOv.classList.remove('show'); renderDash(); dashOv.classList.add('show');
+    })
+    .catch(e => { done(); setMsg($('pwMsg'), 'Connection error: ' + (e && e.message ? e.message : e), 'err'); });
+});
+$('dashClose').addEventListener('click', () => {
+  dashOv.classList.remove('show'); editOv.classList.remove('show'); delOv.classList.remove('show'); adminPw = ''; fanMode = false; D = null; target = null; ui.rq = ''; ui.q = ''; ui.only = true;
+  ['stats','p1','p3'].forEach(id => $(id).innerHTML = '');
+});
+$('dashRefresh').addEventListener('click', () => {
+  if(!adminPw) return;
+  const b = $('dashRefresh'); b.disabled = true; b.textContent = '…';
+  const done = () => { b.disabled = false; b.textContent = 'Refresh'; };
+  rpc('getAdminData', adminPw)
+    .then(r => { done(); if(r && r.ok){ D = r; renderDash(); } })
+    .catch(done);
+});
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
+  document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === t.dataset.t));
+}));
+
+const ui = {rq:'', q:'', only:true};
+const IC_EDIT = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>';
+const IC_DEL  = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10 11v5M14 11v5"/></svg>';
+const actCell = r => fanMode ? '' : `<td><div class="acts-cell"><button class="iconbtn" data-act="edit" data-row="${r.row}" title="Edit" aria-label="Edit">${IC_EDIT}</button><button class="iconbtn danger" data-act="del" data-row="${r.row}" title="Delete" aria-label="Delete">${IC_DEL}</button></div></td>`;
+
+function renderDash(){
+  if(!D) return;
+  $('dashTitle').textContent = fanMode ? 'Fan Dashboard' : 'Admin Dashboard';
+  const all = filterApp === 'ALL';
+  $('tab1').textContent = all ? 'Overview' : 'Ranking';
+  const latest = all ? D.latest : D.latest.filter(r => r.app === filterApp);
+
+  // stats only for a single app (votes are never combined across apps)
+  if(all){
+    $('stats').innerHTML = '';
+  } else {
+    const total = latest.reduce((s,r) => s + r.count, 0);
+    const top = latest.reduce((m,r) => Math.max(m, r.count), 0);
+    $('stats').innerHTML =
+      `<div class="stat"><b>${fmt(total)}</b><span>Total votes</span></div>` +
+      `<div class="stat"><b>${fmt(latest.length)}</b><span>Participants</span></div>` +
+      `<div class="stat"><b>${fmt(top)}</b><span>Highest</span></div>`;
+  }
+
+  // overview / ranking
+  if(all){
+    $('p1').innerHTML = '<div class="cards">' + APPS.map(a => {
+      const lr = D.latest.filter(r => r.app === a.name);
+      const t = lr.reduce((s,r) => s + r.count, 0);
+      return `<button class="appcard" data-app="${esc(a.name)}"><img class="ico" src="${a.icon}" alt="">
+        <div><div class="nm">${esc(a.name)}</div><div class="v">${fmt(t)}</div><div class="s">${fmt(lr.length)} participants</div></div></button>`;
+    }).join('') + '</div>';
+    $('p1').querySelectorAll('.appcard').forEach(c => c.addEventListener('click', () => {
+      filterApp = c.dataset.app; filterDD.set(filterApp); renderDash();
+    }));
+  } else {
+    $('p1').innerHTML = `<div class="tools"><input class="search" id="rq" type="text" placeholder="Search Twitter account"></div>
+      <div class="tw" style="max-height:52vh"><table><thead><tr><th>#</th><th>Twitter</th><th class="n">Votes</th><th>Last updated</th>${fanMode?'':'<th></th>'}</tr></thead><tbody id="rankBody"></tbody></table></div>`;
+    $('rq').value = ui.rq;
+    const sorted = latest.slice().sort((a,b) => b.count - a.count);
+    const drawRank = () => {
+      ui.rq = $('rq').value;
+      const q = ui.rq.toLowerCase();
+      const list = sorted.map((r,i) => ({r, rank:i+1})).filter(x => !q || x.r.account.toLowerCase().includes(q));
+      $('rankBody').innerHTML = list.length ? list.map(x =>
+        `<tr><td>${x.rank}</td><td>@${esc(x.r.account)}</td><td class="n"><b>${fmt(x.r.count)}</b></td><td>${esc(x.r.ts)}</td>${actCell(x.r)}</tr>`).join('')
+        : `<tr><td colspan="${fanMode?4:5}" class="empty">No data</td></tr>`;
+    };
+    drawRank(); $('rq').addEventListener('input', drawRank);
+  }
+
+  // history
+  $('p3').innerHTML = `<div class="tools"><input class="search" id="q" type="text" placeholder="Search Twitter account">
+    <label class="sw"><input type="checkbox" id="onlyLatest">Latest only</label></div>
+    <div class="tw" style="max-height:52vh"><table><thead><tr><th>Time</th><th>Twitter</th><th>App</th><th class="n">Votes</th><th>Status</th>${fanMode?'':'<th></th>'}</tr></thead><tbody id="rowsBody"></tbody></table></div>`;
+  $('q').value = ui.q; $('onlyLatest').checked = ui.only;
+  const draw = () => {
+    ui.q = $('q').value; ui.only = $('onlyLatest').checked;
+    const q = ui.q.toLowerCase();
+    const list = D.rows.filter(r => (all || r.app === filterApp) && (!ui.only || r.latest) && (!q || r.account.toLowerCase().includes(q)));
+    $('rowsBody').innerHTML = list.length ? list.map(r =>
+      `<tr class="${r.latest ? '' : 'old'}"><td>${esc(r.ts)}</td><td>@${esc(r.account)}</td><td>${appCell(r.app)}</td><td class="n">${fmt(r.count)}</td><td><span class="tag ${r.latest ? '' : 'old'}">${r.latest ? 'Counted' : 'History'}</span></td>${actCell(r)}</tr>`).join('')
+      : `<tr><td colspan="${fanMode?5:6}" class="empty">No data</td></tr>`;
+  };
+  draw(); $('q').addEventListener('input', draw); $('onlyLatest').addEventListener('change', draw);
+}
+
+/* ---------- edit / delete ---------- */
+const editOv = $('editOv'), delOv = $('delOv');
+const editDD = makeDD($('ddEdit'), APPS.map(a => ({value:a.name, label:a.name, icon:a.icon})), {placeholder:'Select an app…'});
+const findRec = row => (D.rows.find(r => r.row === row) || D.latest.find(r => r.row === row));
+const refOf = r => ({row:r.row, account:r.account, app:r.app, count:r.count});
+let target = null;
+
+function onAct(e){
+  const b = e.target.closest('.iconbtn');
+  if(!b || !D || fanMode) return;
+  const rec = findRec(Number(b.dataset.row));
+  if(!rec) return;
+  target = rec;
+  if(b.dataset.act === 'edit'){
+    $('eAcc').value = rec.account; editDD.set(rec.app); $('eCount').value = rec.count;
+    setMsg($('eMsg'), '', ''); editOv.classList.add('show');
+  } else {
+    $('delBox').innerHTML = `${iconOf(rec.app) ? `<img src="${iconOf(rec.app)}" alt="">` : ''}<span>@${esc(rec.account)} · ${esc(rec.app)} · ${fmt(rec.count)} votes</span>`;
+    setMsg($('dMsg'), '', ''); delOv.classList.add('show');
+  }
+}
+$('p1').addEventListener('click', onAct);
+$('p3').addEventListener('click', onAct);
+
+$('eCancel').addEventListener('click', () => editOv.classList.remove('show'));
+$('dCancel').addEventListener('click', () => delOv.classList.remove('show'));
+
+$('eSave').addEventListener('click', () => {
+  if(!target) return;
+  const acc = normAcc($('eAcc').value), app = editDD.get(), cnt = Math.floor(Number($('eCount').value));
+  if(!acc) return setMsg($('eMsg'), 'Please enter a Twitter account.', 'err');
+  if(!app) return setMsg($('eMsg'), 'Please select an app.', 'err');
+  if(!isFinite(cnt) || cnt < 1) return setMsg($('eMsg'), 'Please enter a valid vote count.', 'err');
+  const b = $('eSave'); b.disabled = true; b.textContent = 'Saving…';
+  const done = () => { b.disabled = false; b.textContent = 'Save'; };
+  rpc('adminEditRow', adminPw, refOf(target), {account:acc, app:app, count:cnt})
+    .then(r => {
+      done();
+      if(!r || !r.ok) return setMsg($('eMsg'), (r && r.message) || 'Something went wrong.', 'err');
+      D = r; editOv.classList.remove('show'); renderDash();
+    })
+    .catch(e => { done(); setMsg($('eMsg'), 'Connection error: ' + (e && e.message ? e.message : e), 'err'); });
+});
+
+$('dOk').addEventListener('click', () => {
+  if(!target) return;
+  const b = $('dOk'); b.disabled = true; b.textContent = 'Deleting…';
+  const done = () => { b.disabled = false; b.textContent = 'Delete'; };
+  rpc('adminDeleteRow', adminPw, refOf(target))
+    .then(r => {
+      done();
+      if(!r || !r.ok) return setMsg($('dMsg'), (r && r.message) || 'Something went wrong.', 'err');
+      D = r; delOv.classList.remove('show'); renderDash();
+    })
+    .catch(e => { done(); setMsg($('dMsg'), 'Connection error: ' + (e && e.message ? e.message : e), 'err'); });
+});
+
+/* ---------- init ---------- */
+(function init(){
+  const sa = store.get('fv_app');
+  if(sa && APPS.some(a => a.name === sa)) appDD.set(sa);
+  const acc = store.get('fv_account');
+  if(acc){ $('account').value = acc; checkSpecial(); }
+})();
+</script>
+</body>
+</html>
