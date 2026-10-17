@@ -1223,3 +1223,23 @@ th{border-bottom-width:1px}
 .chip img,.cell-app img,.del-box img,.appstack .ai{border-width:1px}
 .ci-d.today{box-shadow:0 0 0 1px var(--blue) inset}
 </style>
+<style>
+/* รูป 2: ถ้าครบ 6 แอป เหลือแค่หลอดพลัง (ซ่อนแถวไอคอนแอป) */
+.ci-energy.full .ci-apps{display:none}
+
+/* สีขอบไอคอนแอปทุกที่ให้เหมือนกัน */
+.ci-app,.ci-app.on{border:1px solid rgba(20,20,20,.22)}
+.hrow .hi img{border:1px solid rgba(20,20,20,.22)}
+
+/* เส้นคั่นแถวใน History ให้ตรง ไม่โค้งที่ปลายเส้น */
+.hrow{border-radius:0;border-bottom:1px dotted rgba(20,20,20,.3)}
+.hrow.today{border-radius:12px;border-bottom-color:transparent}
+.hrow:last-child{border-bottom:0}
+
+/* ไฮไลท์หัวข้อให้ชิดคำหน้า ไม่ห่างเกินไป */
+.ci-head h2 mark{margin:0 0 0 -2px;padding:0 3px}
+
+/* ช่องกรอกกับ dropdown สีขอบเดียวกัน (รูป 1) */
+input[type=text],input[type=number],input[type=password],.dd-btn,.dd-list{border-color:rgba(20,20,20,.35)!important}
+input:focus,.dd-btn:focus,.dd.open .dd-btn{border-color:var(--blue)!important}
+</style>
