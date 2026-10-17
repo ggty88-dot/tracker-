@@ -237,3 +237,17 @@ function cover(c,im,x,y,w,h){
 }
 draw();
 </script>
+<script>
+function fitTxt(c,s,x,y,maxW,weight,size){
+  let px = size + 2;
+  c.font = `400 ${px}px Jua,Mali,system-ui,sans-serif`;
+  while(c.measureText(s).width > maxW && px > 14){
+    px -= 1;
+    c.font = `400 ${px}px Jua,Mali,system-ui,sans-serif`;
+  }
+  c.fillStyle = '#141414'; c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+  c.fillText(s,x,y);
+}
+document.fonts.load('36px Jua').catch(() => {}).then(draw);
+document.fonts.ready.then(draw);
+</script>
