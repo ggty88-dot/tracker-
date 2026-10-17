@@ -1190,3 +1190,36 @@ $('stTot').textContent = '/' + APPS.length;
   touch-action:pan-y;
 }
 </style>
+<style>
+/* 1. ไฮไลท์คำว่า History/Votes/Check-in ไม่ทับตัวอักษร */
+.ci-head h2{display:block;line-height:1.35}
+.ci-head h2 mark{display:inline;margin:0 0 0 4px;padding:0 5px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+
+/* 2. เอาขีดขาวในหลอดพลังออก */
+.ci-track::after{display:none!important}
+.ci-track{border:1px solid rgba(20,20,20,.5)}
+
+/* 3. กรอบไอคอนแอปใต้หลอดพลัง: ขอบบาง มีช่องไฟ */
+.ci-app{padding:4px;border:1px solid rgba(20,20,20,.18);border-radius:16px;background:#fff}
+.ci-app.on{background:#fff;border-color:rgba(36,71,214,.55)}
+.ci-app img{border-radius:12px}
+
+/* 4. แถวใน History ให้เท่ากันทุกแถว */
+.hrow{padding:9px 8px;border-radius:12px;gap:8px}
+.hrow.today{background:var(--sun-l)}
+.hrow .hd{width:56px}
+.hrow .hm{width:28px;display:flex;justify-content:center}
+.hrow .hi{flex:1;display:grid;grid-template-columns:repeat(6,1fr);gap:4px;justify-items:center}
+.hrow .hn{width:30px;text-align:right}
+
+/* 5. ไอคอนในแถว History ขอบบางลง */
+.hrow .hi img{width:100%;max-width:30px;height:auto;aspect-ratio:1;border:1px solid rgba(20,20,20,.22);border-radius:8px}
+
+/* ขอบบางทั้งหน้า */
+.card,.modal,.summary,.stat,.tabs,.appcard,.tw,.del-box,.ov-tile,.quick,.ci-energy,.ci-tap,.menu,.chip,.live,.msg.ok,.msg.err,.tag,.ci-sum .streak,
+input[type=text],input[type=number],input[type=password],.btn,.btn.ghost,.btn.sm,.xbtn,.iconbtn{border-width:1px}
+th{border-bottom-width:1px}
+.ico{border:1px solid rgba(20,20,20,.25)}
+.chip img,.cell-app img,.del-box img,.appstack .ai{border-width:1px}
+.ci-d.today{box-shadow:0 0 0 1px var(--blue) inset}
+</style>
