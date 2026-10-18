@@ -1157,9 +1157,14 @@ $('dOk').addEventListener('click', () => {
   if(window.ResizeObserver) new ResizeObserver(() => { if(measure() && items.length) rebuild(new Set()); }).observe(box);
   const reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   let items = [], seen = new Map(), cur = 0, off = 0, last = 0, raf = 0, paused = false, first = true, busy = false;
-  const k = r => r.account.toLowerCase() + '|' + r.app;
+  const k = r => r.c ? 'c|' + r.id : r.account.toLowerCase() + '|' + r.app;
   const scrolling = () => !reduce && items.length > SHOW;
-  const rowHtml = (r, isNew) => `<div class="tr"><div class="pill${isNew ? ' new' : ''}"><img class="ico" src="${iconOf(r.app)}" alt=""><span class="who">@${esc(r.account)}</span><span class="ap">${esc(r.app)}</span><span class="tm">${esc(r.time)}</span></div></div>`;
+  const CM_ICO = {
+    post: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2447d6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="24" height="24" fill="#dde5ff"/><path d="M6 7h12a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 18 16h-5.5L9 19v-3H6a1.5 1.5 0 0 1-1.5-1.5v-6A1.5 1.5 0 0 1 6 7z"/></svg>'),
+    ann: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="24" height="24" fill="#fff0a6"/><path d="M7 10a5 5 0 0 1 10 0c0 4 1.5 5 1.5 5h-13S7 14 7 10z"/><path d="M10.5 18a1.5 1.5 0 0 0 3 0"/></svg>')
+  };
+  const CM_LBL = {post: 'Community', ann: 'Announcement'};
+  const rowHtml = (r, isNew) => `<div class="tr"><div class="pill${isNew ? ' new' : ''}"${r.c ? ' data-c="1"' : ''}><img class="ico" src="${r.c ? CM_ICO[r.c] : iconOf(r.app)}" alt=""><span class="who">@${esc(r.account)}</span><span class="ap">${esc(r.c ? CM_LBL[r.c] : r.app)}</span><span class="tm">${esc(r.time)}</span></div></div>`;
   const rowEl = (r, isNew) => { const d = document.createElement('div'); d.innerHTML = rowHtml(r, isNew); return d.firstChild; };
 
   function fill(){
@@ -1190,13 +1195,15 @@ $('dOk').addEventListener('click', () => {
       track.innerHTML = items.map(r => rowHtml(r, freshIds.has(r.id))).join('');
     }
   }
-  function apply(recs){
+  function apply(votes, comm){
+    // vote updates + community posts/announcements, ordered by time of day (counts below use votes only)
+    const recs = (votes || []).concat(comm || []).map((r, i) => ({r, i})).sort((a, b) => (a.r.time < b.r.time ? -1 : a.r.time > b.r.time ? 1 : a.i - b.i)).map(x => x.r);
     const fresh = first ? [] : recs.filter(r => seen.get(k(r)) !== r.id);
     const was = scrolling() && track.children.length > 0;
     items = recs; seen = new Map(recs.map(r => [k(r), r.id])); first = false;
     cnt.textContent = recs.length ? recs.length + (recs.length === 1 ? ' update' : ' updates') : '';
-    $('stUpd').textContent = recs.length;
-    const done = new Set(recs.map(r => r.app)); $('stApps').textContent = done.size;
+    $('stUpd').textContent = (votes || []).length;
+    const done = new Set((votes || []).map(r => r.app)); $('stApps').textContent = done.size;
     box.classList.toggle('empty', !recs.length);
     box.classList.toggle('manual', reduce);
     if(!recs.length){ stop(); track.innerHTML = ''; return; }
@@ -1211,7 +1218,7 @@ $('dOk').addEventListener('click', () => {
   function poll(){
     if(busy) return; busy = true;
     rpc('getTodayFeed')
-      .then(r => { if(r && r.ok) apply(r.items || []); })
+      .then(r => { if(r && r.ok) apply(r.items || [], r.community || []); })
       .catch(() => {})
       .then(() => { busy = false; });
   }
@@ -1699,7 +1706,7 @@ input:focus,.dd-btn:focus,.dd.open .dd-btn{border-color:var(--blue)!important}
 
   function decorate(){
     document.querySelectorAll('#liveTrack .pill').forEach(p => {
-      const who = p.querySelector('.who'); if(!who) return;
+      const who = p.querySelector('.who'); if(!who || p.dataset.c) return;
       const r = rank.get(who.textContent.replace(/^@/, '').toLowerCase());
       const old = p.querySelector('.crown');
       if(old && Number(old.dataset.r) === r) return;
@@ -2175,7 +2182,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     'Participants today':'ผู้เข้าร่วมวันนี้','All-time participants':'ผู้เข้าร่วมทั้งหมด',
     'Quick Access':'เมนูลัด','Open voting apps':'เปิดแอปโหวต','Voting Guide':'คู่มือการโหวต','How to collect':'วิธีสะสมโหวต',
     'Daily Check-in':'เช็คอินประจำวัน','Check in for the day':'เช็คอินประจำวัน','Quick Update':'อัปเดตด่วน','Update your totals':'อัปเดตยอดโหวต',
-    'Recent Activity':'กิจกรรมล่าสุด','No updates yet today.':'วันนี้ยังไม่มีการอัปเดต','Be the first to update!':'มาเป็นคนแรกกันเลย!',
+    'Community':'คอมมูนิตี้','Announcement':'ประกาศ','Recent Activity':'กิจกรรมล่าสุด','No updates yet today.':'วันนี้ยังไม่มีการอัปเดต','Be the first to update!':'มาเป็นคนแรกกันเลย!',
     'No need to collect':'ไม่ต้องสะสมโหวต','Go to':'ไปที่','Updated today ✓':'อัปเดตวันนี้แล้ว ✓','Not updated today':'วันนี้ยังไม่อัปเดต','Voting info':'วิธีสะสมโหวต',
     'Tap an app to see how to collect':'แตะที่แอปเพื่อดูวิธีสะสมโหวต',
     'Everyone’s updates from the last 3 days':'การอัปเดตของทุกคนย้อนหลัง 3 วัน',
