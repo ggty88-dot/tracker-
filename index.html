@@ -747,7 +747,7 @@ const store = {
 /* ---------- API (Vercel) ---------- */
 function showWho(){ const w = document.getElementById('ciWho'), i = document.getElementById('ciAcc'); if(!w || !i) return; const a = String(i.value || '').trim().replace(/^@+/, ''); w.textContent = a ? '@' + a : ''; w.hidden = !a; }
 // actions that act "as me" carry this device's session token as first argument
-const AUTHED = ['submitVote','getAccountSummary','checkIn','getCheckins','whoami','logout','changePin','getMyProfile','getMyLevel','communityList','communityPost','communityGet','communityComment','communityLike','communityDelete','communityReport'];
+const AUTHED = ['submitVote','getAccountSummary','checkIn','getCheckins','whoami','logout','changePin','getMyProfile','getMyLevel','communityList','communityPost','communityGet','communityComment','communityLike','communityDelete','communityReport','setAvatar','getLeaderboard'];
 function rpc(action, ...args){
   if(AUTHED.indexOf(action) >= 0) args = [store.get('fv_token') || ''].concat(args);
   return fetch('/api/rpc', {
@@ -2881,6 +2881,31 @@ body[data-tab="community"] .cm-fab{display:flex}
 .cm-cbox{display:flex;gap:8px;align-items:center;margin-top:10px}
 .cm-cbox input{flex:1;min-width:0;border-radius:99px!important;padding:10px 16px!important;font-size:.9rem!important}
 .cm-cbox .btn{margin:0;width:auto;padding:8px 18px 9px;font-size:.95rem}
+.cm-av.img{overflow:hidden;background:#fff}
+.cm-av img{display:block;width:100%;height:100%;object-fit:cover}
+/* my profile photo */
+.hv-av{position:relative}
+.hv-av.has-photo img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.av-edit{position:absolute;right:-3px;bottom:-3px;width:24px;height:24px;border-radius:50%;border:1px solid var(--line-2);background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.av-edit .hv-ic{width:13px;height:13px}
+.av-prev{display:flex;justify-content:center;margin:14px 0 6px}
+.av-prev img{width:128px;height:128px;border-radius:50%;object-fit:cover;border:1px solid var(--line-2);background:var(--blue-l)}
+.av-prev img.mascot{object-fit:contain;padding:22px}
+.av-btns{display:flex;flex-direction:column;gap:8px;align-items:center;margin-top:12px}
+.av-btns .btn{width:auto;min-width:180px;margin:0}
+.lvm .lb li{gap:9px}
+.lvm .lb .g{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lvm .lb .rk{flex:none;width:20px;text-align:center;font-family:var(--display);color:var(--blue)}
+.lvm .lb .cm-av{width:28px;height:28px;font-size:.8rem;flex:none}
+.lb-me{margin:2px 0 4px;font-weight:800;font-size:.78rem;color:var(--muted)}
+/* My page: a little more compact so the level bar still fits on one screen (no scrolling) */
+.hv-view[data-v="me"] .hv-me{padding:10px 14px!important}
+.hv-view[data-v="me"] .hv-tiles{margin:9px 0}
+.hv-view[data-v="me"] .ov-tile{padding:7px 13px 8px}
+.hv-view[data-v="me"] .hv-li{padding:5px 14px!important}
+.lv-tap{margin-top:5px}
+.lv-bar{height:8px}
+.lv-meta{margin-top:3px}
 #cmDetOv .modal,#cmNewOv .modal{padding:16px 16px 18px}
 </style>
 <script>
@@ -2898,6 +2923,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     bubble:svg('<path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 3.5V16A2.5 2.5 0 0 1 4 13.5z"/>'),
     trash: svg('<path d="M5 7h14M10 7V4.5h4V7M7 7l1 12.5h8L17 7M10 11v5M14 11v5"/>'),
     flag:  svg('<path d="M6 21V4M6 5h11l-2 4 2 4H6"/>'),
+    pen:   svg('<path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/>'),
     photo: svg('<rect x="3.5" y="5" width="17" height="14" rx="3"/><circle cx="9" cy="10.5" r="1.8"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/>')
   };
   const X_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
@@ -2926,7 +2952,9 @@ body[data-tab="community"] .cm-fab{display:flex}
   const lvName = n => { const x = LV_NAMES[Math.min(Math.max(n, 1), LV_NAMES.length) - 1]; return isTh() ? x[1] : x[0]; };
   const tierOf = n => Math.min(5, Math.ceil(Math.max(1, n) / 2));
   const badge = n => '<span class="lv-b" data-tier="' + tierOf(n) + '">LV.' + n + '</span>';
+  const tagOf = x => x.admin ? '<span class="lv-b" data-tier="5">ADMIN</span>' : badge(x.lv);
   let LV = null;                                  // last level payload for me
+  let LB = null;                                  // leaderboard payload
 
   const meCard = document.querySelector('.hv-view[data-v="me"] .hv-me');
   const nameEl = g('hvMeName');
@@ -2960,6 +2988,17 @@ body[data-tab="community"] .cm-fab{display:flex}
     g('lvNext').textContent = LV.max ? L('Max level', 'เลเวลสูงสุด') : L(fmt(LV.to - LV.xp) + ' XP to LV.' + (LV.level + 1), 'อีก ' + fmt(LV.to - LV.xp) + ' XP ถึง LV.' + (LV.level + 1));
     window.dispatchEvent(new Event('resize'));     // let the My page re-fit one screen
   }
+  function boardHtml(){
+    const t = '<h3>' + L('Top fans', 'อันดับแฟนคลับ') + '</h3>';
+    if(!LB) return t + '<div class="cm-empty" style="padding:12px 0">' + L('Loading…', 'กำลังโหลด…') + '</div>';
+    if(!LB.top.length) return t + '<div class="cm-empty" style="padding:12px 0">' + L('No ranking yet', 'ยังไม่มีอันดับ') + '</div>';
+    const rows = LB.top.map((u, i) => '<li class="' + (u.me ? 'cur' : '') + '"><span class="rk">' + (i + 1) + '</span>' + avOf(u.account, u.av) +
+      '<span class="g">@' + esc(u.account) + '</span>' + badge(u.level) + '<span class="p">' + fmt(u.xp) + ' XP</span></li>').join('');
+    return t + (LB.rank ? '<div class="lb-me">' + L('Your rank: #' + LB.rank + ' of ' + LB.total, 'อันดับของคุณ: #' + LB.rank + ' จาก ' + LB.total) + '</div>' : '') + '<ol class="lb">' + rows + '</ol>';
+  }
+  function loadBoard(){
+    rpc('getLeaderboard').then(r => { if(r && r.ok){ LB = r; if(lvOv.classList.contains('show')) drawLevelDialog(); } }).catch(() => {});
+  }
   function drawLevelDialog(){
     if(!LV) return;
     g('lvTitle').innerHTML = L('My <mark>Level</mark>', '<mark>เลเวล</mark>ของฉัน');
@@ -2977,12 +3016,12 @@ body[data-tab="community"] .cm-fab{display:flex}
         '<li><span class="g">' + L('Daily check-in', 'เช็คอินประจำวัน') + '</span><span class="p">+' + r.checkin + ' XP</span></li>' +
         '<li><span class="g">' + L('Update an app (once per app per day)', 'อัปเดตยอดแอป (นับ 1 ครั้งต่อแอปต่อวัน)') + '</span><span class="p">+' + r.app + ' XP</span></li>' +
         '<li><span class="g">' + L('Update all 6 apps in one day (bonus)', 'อัปเดตครบทั้ง 6 แอปในวันเดียว (โบนัส)') + '</span><span class="p">+' + r.full + ' XP</span></li>' +
-      '</ul><h3>' + L('Levels', 'ระดับเลเวล') + '</h3><ol>' + ladder + '</ol>';
+      '</ul>' + boardHtml() + '<h3>' + L('Levels', 'ระดับเลเวล') + '</h3><ol>' + ladder + '</ol>';
   }
   function loadLevel(){
     rpc('getMyLevel').then(r => {
       if(!r || !r.ok) return;
-      const prev = LV; LV = r; drawLevel();
+      const prev = LV; LV = r; myAcc = r.account || ''; myAv = r.av || 0; drawAvatar(); drawLevel();
       const k = 'fv_lv_seen';
       const seen = Number(store.get(k) || 0);
       if(seen && r.level > seen) toast(L('Level up! LV.' + r.level + ' · ' + lvName(r.level), 'เลเวลอัป! LV.' + r.level + ' · ' + lvName(r.level)));
@@ -2990,7 +3029,68 @@ body[data-tab="community"] .cm-fab{display:flex}
       if(lvOv.classList.contains('show')) drawLevelDialog();
     }).catch(() => {});
   }
-  if(g('lvTap')) g('lvTap').addEventListener('click', () => { drawLevelDialog(); lvOv.classList.add('show'); });
+  if(g('lvTap')) g('lvTap').addEventListener('click', () => { drawLevelDialog(); lvOv.classList.add('show'); loadBoard(); });
+
+  /* ---------- profile photo ---------- */
+  const hvAv = g('hvAv'), avWrap = hvAv && hvAv.parentNode, MASCOT = hvAv ? hvAv.src : '';
+  let myAcc = '', myAv = 0;
+  function drawAvatar(){
+    if(!hvAv) return;
+    if(myAv && myAcc){ hvAv.src = '/api/img?u=' + encodeURIComponent(myAcc) + '&v=' + myAv; avWrap.classList.add('has-photo'); }
+    else { hvAv.src = MASCOT; avWrap.classList.remove('has-photo'); }
+  }
+  const avOv = el('<div class="ov" id="avOv"><div class="modal ci">' +
+    '<div class="ci-head"><h2 id="avT"></h2><button class="xbtn" type="button" id="avX" aria-label="Close">' + X_SVG + '</button></div>' +
+    '<div class="av-prev"><img id="avPrevImg" alt=""></div><div class="msg" id="avMsg"></div>' +
+    '<div class="av-btns"><button type="button" class="btn sm" id="avPick"></button><button type="button" class="btn ghost" id="avReset"></button></div>' +
+    '<input type="file" id="avFile" accept="image/*" hidden></div></div>');
+  document.body.appendChild(avOv);
+  const avMsg = t => { const m = g('avMsg'); m.className = t ? 'msg err' : 'msg'; m.textContent = t || ''; };
+  function drawAvDialog(){
+    g('avT').innerHTML = L('Profile <mark>photo</mark>', '<mark>รูป</mark>โปรไฟล์');
+    g('avPick').textContent = L('Choose photo', 'เลือกรูป');
+    g('avReset').textContent = L('Use mascot', 'ใช้รูปมาสคอต');
+    g('avReset').hidden = !myAv;
+    const im = g('avPrevImg'); im.src = hvAv.src; im.className = myAv ? '' : 'mascot';
+  }
+  function openAv(){ if(!myAcc) return; avMsg(''); drawAvDialog(); avOv.classList.add('show'); }
+  if(avWrap){
+    avWrap.insertAdjacentHTML('beforeend', '<button type="button" class="av-edit" id="avEdit" aria-label="Change photo">' + ICN.pen + '</button>');
+    avWrap.addEventListener('click', openAv);
+  }
+  g('avX').addEventListener('click', () => avOv.classList.remove('show'));
+  avOv.addEventListener('click', e => { if(e.target === avOv) avOv.classList.remove('show'); });
+  g('avPick').addEventListener('click', () => g('avFile').click());
+  function squareJpeg(file){
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        const s = Math.min(img.naturalWidth, img.naturalHeight), c = document.createElement('canvas');
+        c.width = c.height = 256;
+        const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, 256, 256);
+        x.drawImage(img, (img.naturalWidth - s) / 2, (img.naturalHeight - s) / 2, s, s, 0, 0, 256, 256);
+        URL.revokeObjectURL(url);
+        let q = .82, out = c.toDataURL('image/jpeg', q);
+        while(out.length > 60000 && q > .4){ q -= .1; out = c.toDataURL('image/jpeg', q); }
+        out.length > 64000 ? rej(new Error('big')) : res(out);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('bad')); };
+      img.src = url;
+    });
+  }
+  function saveAvatar(data){
+    avMsg('');
+    rpc('setAvatar', data).then(r => {
+      if(r && r.ok){ myAv = r.v || 0; drawAvatar(); drawAvDialog(); toast(L('Saved', 'บันทึกแล้ว')); avOv.classList.remove('show'); }
+      else avMsg((r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ'));
+    }).catch(() => avMsg(L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ')));
+  }
+  g('avFile').addEventListener('change', () => {
+    const f = g('avFile').files && g('avFile').files[0]; if(!f) return;
+    squareJpeg(f).then(saveAvatar).catch(() => avMsg(L('Could not use that image. Try another one.', 'ใช้รูปนี้ไม่ได้ ลองรูปอื่นนะ')));
+    g('avFile').value = '';
+  });
+  g('avReset').addEventListener('click', () => saveAvatar(''));
 
   /* ---------- Community: tab + view ---------- */
   const app = g('hvApp'), nav = document.querySelector('.hv-tabs');
@@ -3012,7 +3112,7 @@ body[data-tab="community"] .cm-fab{display:flex}
   const KINDS = ['chat', 'ask', 'share'];
   const kindLbl = k => ({all: L('All','ทั้งหมด'), chat: L('Chat','คุยเล่น'), ask: L('Question','ถามตอบ'), share: L('Share','แชร์')})[k];
   const AVC = ['#dde5ff', '#fff1b3', '#dcf5e1', '#ffe3ef', '#ece3ff'];
-  const avOf = a => { let h = 0; for(let i = 0; i < a.length; i++) h = (h * 31 + a.charCodeAt(i)) >>> 0; return '<span class="cm-av" style="background:' + AVC[h % AVC.length] + '">' + esc(a.charAt(0).toUpperCase()) + '</span>'; };
+  const avOf = (a, v) => { if(v) return '<span class="cm-av img"><img alt="" loading="lazy" src="/api/img?u=' + encodeURIComponent(a) + '&v=' + v + '"></span>'; let h = 0; for(let i = 0; i < a.length; i++) h = (h * 31 + a.charCodeAt(i)) >>> 0; return '<span class="cm-av" style="background:' + AVC[h % AVC.length] + '">' + esc(a.charAt(0).toUpperCase()) + '</span>'; };
 
   let filter = 'all', posts = [], next = 0, more = false, loading = false, loadedOnce = false;
 
@@ -3026,10 +3126,10 @@ body[data-tab="community"] .cm-fab{display:flex}
   }
 
   function postHtml(p, full){
-    const mine = p.mine;
+    const mine = p.canDel || p.mine;
     return '<article class="cm-post" data-id="' + p.id + '">' +
-      '<div class="cm-head">' + avOf(p.account) +
-        '<div class="cm-who"><div class="n"><b>@' + esc(p.account) + '</b>' + badge(p.lv) + '</div>' +
+      '<div class="cm-head">' + avOf(p.account, p.av) +
+        '<div class="cm-who"><div class="n"><b>@' + esc(p.account) + '</b>' + tagOf(p) + '</div>' +
         '<small>' + ago(p.t) + '<span class="cm-kind ' + p.kind + '">' + kindLbl(p.kind) + '</span></small></div></div>' +
       (p.text ? '<p class="cm-text">' + esc(p.text) + '</p>' : '') +
       (p.img ? '<img class="cm-img" loading="lazy" alt="" src="/api/img?id=' + p.id + '">' : '') +
@@ -3115,9 +3215,9 @@ body[data-tab="community"] .cm-fab{display:flex}
   detOv.addEventListener('click', e => { if(e.target === detOv) detOv.classList.remove('show'); });
 
   function cmHtml(c){
-    return '<div class="cm-cm" data-cid="' + c.id + '">' + avOf(c.account) +
-      '<div class="b"><div class="n">@' + esc(c.account) + badge(c.lv) + '<em>' + ago(c.t) + '</em></div><p>' + esc(c.text) + '</p></div>' +
-      (c.mine ? '<button type="button" class="x" data-del="' + c.id + '" aria-label="Delete">' + ICN.trash + '</button>' : '') + '</div>';
+    return '<div class="cm-cm" data-cid="' + c.id + '">' + avOf(c.account, c.av) +
+      '<div class="b"><div class="n">@' + esc(c.account) + tagOf(c) + '<em>' + ago(c.t) + '</em></div><p>' + esc(c.text) + '</p></div>' +
+      ((c.canDel || c.mine) ? '<button type="button" class="x" data-del="' + c.id + '" aria-label="Delete">' + ICN.trash + '</button>' : '') + '</div>';
   }
   function drawDetail(){
     if(!curPost || !detOv.classList.contains('show')) return;
@@ -3251,7 +3351,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     drawStatic(); drawFeed(); drawLevel(); drawNew(); drawDetail();
     if(lvOv.classList.contains('show')) drawLevelDialog();
   }).observe(document.documentElement, {attributes:true, attributeFilter:['lang']});
-  document.addEventListener('fv:auth', () => { LV = null; posts = []; loadedOnce = false; store.set('fv_lv_seen', ''); if(document.body.dataset.tab === 'me') loadLevel(); if(document.body.dataset.tab === 'community') loadFeed(true); });
+  document.addEventListener('fv:auth', () => { LV = null; myAcc = ''; myAv = 0; drawAvatar(); posts = []; loadedOnce = false; store.set('fv_lv_seen', ''); if(document.body.dataset.tab === 'me') loadLevel(); if(document.body.dataset.tab === 'community') loadFeed(true); });
 
   drawStatic(); drawFeed();
   if(document.body.dataset.tab === 'me') loadLevel();
