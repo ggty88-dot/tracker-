@@ -2724,3 +2724,61 @@ input.pin-box[type=password].on{background:var(--blue-l)}
 #uBody .chips{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:8px}
 #uBody .chip{width:100%}
 </style>
+<script>
+/* ===== Back button (Android / browser): closes the open dialog first, then steps back through the tabs ===== */
+(function(){
+  if(!window.history || !history.pushState) return;
+  var body = document.body;
+  var curTab = body.dataset.tab || 'home';
+  var order = [];            // dialogs that are open right now (oldest first)
+  var depth = 0;             // history entries added for those dialogs
+  var pending = false;       // a history.go() is still travelling
+
+  function tracked(el){
+    if(el.id === 'gateOv'){ var c = document.getElementById('gateCancel'); return !!c && !c.hidden; }   // a sign-in that can't be cancelled stays put
+    return true;
+  }
+  function stateNow(){ return {tab: curTab, ov: depth}; }
+  function reconcile(){
+    if(pending) return;
+    var n = order.length;
+    if(n > depth){ while(depth < n){ depth++; history.pushState(stateNow(), ''); } }
+    else if(n < depth){ var d = depth - n; depth = n; pending = true; history.go(-d); }
+  }
+
+  window.addEventListener('popstate', function(e){
+    if(pending){ pending = false; reconcile(); return; }
+    var s = e.state || {};
+    var target = Math.min(s.ov || 0, order.length);
+    depth = target;
+    while(order.length > target){ order.pop().classList.remove('show'); }
+    if((s.ov || 0) > target) history.replaceState({tab: s.tab || curTab, ov: target}, '');   // forward into a dialog we can't reopen
+    if(s.tab && s.tab !== curTab){
+      curTab = s.tab;
+      var b = document.querySelector('.hv-tabs button[data-t="' + s.tab + '"]');
+      if(b) b.click();
+    }
+  });
+
+  new MutationObserver(function(muts){
+    var changed = false;
+    muts.forEach(function(m){
+      var t = m.target;
+      if(t === body){
+        var nt = body.dataset.tab;
+        if(nt && nt !== curTab){ curTab = nt; if(!pending) history.pushState(stateNow(), ''); }
+        return;
+      }
+      if(!t.classList || !t.classList.contains('ov')) return;
+      var i = order.indexOf(t), shown = t.classList.contains('show');
+      if(shown && i < 0 && tracked(t)){ order.push(t); changed = true; }
+      else if(!shown && i >= 0){ order.splice(i, 1); changed = true; }
+    });
+    if(changed) reconcile();
+  }).observe(body, {attributes:true, attributeFilter:['class','data-tab'], subtree:true});
+
+  history.replaceState({tab: curTab, ov: 0}, '');
+  [].forEach.call(document.querySelectorAll('.ov.show'), function(el){ if(tracked(el)) order.push(el); });
+  reconcile();
+})();
+</script>
