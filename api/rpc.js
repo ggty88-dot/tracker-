@@ -267,6 +267,8 @@ const C_POSTS = 'cposts', C_SEQ = 'cposts:seq', C_FEED = 'cfeed';
 const POST_MAX = 1000, CMT_MAX = 300;
 const IMG_MAX = 450000;          // base64 characters (~330 KB jpeg)
 const PAGE = 12;
+const ANN = 'cann', ANN_SEQ = 'cann:seq', ANN_READ = 'cann:read';   // announcements: id -> JSON, counter, account -> last id read
+const ANN_MAX = 500, ANN_KEEP = 50;
 const REPORT_HIDE = 3;           // this many different reports hide a post from the feed
 // admin accounts (lower-case). Edit this list, or set ADMIN_ACCOUNTS=name1,name2 in Vercel.
 const ADMINS = (process.env.ADMIN_ACCOUNTS || 'markleevotingth').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
@@ -612,6 +614,50 @@ const actions = {
     const hidden = n >= REPORT_HIDE;
     if (hidden) await pipe([['ZREM', C_FEED, id], ['ZREM', C_FEED + ':' + p.kind, id]]);
     return { ok: true, hidden };
+  },
+
+  /* ----- announcements: admins post, everyone reads ----- */
+  async annList(token) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    const [flat, rd] = await Promise.all([cmd('HGETALL', ANN), cmd('HGET', ANN_READ, lc(me.account))]);
+    const items = [];
+    for (let i = 1; i < (flat || []).length; i += 2) { try { items.push(JSON.parse(flat[i])); } catch (e) { /* skip bad row */ } }
+    items.sort((x, y) => y.id - x.id);
+    const list = items.slice(0, ANN_KEEP);
+    const last = Number(rd) || 0;
+    return { ok: true, admin: isAdminAcc(me.account), last, unread: list.filter(x => x.id > last).length, items: list };
+  },
+
+  async annRead(token) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    const seq = Number(await cmd('GET', ANN_SEQ)) || 0;
+    await cmd('HSET', ANN_READ, lc(me.account), seq);
+    return { ok: true, last: seq };
+  },
+
+  async annPost(token, text) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    if (!isAdminAcc(me.account)) return MISMATCH;
+    text = String(text || '').replace(/\r\n/g, '\n').trim();
+    if (!text) return bad('Write something first.');
+    if (text.length > ANN_MAX) return bad('Announcement is too long.');
+    if (!(await rateOk(me.account, 'ann', 20, 3600))) return bad('You are posting too fast. Please try again later.');
+    const id = Number(await cmd('INCR', ANN_SEQ));
+    const item = { id, text, t: Date.now(), account: me.account };
+    await pipe([['HSET', ANN, id, JSON.stringify(item)], ['HSET', ANN_READ, lc(me.account), id], ['HDEL', ANN, id - ANN_KEEP]]);
+    return { ok: true, item };
+  },
+
+  async annDelete(token, id) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    if (!isAdminAcc(me.account)) return MISMATCH;
+    if (!isId(id)) return bad('Not found.');
+    await cmd('HDEL', ANN, id);
+    return { ok: true };
   },
 
   /* ----- admin: user management ----- */
