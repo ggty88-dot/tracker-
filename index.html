@@ -1661,6 +1661,16 @@ img.stamp{display:block;object-fit:contain}
 @media(prefers-reduced-motion:reduce){.ci-tap img.stamp,.ci-tap.pop img.stamp{animation:none}}
 </style>
 
+<style>
+/* ===== Go to button: smaller ===== */
+.hv-app .hv-open.btn.sm{padding:4px 14px 5px;font-size:.82rem;border-width:1.5px}
+#hvInfoOv .hv-iopen.btn{width:auto;min-width:120px;align-self:center;padding:6px 18px 7px;font-size:.92rem;border-width:1.5px;margin-top:10px!important}
+/* ===== emoji rows in Voting info ===== */
+.hv-sc li.hv-it{display:flex;align-items:center;gap:11px}
+.hv-em{flex:none;width:38px;height:38px;border-radius:13px;background:#fff;border:1px solid var(--line,rgba(20,20,20,.14));display:flex;align-items:center;justify-content:center}
+.hv-em svg{width:28px;height:28px;display:block}
+.hv-tx{min-width:0}
+</style>
 <script>
 (function(){
   /* ================= EDIT HERE ================= */
@@ -1771,11 +1781,11 @@ img.stamp{display:block;object-fit:contain}
     'Vote · Check-in · Certificate':'โหวต · เช็คอิน · ใบประกาศ',
     'Home':'หน้าหลัก','More on X':'เพิ่มเติมบน X','Create yours today':'สร้างของคุณวันนี้','How to use':'วิธีใช้งาน','Steps for using this page':'ขั้นตอนการใช้งานหน้านี้','App Vote':'โหวตแอป','History':'ประวัติ','My':'ของฉัน','App':'แอป','Vote':'โหวต',
     'Participants today':'ผู้เข้าร่วมวันนี้','All-time participants':'ผู้เข้าร่วมทั้งหมด',
-    'Quick Access':'เมนูลัด','Open voting apps':'เปิดแอปโหวต','Voting Guide':'คู่มือการโหวต','How to vote':'วิธีโหวต',
+    'Quick Access':'เมนูลัด','Open voting apps':'เปิดแอปโหวต','Voting Guide':'คู่มือการโหวต','How to collect':'วิธีสะสมโหวต',
     'Daily Check-in':'เช็คอินประจำวัน','Check in for the day':'เช็คอินประจำวัน','Quick Update':'อัปเดตด่วน','Update your totals':'อัปเดตยอดโหวต',
     'Recent Activity':'กิจกรรมล่าสุด','No updates yet today.':'วันนี้ยังไม่มีการอัปเดต','Be the first to update!':'มาเป็นคนแรกกันเลย!',
-    'Open app':'เปิดแอป','Updated today ✓':'อัปเดตวันนี้แล้ว ✓','Not updated today':'วันนี้ยังไม่อัปเดต','Voting info':'วิธีโหวต',
-    'Tap an app to see how to vote':'แตะที่แอปเพื่อดูวิธีโหวต',
+    'Go to':'ไปที่','Updated today ✓':'อัปเดตวันนี้แล้ว ✓','Not updated today':'วันนี้ยังไม่อัปเดต','Voting info':'วิธีสะสมโหวต',
+    'Tap an app to see how to collect':'แตะที่แอปเพื่อดูวิธีสะสมโหวต',
     'Everyone’s updates from the last 3 days':'การอัปเดตของทุกคนย้อนหลัง 3 วัน',
     'Today':'วันนี้','Yesterday':'เมื่อวาน','2 days ago':'2 วันที่แล้ว','No updates':'ไม่มีการอัปเดต',
     'Not set yet':'ยังไม่ได้ตั้งค่า','Your account':'บัญชีของคุณ',
@@ -1906,7 +1916,7 @@ img.stamp{display:block;object-fit:contain}
       qb('upd', IC.bolt, 'Quick Update', 'Update your totals') +
     '</div>' +
   '</div>' +
-  '<div class="hv-view" data-v="vote" hidden><h2 class="hv-h">App <mark>Vote</mark></h2><p class="hv-s">Tap an app to see how to vote</p><div id="hvApps"></div></div>' +
+  '<div class="hv-view" data-v="vote" hidden><h2 class="hv-h">App <mark>Vote</mark></h2><p class="hv-s">Tap an app to see how to collect</p><div id="hvApps"></div></div>' +
   '<div class="hv-view" data-v="history" hidden><h2 class="hv-h"><mark>History</mark></h2><p class="hv-s">Everyone’s updates from the last 3 days</p>' +
     '<input class="hv-search" id="hvSearch" type="text" placeholder="Search Twitter account" autocomplete="off" autocapitalize="none" spellcheck="false"><div id="hvHist"></div></div>' +
   '<div class="hv-view" data-v="me" hidden>' +
@@ -1956,26 +1966,93 @@ img.stamp{display:block;object-fit:contain}
     box.innerHTML = APPS.map(a => {
       const d = done.has(a.name), link = APP_LINKS[a.name];
       const btn = link && /^https?:\/\//.test(link)
-        ? '<a class="btn sm hv-open" href="' + esc(link) + '" target="_blank" rel="noopener">Open app</a>'
-        : '<button class="btn sm hv-open" type="button" disabled>Open app</button>';
+        ? '<a class="btn sm hv-open" href="' + esc(link) + '" target="_blank" rel="noopener">Go to</a>'
+        : '<button class="btn sm hv-open" type="button" disabled>Go to</button>';
       return '<div class="hv-app" data-app="' + esc(a.name) + '" role="button" tabindex="0"><div class="r"><img class="ico" src="' + a.icon + '" alt=""><div class="x"><b>' + esc(a.name) + '</b><span class="tag ' + (d ? 'ok' : 'old') + '">' + (d ? 'Updated today ✓' : 'Not updated today') + '</span></div>' + btn + '</div>' +
         '<div class="hv-more"><span>Voting info</span>' + IC.chev + '</div></div>';
     }).join('');
   }
   const iov = document.createElement('div');
   iov.className = 'ov'; iov.id = 'hvInfoOv';
-  iov.innerHTML = '<div class="modal ci"><div class="ci-head"><div class="hv-ih"><img class="ico" id="hvInfoIco" alt=""><h2 id="hvInfoName"></h2></div><button class="xbtn" type="button" id="hvInfoClose" aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="hvInfoBody"></div><a class="btn hv-iopen" id="hvInfoOpen" target="_blank" rel="noopener">Open app</a></div>';
+  iov.innerHTML = '<div class="modal ci"><div class="ci-head"><div class="hv-ih"><img class="ico" id="hvInfoIco" alt=""><h2 id="hvInfoName"></h2></div><button class="xbtn" type="button" id="hvInfoClose" aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="hvInfoBody"></div><a class="btn hv-iopen" id="hvInfoOpen" target="_blank" rel="noopener">Go to</a></div>';
   document.body.appendChild(iov);
   $('hvInfoClose').addEventListener('click', () => iov.classList.remove('show'));
   iov.addEventListener('click', e => { if(e.target === iov) iov.classList.remove('show'); });
+
+  /* ---------- emoji-style icons for \"How to collect votes\" (web-theme outline, real app colors) ---------- */
+  const EM = (function(){
+    const K = '#141414';
+    const svg = b => '<svg viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="' + K + '" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + b + '</svg>';
+    const cal = p => svg('<rect x="4.5" y="7" width="23" height="20" rx="5.5" fill="' + p[0] + '"/><path d="M4.5 13.5h23M11 4v6M21 4v6"/>' +
+      [[10,18.5],[16,18.5],[22,18.5],[10,23],[16,23]].map(d => '<circle cx="' + d[0] + '" cy="' + d[1] + '" r="1.35" fill="' + p[1] + '" stroke="none"/>').join(''));
+    const pin = () => svg('<path d="M16 28S6.5 19.5 6.5 12.5a9.5 9.5 0 0 1 19 0C25.5 19.5 16 28 16 28z" fill="#ee5a3a"/><circle cx="16" cy="12.5" r="4" fill="#fff"/><circle cx="23.5" cy="23.5" r="5.2" fill="#34c26a"/><path d="M21 23.5l1.8 1.8 3.2-3.6" stroke="#fff"/>');
+    const wheel = cols => { let b = ''; const cx = 16, cy = 14, r = 11.5;
+      for(let i = 0; i < 6; i++){
+        const a0 = (i * 60 - 90) * Math.PI / 180, a1 = ((i + 1) * 60 - 90) * Math.PI / 180;
+        b += '<path d="M' + cx + ' ' + cy + 'L' + (cx + r * Math.cos(a0)).toFixed(2) + ' ' + (cy + r * Math.sin(a0)).toFixed(2) + 'A' + r + ' ' + r + ' 0 0 1 ' + (cx + r * Math.cos(a1)).toFixed(2) + ' ' + (cy + r * Math.sin(a1)).toFixed(2) + 'Z" fill="' + cols[i % cols.length] + '" stroke-width="1.2"/>';
+      }
+      return svg(b + '<circle cx="16" cy="14" r="11.5"/><circle cx="16" cy="14" r="2.4" fill="#5b6ea6"/><path d="M16 25.5v2.5M10.5 28.5h11"/>'); };
+    const pad = c => svg('<path d="M9 9.5h14a6.5 6.5 0 0 1 6.3 8.2l-1.2 4.6a3.4 3.4 0 0 1-5.7 1.5L19 21.5h-6l-3.4 2.3a3.4 3.4 0 0 1-5.7-1.5l-1.2-4.6A6.5 6.5 0 0 1 9 9.5z" fill="' + c + '"/><path d="M10 13.5v5M7.5 16h5" stroke="#fff" stroke-width="2.2"/><circle cx="21" cy="14.5" r="1.5" fill="#fff" stroke="none"/><circle cx="24.5" cy="17.5" r="1.5" fill="#fff" stroke="none"/>');
+    const target = c => svg('<circle cx="15" cy="17" r="11" fill="' + c + '"/><circle cx="15" cy="17" r="6.6" fill="#fff"/><circle cx="15" cy="17" r="2.6" fill="' + c + '"/><path d="M15 17L26 6M26 6V2.6M26 6h3.4"/>');
+    const clap = () => svg('<rect x="4" y="13" width="24" height="14.5" rx="3" fill="#1b1b1b"/><path d="M4 12.8L3.2 8.2l22.3-3.9.9 4.6z" fill="#1b1b1b"/><path d="M8.6 12l-.7-4M14.8 10.9l-.7-4M21 9.8l-.7-4" stroke="#fff" stroke-width="1.8"/><path d="M13.5 17.4v6.4l5.6-3.2z" fill="#fff" stroke="#fff" stroke-width="1"/>');
+    const cam = c => svg('<circle cx="16" cy="16" r="13" fill="' + c + '"/><rect x="8" y="11.5" width="11" height="9" rx="2.4" fill="#fff" stroke="none"/><path d="M20.2 14.6l4.2-2.4v7.6l-4.2-2.4z" fill="#fff" stroke="none"/>');
+    const quiz = c => svg('<circle cx="16" cy="16" r="13" fill="' + c + '"/><path d="M12.3 12.6a3.9 3.9 0 1 1 5.6 3.5c-1.3.7-1.9 1.4-1.9 2.7" stroke="#fff" stroke-width="2.6"/><circle cx="16" cy="22.6" r="1.6" fill="#fff" stroke="none"/>');
+    const cards = () => svg('<rect x="5" y="6" width="14" height="19" rx="2.6" transform="rotate(-12 12 15)" fill="#fff"/><rect x="12" y="6.5" width="14" height="19" rx="2.6" transform="rotate(10 19 16)" fill="#fff"/><g stroke="none" fill="#1b1b1b"><circle cx="19" cy="13.2" r="2.1"/><circle cx="16.2" cy="16" r="2.1"/><circle cx="21.8" cy="16" r="2.1"/><circle cx="19" cy="18.8" r="2.1"/></g><path d="M19 18.8l-.5 3.6"/>');
+    const coin = () => svg('<circle cx="16" cy="16" r="12.5" fill="#ffc93c"/><circle cx="16" cy="16" r="8.6" fill="#ffd96b" stroke-width="1.2"/><path d="M16 10.4l1.7 3.5 3.8.5-2.8 2.7.7 3.8-3.4-1.8-3.4 1.8.7-3.8-2.8-2.7 3.8-.5z" fill="#fff6c9" stroke-width="1.4"/>');
+    const lock = c => svg('<path d="M10.5 14v-3a5.5 5.5 0 0 1 11 0v3"/><rect x="6.5" y="14" width="19" height="13.5" rx="3.5" fill="' + c + '"/><circle cx="16" cy="20" r="2" fill="#fff" stroke="none"/><path d="M16 21v3" stroke="#fff"/>');
+    // real colors from each app's guide image
+    const PAL = {
+      'IDOLCHAMP':  {cal:['#ff9bd6','#fff'], wheel:['#43c6ea','#5b9cf0','#ff8fc8'], pad:'#c6a2f7', target:'#45c0dc'},
+      'MUBEAT':     {target:'#ff6eb4', quiz:'#7b3ff2'},
+      'HIGHER':     {target:'#f2403a'},
+      'LINC / TIN': {wheel:['#ff6eb4','#8a5cf2','#6fa8ff'], cam:'#3d5af1'},
+      'COOGOONG':   {cal:['#9ccaf7','#fff'], wheel:['#d8e9fb','#8fb6ee'], target:'#f5a524', cam:'#63d3d0', lock:'#2f8cf0'},
+      'MUNIVERSE':  {cal:['#1450b8','#fff'], wheel:['#cfe8ff','#ffffff','#9ec9f5'], target:'#f5a53a'}
+    };
+    function kind(label, app){
+      const L = label.toLowerCase();
+      if(/first use|ครั้งแรก/.test(L)) return 'lock';
+      if(/lucky/.test(L)) return 'cards';
+      if(/attendance|check-?in|เช็คอิน/.test(L)) return app === 'HIGHER' ? 'pin' : 'cal';
+      if(/roulette|รูเล็ต/.test(L)) return 'wheel';
+      if(/mini ?game|มินิเกม/.test(L)) return 'pad';
+      if(/mission|ภารกิจ/.test(L)) return 'target';
+      if(/quiz|ควิซ/.test(L)) return 'quiz';
+      if(/star beat/.test(L)) return 'coin';
+      if(/watch|ดูโฆษณา/.test(L)) return (app === 'LINC / TIN' || app === 'COOGOONG') ? 'cam' : 'clap';
+      return '';
+    }
+    return function(label, app){
+      const k = kind(label, app), p = PAL[app] || {};
+      switch(k){
+        case 'cal':    return cal(p.cal || ['#9ccaf7','#fff']);
+        case 'pin':    return pin();
+        case 'wheel':  return wheel(p.wheel || ['#9ccaf7','#fff']);
+        case 'pad':    return pad(p.pad || '#c6a2f7');
+        case 'target': return target(p.target || '#2447d6');
+        case 'clap':   return clap();
+        case 'cam':    return cam(p.cam || '#3d5af1');
+        case 'quiz':   return quiz(p.quiz || '#7b3ff2');
+        case 'cards':  return cards();
+        case 'coin':   return coin();
+        case 'lock':   return lock(p.lock || '#2f8cf0');
+      }
+      return '';
+    };
+  })();
+  function liHtml(t, app, si, bold){
+    const i = t.indexOf(': '), label = i > 0 ? t.slice(0, i) : t;
+    const ic = si === 0 ? EM(label, app) : '';
+    return ic ? '<li class="hv-it"><span class="hv-em">' + ic + '</span><span class="hv-tx">' + bold(t) + '</span></li>' : '<li>' + bold(t) + '</li>';
+  }
   function openInfo(name){
     const a = APPS.find(x => x.name === name); if(!a) return;
     const secs = (INFO[name] && (INFO[name][LANG] || INFO[name].en)) || [];
     const bold = t => { const i = t.indexOf(': '); return i > 0 ? '<b>' + esc(t.slice(0, i)) + '</b>' + esc(t.slice(i)) : esc(t); };
     $('hvInfoIco').src = a.icon; $('hvInfoName').textContent = name;
-    $('hvInfoBody').innerHTML = secs.map(sc => '<div class="hv-sc"><h3>' + esc(sc[0]) + '</h3>' + (sc[1] ? '<p>' + esc(sc[1]) + '</p>' : '') + '<ul>' + sc[2].map(t => '<li>' + bold(t) + '</li>').join('') + '</ul></div>').join('');
+    $('hvInfoBody').innerHTML = secs.map((sc, si) => '<div class="hv-sc"><h3>' + esc(sc[0]) + '</h3>' + (sc[1] ? '<p>' + esc(sc[1]) + '</p>' : '') + '<ul>' + sc[2].map(t => liHtml(t, name, si, bold)).join('') + '</ul></div>').join('');
     const o = $('hvInfoOpen'), link = APP_LINKS[name];
-    o.textContent = LANG === 'th' ? 'เปิดแอป' : 'Open app';
+    o.textContent = LANG === 'th' ? 'ไปที่' : 'Go to';
     if(link && /^https?:\/\//.test(link)){ o.href = link; o.classList.remove('off'); } else { o.removeAttribute('href'); o.classList.add('off'); }
     $('hvInfoBody').scrollTop = 0; iov.classList.add('show');
   }
