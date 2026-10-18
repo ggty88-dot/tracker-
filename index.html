@@ -582,9 +582,11 @@ html[lang="th"] .hv-qb b{font-size:.9rem!important}
     <div class="tabs">
       <button class="tab on" data-t="p1" id="tab1">Overview</button>
       <button class="tab" data-t="p3">History</button>
+      <button class="tab" data-t="p4" id="tab4" hidden>Users</button>
     </div>
     <div class="pane on" id="p1"></div>
     <div class="pane" id="p3"></div>
+    <div class="pane" id="p4"></div>
     </div>
   </div>
 </div>
@@ -632,6 +634,7 @@ html[lang="th"] .hv-qb b{font-size:.9rem!important}
         <button class="xbtn" id="ciClose" aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
     </div>
+    <div class="ci-who" id="ciWho" hidden></div>
     <div class="field" style="display:none"><span class="at-sign">@</span><input id="ciAcc" class="at" type="text" autocapitalize="none" spellcheck="false" placeholder="your_account" maxlength="40"></div>
     <div class="ci-sum"><b id="ciDays">0</b><span>days this month</span><span class="streak" id="ciStreak" hidden></span></div>
     <div class="ci-dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
@@ -658,18 +661,59 @@ html[lang="th"] .hv-qb b{font-size:.9rem!important}
   </div>
 </div>
 
-<!-- Account gate -->
+<!-- Account gate: Twitter account + 4-digit PIN -->
 <div class="ov top" id="gateOv" style="z-index:70">
-  <div class="modal">
+  <div class="modal" id="gateModal">
     <div style="text-align:center"><img id="gateBear" alt="" style="width:64px;height:auto"></div>
     <h2 style="justify-content:center;margin-top:6px">Welcome!</h2>
-    <div class="hint" style="text-align:center;margin:0 0 12px">Enter your Twitter account once. It’s remembered on this device, so you won’t need to type it again.</div>
+    <div class="hint" id="gateHint" style="text-align:center;margin:0 0 12px">Enter your Twitter account once. It’s remembered on this device, so you won’t need to type it again.</div>
     <div class="field"><span class="at-sign">@</span><input id="gateAcc" class="at" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="your_account" maxlength="40"></div>
+    <div class="gate-pin" id="gatePinWrap" hidden>
+      <label id="gatePinLbl">PIN</label>
+      <div class="pin" id="gatePin1"></div>
+      <div id="gatePin2Wrap" hidden>
+        <label>Confirm PIN</label>
+        <div class="pin" id="gatePin2"></div>
+      </div>
+      <button type="button" class="link-btn" id="gateBack">Not you? Change account</button>
+    </div>
+    <div class="hint gate-forgot" id="gateForgot" hidden>Forgot your PIN? Ask an admin to reset it.</div>
     <div class="msg" id="gateMsg"></div>
     <div class="row">
       <button class="btn ghost" id="gateCancel" hidden style="flex:1">Cancel</button>
       <button class="btn" id="gateOk" style="flex:1">Continue</button>
     </div>
+  </div>
+</div>
+
+<!-- Change PIN -->
+<div class="ov top" id="cpOv">
+  <div class="modal">
+    <h2>Change PIN</h2>
+    <div class="hint" style="margin:0 0 6px">Enter your current PIN, then choose a new 4-digit PIN.</div>
+    <label>Current PIN</label>
+    <div class="pin" id="cpOld"></div>
+    <label>New PIN</label>
+    <div class="pin" id="cpNew"></div>
+    <label>Confirm new PIN</label>
+    <div class="pin" id="cpNew2"></div>
+    <div class="msg" id="cpMsg" role="status"></div>
+    <div class="row">
+      <button class="btn ghost" id="cpCancel" style="flex:1">Cancel</button>
+      <button class="btn" id="cpOk" style="flex:1">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin: one account (PIN reset, data) -->
+<div class="ov top" id="userOv">
+  <div class="modal ci">
+    <div class="ci-head">
+      <h2 id="uTitle">Account</h2>
+      <button class="xbtn" id="uClose" aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="msg" id="uMsg" role="status"></div>
+    <div id="uBody"></div>
   </div>
 </div>
 
@@ -699,12 +743,17 @@ const store = {
   set(k,v){ try { localStorage.setItem(k,v); } catch(e){ mem[k] = v; } }
 };
 /* ---------- API (Vercel) ---------- */
+function showWho(){ const w = document.getElementById('ciWho'), i = document.getElementById('ciAcc'); if(!w || !i) return; const a = String(i.value || '').trim().replace(/^@+/, ''); w.textContent = a ? '@' + a : ''; w.hidden = !a; }
+// actions that act "as me" carry this device's session token as first argument
+const AUTHED = ['submitVote','getAccountSummary','checkIn','getCheckins','whoami','logout','changePin'];
 function rpc(action, ...args){
+  if(AUTHED.indexOf(action) >= 0) args = [store.get('fv_token') || ''].concat(args);
   return fetch('/api/rpc', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({action, args})
-  }).then(res => res.json().catch(() => ({ok:false, message:'Server error'})));
+  }).then(res => res.json().catch(() => ({ok:false, message:'Server error'})))
+    .then(r => { if(r && r.code === 'AUTH' && window.fvAuthLost) window.fvAuthLost(); return r; });
 }
 const normAcc = v => String(v||'').trim().replace(/^@+/, '');
 
@@ -828,16 +877,17 @@ $('pwOk').addEventListener('click', () => {
       done();
       if(!r || !r.ok) return setMsg($('pwMsg'), (r && r.message) || 'Incorrect password', 'err');
       adminPw = pw; fanMode = (r.role === 'fan'); D = r; filterApp = 'ALL'; filterDD.set('ALL'); ui.rq = ''; ui.q = ''; ui.only = true;
-      pwOv.classList.remove('show'); renderDash(); dashOv.classList.add('show');
+      pwOv.classList.remove('show'); U = null; renderDash(); dashOv.classList.add('show'); $('tab1').click();
     })
     .catch(e => { done(); setMsg($('pwMsg'), 'Connection error: ' + (e && e.message ? e.message : e), 'err'); });
 });
 $('dashClose').addEventListener('click', () => {
   dashOv.classList.remove('show'); editOv.classList.remove('show'); delOv.classList.remove('show'); adminPw = ''; fanMode = false; D = null; target = null; ui.rq = ''; ui.q = ''; ui.only = true;
-  ['stats','p1','p3'].forEach(id => $(id).innerHTML = '');
+  ['stats','p1','p3','p4'].forEach(id => $(id).innerHTML = ''); U = null; uOv.classList.remove('show'); dashOv.classList.remove('users-tab');
 });
 $('dashRefresh').addEventListener('click', () => {
   if(!adminPw) return;
+  if($('p4').classList.contains('on')) loadUsers();
   const b = $('dashRefresh'); b.disabled = true; b.classList.add('spin');
   const done = () => { b.disabled = false; b.classList.remove('spin'); };
   rpc('getAdminData', adminPw)
@@ -847,6 +897,8 @@ $('dashRefresh').addEventListener('click', () => {
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
   document.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x === t));
   document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === t.dataset.t));
+  dashOv.classList.toggle('users-tab', t.dataset.t === 'p4');
+  if(t.dataset.t === 'p4') loadUsers();
 }));
 
 const ui = {rq:'', q:'', only:true};
@@ -856,6 +908,7 @@ const actCell = r => fanMode ? '' : `<td><div class="acts-cell"><button class="i
 
 function renderDash(){
   if(!D) return;
+  $('tab4').hidden = fanMode;
   $('dashTitle').innerHTML = fanMode ? 'Fan <mark>Dashboard</mark>' : 'Admin <mark>Dashboard</mark>';
   const all = filterApp === 'ALL';
   renderChips();
@@ -916,6 +969,104 @@ function renderDash(){
   };
   draw(); $('q').addEventListener('input', draw); $('onlyLatest').addEventListener('change', draw);
 }
+
+/* ---------- admin: accounts & PIN management ---------- */
+let U = null, uAcc = '', uq = '';
+const uOv = $('userOv');
+const IC_CHEV = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+
+function loadUsers(){
+  if(!adminPw || fanMode) return;
+  if(!U) $('p4').innerHTML = '<div class="empty">Loading…</div>';
+  rpc('adminListUsers', adminPw).then(r => {
+    if(r && r.ok){ U = r.users; renderUsers(); }
+    else if(!U) $('p4').innerHTML = '<div class="empty">' + esc((r && r.message) || 'Something went wrong.') + '</div>';
+  }).catch(() => { if(!U) $('p4').innerHTML = '<div class="empty">Connection error</div>'; });
+}
+function renderUsers(){
+  if(!U) return;
+  if(!$('uq')){
+    $('p4').innerHTML = '<div class="tools"><input class="search" id="uq" type="text" placeholder="Search Twitter account" autocomplete="off" autocapitalize="none" spellcheck="false"></div><div class="u-sum" id="uSum"></div><div class="ulist" id="uList"></div>';
+    $('uq').addEventListener('input', () => { uq = $('uq').value; drawUsers(); });
+    $('uList').addEventListener('click', e => { const b = e.target.closest('.urow'); if(b) openUser(b.dataset.acc); });
+  }
+  $('uq').value = uq; drawUsers();
+}
+function drawUsers(){
+  const q = uq.trim().replace(/^@+/, '').toLowerCase();
+  const list = U.filter(u => !q || u.account.toLowerCase().indexOf(q) >= 0);
+  const withPin = U.filter(u => u.hasPin).length;
+  $('uSum').textContent = U.length + (U.length === 1 ? ' account' : ' accounts') + ' · ' + withPin + ' with PIN';
+  $('uList').innerHTML = list.length ? list.map(u => {
+    const tag = u.locked ? '<span class="tag">Locked</span>' : (u.hasPin ? '<span class="tag ok">PIN set</span>' : '<span class="tag old">No PIN</span>');
+    const meta = u.last
+      ? '<span>' + u.apps + (u.apps === 1 ? ' app' : ' apps') + '</span> · <span>' + u.checkins + (u.checkins === 1 ? ' check-in day' : ' check-in days') + '</span> · <span>' + esc(u.last) + '</span>'
+      : '<span>No activity yet</span>';
+    return '<button type="button" class="urow" data-acc="' + esc(u.account) + '"><span class="uav">' + esc(u.account.charAt(0).toUpperCase()) + '</span><span class="ux"><b>@' + esc(u.account) + '</b><small>' + meta + '</small></span>' + tag + '<span class="uch">' + IC_CHEV + '</span></button>';
+  }).join('') : '<div class="empty">No data</div>';
+}
+
+function openUser(acc){
+  uAcc = acc; $('uTitle').textContent = '@' + acc; setMsg($('uMsg'), '', '');
+  $('uBody').innerHTML = '<div class="empty">Loading…</div>'; uOv.classList.add('show');
+  loadUser();
+}
+function loadUser(){
+  rpc('adminGetUser', adminPw, uAcc).then(r => {
+    if(!r || !r.ok){ $('uBody').innerHTML = '<div class="empty">' + esc((r && r.message) || 'Something went wrong.') + '</div>'; return; }
+    drawUser(r);
+  }).catch(() => { $('uBody').innerHTML = '<div class="empty">Connection error</div>'; });
+}
+function drawUser(r){
+  const chips = r.latest.length
+    ? r.latest.map(v => '<div class="chip"><img src="' + iconOf(v.app) + '" alt="">' + esc(v.app) + ': ' + fmt(v.count) + '</div>').join('')
+    : '<div class="hint" style="margin:0">No votes yet</div>';
+  const kv = (k, v) => '<div class="u-kv"><span>' + k + '</span><b>' + v + '</b></div>';
+  $('uBody').innerHTML =
+    '<div class="u-tags">' + (r.hasPin ? '<span class="tag ok">PIN set</span>' : '<span class="tag old">No PIN</span>') + (r.locked ? '<span class="tag">Locked</span>' : '') + '</div>' +
+    '<div class="u-sec"><h3>Latest votes</h3><div class="chips" style="margin-top:6px">' + chips + '</div></div>' +
+    '<div class="u-sec">' + kv('Registered', esc(r.created || '–')) + kv('Last active', esc(r.last || '–')) + kv('Check-in days', fmt(r.checkins)) + kv('Entries', fmt(r.entries)) + '</div>' +
+    '<div class="u-sec"><h3>Reset PIN</h3>' +
+      '<div class="u-pinrow"><input id="uPin" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="New 4-digit PIN" autocomplete="off"><button type="button" class="btn ghost sm" id="uRand">Random</button></div>' +
+      '<button type="button" class="btn" id="uSetPin">Set PIN</button>' +
+      '<button type="button" class="btn ghost" id="uClrPin" style="width:100%;margin-top:10px">Clear PIN</button>' +
+      '<div class="hint" style="text-align:left">Set PIN: give the new code to the fan. Clear PIN: they create their own the next time they sign in.</div></div>' +
+    '<div class="u-sec"><button type="button" class="btn danger" id="uDel" style="margin-top:0">Delete account data</button>' +
+      '<div class="hint" style="text-align:left">Removes this account’s votes, check-ins and PIN. This cannot be undone.</div></div>';
+}
+function uAct(btn, args, okMsg, after){
+  btn.disabled = true;
+  rpc.apply(null, args).then(r => {
+    btn.disabled = false;
+    if(!r || !r.ok) return setMsg($('uMsg'), (r && r.message) || 'Something went wrong.', 'err');
+    setMsg($('uMsg'), okMsg, 'ok'); if(after) after(r);
+  }).catch(e => { btn.disabled = false; setMsg($('uMsg'), 'Connection error: ' + (e && e.message ? e.message : e), 'err'); });
+}
+$('uBody').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  if(b.id === 'uRand'){ $('uPin').value = String(crypto.getRandomValues(new Uint32Array(1))[0] % 10000).padStart(4, '0'); }
+  else if(b.id === 'uSetPin'){
+    const p = $('uPin').value.trim();
+    if(!/^\d{4}$/.test(p)) return setMsg($('uMsg'), 'PIN must be 4 digits.', 'err');
+    uAct(b, ['adminSetPin', adminPw, uAcc, p], 'PIN saved ✓', () => { loadUser(); loadUsers(); });
+  }
+  else if(b.id === 'uClrPin'){
+    uAct(b, ['adminSetPin', adminPw, uAcc, ''], 'PIN cleared. They can create a new one at next sign-in.', () => { loadUser(); loadUsers(); });
+  }
+  else if(b.id === 'uDel'){
+    if(!b.dataset.arm){                                      // first tap arms, second tap deletes
+      b.dataset.arm = '1'; b.textContent = 'Tap again to confirm';
+      setTimeout(() => { if(b.isConnected){ delete b.dataset.arm; b.textContent = 'Delete account data'; } }, 3500);
+      return;
+    }
+    uAct(b, ['adminDeleteUser', adminPw, uAcc, true], 'Account data deleted.', () => {
+      uOv.classList.remove('show'); loadUsers();
+      rpc('getAdminData', adminPw).then(r => { if(r && r.ok){ D = r; renderDash(); } }).catch(() => {});
+    });
+  }
+});
+$('uClose').addEventListener('click', () => uOv.classList.remove('show'));
+uOv.addEventListener('click', e => { if(e.target === uOv) uOv.classList.remove('show'); });
 
 /* ---------- edit / delete ---------- */
 const editOv = $('editOv'), delOv = $('delOv');
@@ -1201,6 +1352,7 @@ $('dOk').addEventListener('click', () => {
 
   $('ciOpen').addEventListener('click', () => {
     $('ciAcc').value = normAcc($('account').value) || normAcc(store.get('fv_account'));
+    showWho();
     msg('', ''); load(); $('ciOv').classList.add('show');
   });
   $('ciClose').addEventListener('click', () => $('ciOv').classList.remove('show'));
@@ -1227,33 +1379,174 @@ $('dOk').addEventListener('click', () => {
   document.addEventListener('keydown', e => { if(e.key === 'Escape') set(false); });
 })();
 
-/* ---------- account gate ---------- */
+/* ---------- PIN boxes (4 masked digits, auto-advance, paste, backspace) ---------- */
+function makePin(root){
+  root.innerHTML = [1,2,3,4].map(n => '<input class="pin-box" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="1" autocomplete="off" aria-label="PIN digit ' + n + '">').join('');
+  const bx = [].slice.call(root.querySelectorAll('input'));
+  const val = () => bx.map(b => b.value).join('');
+  bx.forEach((b, i) => {
+    b.addEventListener('focus', () => { try{ b.select(); }catch(e){} });
+    b.addEventListener('input', () => {
+      b.value = b.value.replace(/\D/g, '').slice(-1);
+      b.classList.toggle('on', !!b.value);
+      if(b.value && i < 3) bx[i + 1].focus();
+      if(val().length === 4 && root.onfull) root.onfull();
+    });
+    b.addEventListener('keydown', e => {
+      if(e.key === 'Backspace' && !b.value && i > 0){ e.preventDefault(); bx[i - 1].value = ''; bx[i - 1].classList.remove('on'); bx[i - 1].focus(); }
+      else if(e.key === 'ArrowLeft' && i > 0){ e.preventDefault(); bx[i - 1].focus(); }
+      else if(e.key === 'ArrowRight' && i < 3){ e.preventDefault(); bx[i + 1].focus(); }
+      else if(e.key === 'Enter' && root.onenter){ e.preventDefault(); root.onenter(); }
+    });
+    b.addEventListener('paste', e => {
+      const t = ((e.clipboardData || window.clipboardData).getData('text') || '').replace(/\D/g, '').slice(0, 4);
+      if(!t) return;
+      e.preventDefault();
+      t.split('').forEach((c, k) => { bx[k].value = c; bx[k].classList.add('on'); });
+      bx[Math.min(t.length, 3)].focus();
+      if(t.length === 4 && root.onfull) root.onfull();
+    });
+  });
+  return {
+    root: root,
+    value: val,
+    clear(){ bx.forEach(b => { b.value = ''; b.classList.remove('on'); }); },
+    focus(){ (bx.filter(b => !b.value)[0] || bx[3]).focus({preventScroll:true}); },
+    shake(){ root.classList.remove('shake'); void root.offsetWidth; root.classList.add('shake'); }
+  };
+}
+
+/* ---------- account gate: Twitter account + 4-digit PIN ---------- */
 (function(){
   const ok = a => /^[A-Za-z0-9_]{1,40}$/.test(a);
-  const ov = $('gateOv'), inp = $('gateAcc');
+  const ov = $('gateOv'), inp = $('gateAcc'), okBtn = $('gateOk'), msgEl = $('gateMsg');
   $('gateBear').src = document.querySelector('.mascot').src;
+  const p1 = makePin($('gatePin1')), p2 = makePin($('gatePin2'));
+  const HINT = {
+    acct:   'Enter your Twitter account once. It’s remembered on this device, so you won’t need to type it again.',
+    login:  'Welcome back! Enter your 4-digit PIN to continue.',
+    'new':  'First time here? Create a 4-digit PIN. It keeps your votes and check-ins private to you.',
+    legacy: 'This account already has data. Create a 4-digit PIN to lock it to you.'
+  };
+  let step = 'acct', busyG = false;
+  const isNew = () => step === 'new' || step === 'legacy';
+  const label = () => step === 'acct' ? 'Continue' : (isNew() ? 'Create PIN' : 'Log in');
+
+  function setStep(s){
+    step = s;
+    const pin = s !== 'acct';
+    $('gatePinWrap').hidden = !pin;
+    $('gatePin2Wrap').hidden = !isNew();
+    $('gateForgot').hidden = s !== 'login';
+    $('gatePinLbl').textContent = isNew() ? 'Create a 4-digit PIN' : 'PIN';
+    $('gateHint').textContent = HINT[s];
+    okBtn.textContent = label();
+    inp.readOnly = pin;
+  }
+  function setBusy(b){ busyG = b; okBtn.disabled = b; okBtn.textContent = b ? 'Checking…' : label(); }
+
+  // everything that depends on "who am I" lives here
   function apply(a){
     store.set('fv_account', a);
-    $('account').value = a; $('ciAcc').value = a; $('asName').textContent = '@' + a;
+    $('account').value = a; $('ciAcc').value = a; $('asName').textContent = '@' + a; showWho();
     checkSpecial();
     if(window.ciRefresh) ciRefresh(a);
   }
-  function open(closable){
-    inp.value = normAcc($('account').value) || normAcc(store.get('fv_account'));
-    setMsg($('gateMsg'), '', ''); $('gateCancel').hidden = !closable;
-    ov.classList.add('show'); setTimeout(() => inp.focus({preventScroll:true}), 50);
+  function finish(r){
+    if(store.get('fv_token')) rpc('logout').catch(() => {});   // end the previous session (request is built before the token changes)
+    store.set('fv_token', r.token);
+    apply(r.account);
+    ov.classList.remove('show');
+    document.dispatchEvent(new CustomEvent('fv:auth', {detail: r.account}));
   }
-  function submit(){
+
+  function open(closable, preset){
+    inp.value = preset || ''; p1.clear(); p2.clear(); setMsg(msgEl, '', ''); setStep('acct');
+    $('gateCancel').hidden = !closable; ov.classList.add('show');
+    if(preset && ok(preset)) submit(); else setTimeout(() => inp.focus({preventScroll:true}), 50);
+  }
+
+  async function submit(){
+    if(busyG) return;
     const a = normAcc(inp.value);
-    if(!ok(a)) return setMsg($('gateMsg'), 'Use letters, numbers and underscores only (max 40).', 'err');
-    apply(a); ov.classList.remove('show');
+    if(!ok(a)) return setMsg(msgEl, 'Use letters, numbers and underscores only (max 40).', 'err');
+    setMsg(msgEl, '', ''); setBusy(true);
+    try{
+      if(step === 'acct'){                                    // step 1: who are you?
+        const r = await rpc('checkAccount', a);
+        if(!r || !r.ok) return setMsg(msgEl, (r && r.message) || 'Something went wrong. Please try again.', 'err');
+        inp.value = a;                                         // show the cleaned name (no leading @)
+        setStep(r.exists ? 'login' : (r.legacy ? 'legacy' : 'new'));
+        p1.focus();
+        return;
+      }
+      const pin = p1.value();                                 // step 2: PIN (+ confirm when creating)
+      if(pin.length !== 4){ p1.shake(); return setMsg(msgEl, 'Enter your 4-digit PIN.', 'err'); }
+      if(isNew() && pin !== p2.value()){ p2.shake(); return setMsg(msgEl, 'PINs don’t match.', 'err'); }
+      const r = await rpc(isNew() ? 'register' : 'login', a, pin);
+      if(!r || !r.ok){
+        if(r && r.code === 'EXISTS') setStep('login'); else p1.shake();
+        p1.clear(); p2.clear(); p1.focus();
+        return setMsg(msgEl, (r && r.message) || 'Something went wrong. Please try again.', 'err');
+      }
+      finish(r);
+    }catch(e){
+      setMsg(msgEl, 'Connection error: ' + (e && e.message ? e.message : e), 'err');
+    }finally{
+      setBusy(false);
+    }
   }
-  $('gateOk').addEventListener('click', submit);
+
+  okBtn.addEventListener('click', submit);
   inp.addEventListener('keydown', e => { if(e.key === 'Enter') submit(); });
+  inp.addEventListener('input', () => setMsg(msgEl, '', ''));
+  p1.root.onenter = p2.root.onenter = submit;
+  p1.root.onfull = () => { if(isNew()) p2.focus(); else submit(); };
+  p2.root.onfull = submit;
+  $('gateBack').addEventListener('click', () => { p1.clear(); p2.clear(); setMsg(msgEl, '', ''); setStep('acct'); inp.focus(); inp.select(); });
   $('gateCancel').addEventListener('click', () => ov.classList.remove('show'));
-  $('switchAcc').addEventListener('click', () => open(true));
+  $('switchAcc').addEventListener('click', () => open(true, ''));
+
+  // the server says this device's session is gone (PIN reset, other device changed PIN, expired…)
+  window.fvAuthLost = function(){
+    if(ov.classList.contains('show')) return;
+    store.set('fv_token', '');
+    const a = normAcc(store.get('fv_account'));
+    open(false, ok(a) ? a : '');
+    setMsg(msgEl, 'Please sign in again.', 'err');
+  };
+
+  // start-up: signed-in device -> straight in; no token yet (first visit, or an old device from before PINs) -> gate
   const saved = normAcc(store.get('fv_account'));
-  if(ok(saved)) apply(saved); else open(false);
+  if(ok(saved) && store.get('fv_token')){
+    apply(saved);
+    rpc('whoami').then(r => { if(r && r.ok && r.account !== saved) apply(r.account); }).catch(() => {});
+  } else open(false, ok(saved) ? saved : '');
+})();
+
+/* ---------- change my PIN ---------- */
+(function(){
+  const ov = $('cpOv'), msg = $('cpMsg'), btn = $('cpOk');
+  const a = makePin($('cpOld')), b = makePin($('cpNew')), c = makePin($('cpNew2'));
+  const all = [a, b, c];
+  window.fvChangePin = function(){ all.forEach(p => p.clear()); setMsg(msg, '', ''); ov.classList.add('show'); setTimeout(() => a.focus(), 60); };
+  a.root.onfull = () => b.focus(); b.root.onfull = () => c.focus();
+  all.forEach(p => p.root.onenter = () => btn.click());
+  $('cpCancel').addEventListener('click', () => ov.classList.remove('show'));
+  ov.addEventListener('click', e => { if(e.target === ov) ov.classList.remove('show'); });
+  btn.addEventListener('click', () => {
+    const o = a.value(), n = b.value();
+    if(o.length !== 4) return setMsg(msg, 'Enter your 4-digit PIN.', 'err');
+    if(n.length !== 4) return setMsg(msg, 'PIN must be 4 digits.', 'err');
+    if(n !== c.value()){ c.shake(); return setMsg(msg, 'PINs don’t match.', 'err'); }
+    btn.disabled = true; btn.textContent = 'Saving…';
+    const done = () => { btn.disabled = false; btn.textContent = 'Save'; };
+    rpc('changePin', o, n).then(r => {
+      done();
+      if(!r || !r.ok){ if(!(r && r.code === 'AUTH')){ a.clear(); a.focus(); } return setMsg(msg, (r && r.message) || 'Something went wrong. Please try again.', 'err'); }
+      setMsg(msg, 'PIN updated ✓', 'ok'); setTimeout(() => ov.classList.remove('show'), 900);
+    }).catch(e => { done(); setMsg(msg, 'Connection error: ' + (e && e.message ? e.message : e), 'err'); });
+  });
 })();
 
 /* ---------- update modal ---------- */
@@ -1263,6 +1556,51 @@ $('updClose').addEventListener('click', () => $('updOv').classList.remove('show'
 $('updOv').addEventListener('click', e => { if(e.target === $('updOv')) $('updOv').classList.remove('show'); });
 
 $('stTot').textContent = '/' + APPS.length;
+</script>
+<style>
+/* ===== BOUNCY PRESS (cute press-in + springy pop-back on every button) ===== */
+:root{--spring:cubic-bezier(.3,1.9,.5,1)}
+:is(button,[role="button"],a.btn,a.hv-li,.ci-d,.hv-app,.credit){
+  --px:.93;--py:.88;
+  transition:transform .55s var(--spring),background-color .15s,color .15s,border-color .15s,opacity .15s!important;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation;
+}
+/* big cards press less so the layout never feels jumpy */
+html :is(.hv-app,.hv-tile,.hv-qb,.ci-tap,.appcard,.hv-li,.urow){--px:.97;--py:.95}
+/* round icon buttons and calendar days squash evenly */
+html :is(.xbtn,.iconbtn,.ci-d,.ci-app){--px:.84;--py:.84}
+/* the bottom tab bar: only the icon + label pop, not the whole bar cell */
+html .hv-tabs button{--px:1;--py:1}
+.hv-tabs button>*{transition:transform .5s var(--spring)}
+.hv-tabs button.is-down>*{transform:scale(.78);transition:transform .08s ease-out}
+
+:is(button,[role="button"],a.btn,a.hv-li,.ci-d,.hv-app,.credit).is-down{
+  transform:scale(var(--px),var(--py))!important;
+  transition:transform .08s ease-out,background-color .15s,color .15s,border-color .15s!important;
+}
+@media (prefers-reduced-motion:reduce){
+  :is(button,[role="button"],a.btn,a.hv-li,.ci-d,.hv-app,.credit){transition:transform .12s ease-out,background-color .15s!important}
+  :is(button,[role="button"],a.btn,a.hv-li,.ci-d,.hv-app,.credit).is-down{transform:scale(.97)!important}
+  .hv-tabs button.is-down>*{transform:none}
+}
+</style>
+<script>
+/* press tracking: keeps the squish visible even on very quick taps (min 110ms) and releases on scroll/cancel */
+(function(){
+  var SEL = 'button,[role="button"],a.btn,a.hv-li,.ci-d,.hv-app,.credit', HOLD = 110, down = new Map();
+  document.addEventListener('pointerdown', function(e){
+    if(e.button > 0 || !e.target.closest) return;
+    var el = e.target.closest(SEL);
+    if(!el || el.disabled || el.classList.contains('off') || el.getAttribute('aria-disabled') === 'true') return;
+    down.set(el, performance.now()); el.classList.add('is-down');
+  }, {passive:true, capture:true});
+  function release(){
+    var now = performance.now();
+    down.forEach(function(t0, el){ down.delete(el); setTimeout(function(){ el.classList.remove('is-down'); }, Math.max(0, HOLD - (now - t0))); });
+  }
+  ['pointerup','pointercancel','dragend','blur'].forEach(function(ev){ window.addEventListener(ev, release, {passive:true, capture:true}); });
+  document.addEventListener('visibilitychange', release);
+})();
 </script>
 </body>
 </html>
@@ -1671,19 +2009,25 @@ img.stamp{display:block;object-fit:contain}
 .hv-em svg{width:28px;height:28px;display:block}
 .hv-tx{min-width:0}
 /* ===== App Vote: compact, 2 per row, fits one screen ===== */
-#hvApps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-items:stretch}
-#hvApps .hv-app{margin:0!important;padding:10px 11px 9px!important;border-radius:20px!important;display:flex;flex-direction:column;gap:7px;min-width:0;box-sizing:border-box}
-#hvApps .hv-app .r{display:grid;grid-template-columns:36px minmax(0,1fr);column-gap:8px;row-gap:6px;align-items:center}
-#hvApps .hv-app .ico{width:36px;height:36px;border-radius:11px}
+/* account name under the Daily Check-in title (for screenshots) */
+.ci-who{margin:-2px 0 0;font-weight:800;font-size:.82rem;color:var(--muted);line-height:1.2}
+.ci-who[hidden]{display:none}
+#hvApps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,1.35fr) 1fr;gap:10px;align-items:stretch}
+#hvApps .hv-app{margin:0!important;padding:10px 12px!important;border-radius:22px!important;display:flex;flex-direction:column;justify-content:center;gap:9px;min-width:0;box-sizing:border-box}
+#hvApps .hv-app .r{display:grid;grid-template-columns:40px minmax(0,1fr);column-gap:9px;row-gap:7px;align-items:center}
+#hvApps .hv-app .ico{width:40px;height:40px;border-radius:12px}
 #hvApps .hv-app .x{display:contents}
-#hvApps .hv-app .tag{grid-column:1/-1}
-#hvApps .hv-app .x b{font-size:.86rem;margin:0;line-height:1.15;overflow-wrap:anywhere}
-#hvApps .hv-app .tag{display:block;width:max-content;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.62rem;padding:1px 8px;line-height:1.4;border-width:1px;box-sizing:border-box}
+#hvApps .hv-app .x b{font-size:.88rem;margin:0;line-height:1.15;overflow-wrap:anywhere}
+#hvApps .hv-app .tag{grid-column:1/-1;display:block;width:max-content;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.62rem;padding:1px 8px;line-height:1.4;border-width:1px;box-sizing:border-box}
 #hvApps .hv-act{display:flex;align-items:center;justify-content:space-between;gap:6px}
 #hvApps .hv-act .hv-open.btn.sm{margin:0;padding:3px 14px 4px;font-size:.76rem;flex:none}
 #hvApps .hv-act .hv-more{margin:0;padding:0;border:0;font-size:.72rem;white-space:nowrap}
 #hvApps .hv-app.wide{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
-#hvApps .hv-app.wide .r{flex:1;min-width:0}
+#hvApps .hv-app.wide .r{flex:1;min-width:0;row-gap:3px}
+#hvApps .hv-app.wide .ico{grid-row:1/3}
+#hvApps .hv-app.wide .x b{align-self:end}
+#hvApps .hv-app.wide .tag{grid-column:2;align-self:start}
+body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
 /* ===== inline icons replacing emoji (hearts / gems) ===== */
 .hv-g{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;margin:0 1px;line-height:0}
 .hv-g svg{width:100%;height:100%;display:block}
@@ -1704,7 +2048,7 @@ img.stamp{display:block;object-fit:contain}
     'MUNIVERSE':  'https://apps.apple.com/th/app/muniverse/id6749677921'
   };
   // Mnet Plus: info-only card (no vote collecting, not part of the 6 tracked apps)
-  const MNET_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><defs><linearGradient id="mg" gradientUnits="userSpaceOnUse" x1="70" y1="0" x2="322" y2="0"><stop offset="0" stop-color="#f0137f"/><stop offset=".55" stop-color="#f0137f"/><stop offset=".8" stop-color="#b06cf2"/><stop offset="1" stop-color="#35cdef"/></linearGradient></defs><rect width="400" height="400" fill="#fff"/><path d="M268 132H140a70 70 0 0 0-70 70v28a70 70 0 0 0 70 70h112a70 70 0 0 0 70-70v-30" fill="none" stroke="url(#mg)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M148 256v-78l46 48 46-48v78" fill="none" stroke="#f0137f" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M322 96v38M303 115h38" stroke="#f0137f" stroke-width="13" stroke-linecap="round"/></svg>';
+  const MNET_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="#fff"/><g transform="translate(200 204) scale(1.12) translate(-200 -204)" fill="none" stroke="#1f3a7a" stroke-linecap="round" stroke-linejoin="round"><path d="M268 132H140a70 70 0 0 0-70 70v28a70 70 0 0 0 70 70h112a70 70 0 0 0 70-70v-30" stroke-width="24"/><path d="M148 256v-78l46 48 46-48v78" stroke-width="24"/><path d="M322 96v38M303 115h38" stroke-width="13"/></g></svg>';
   const MNET = {name: 'MNET PLUS', icon: 'data:image/svg+xml;utf8,' + encodeURIComponent(MNET_SVG)};
   APP_LINKS['MNET PLUS'] = 'https://apps.apple.com/th/app/mnet-plus/id6443405421';
   // Voting info per app. Each section: [title, note, [items]]; an item "Label: text" shows the label in bold.
@@ -1853,7 +2197,22 @@ img.stamp{display:block;object-fit:contain}
     'Collect all 6 apps today to unlock your history':'อัปเดตให้ครบ 6 แอปวันนี้เพื่อปลดล็อกประวัติของคุณ',
     'Welcome!':'ยินดีต้อนรับ!','Continue':'ต่อไป',
     'Enter your Twitter account once. It’s remembered on this device, so you won’t need to type it again.':'กรอกบัญชี Twitter ครั้งเดียว ระบบจะจำไว้ในเครื่องนี้ ไม่ต้องพิมพ์อีก',
-    'Use letters, numbers and underscores only (max 40).':'ใช้ได้เฉพาะตัวอักษร ตัวเลข และขีดล่าง (สูงสุด 40 ตัว)'
+    'Use letters, numbers and underscores only (max 40).':'ใช้ได้เฉพาะตัวอักษร ตัวเลข และขีดล่าง (สูงสุด 40 ตัว)',
+    'Welcome back! Enter your 4-digit PIN to continue.':'ยินดีต้อนรับกลับ! กรอกรหัส PIN 4 หลักเพื่อดำเนินการต่อ',
+    'First time here? Create a 4-digit PIN. It keeps your votes and check-ins private to you.':'มาครั้งแรกใช่ไหม? ตั้งรหัส PIN 4 หลัก เพื่อให้ข้อมูลโหวตและเช็คอินเป็นของคุณคนเดียว',
+    'This account already has data. Create a 4-digit PIN to lock it to you.':'บัญชีนี้มีข้อมูลอยู่แล้ว ตั้งรหัส PIN 4 หลักเพื่อล็อกให้เป็นของคุณ',
+    'PIN':'รหัส PIN','Create a 4-digit PIN':'ตั้งรหัส PIN 4 หลัก','Confirm PIN':'ยืนยันรหัส PIN','Log in':'เข้าสู่ระบบ','Create PIN':'สร้างรหัส PIN','Not you? Change account':'ไม่ใช่คุณ? เปลี่ยนบัญชี',
+    'Forgot your PIN? Ask an admin to reset it.':'ลืมรหัส PIN? ติดต่อแอดมินเพื่อรีเซ็ต',
+    'Enter your 4-digit PIN.':'กรอกรหัส PIN 4 หลัก','PINs don’t match.':'รหัส PIN ไม่ตรงกัน','Please sign in again.':'กรุณาเข้าสู่ระบบอีกครั้ง',
+    'PIN must be 4 digits.':'รหัส PIN ต้องเป็นตัวเลข 4 หลัก','This account already has a PIN. Please log in.':'บัญชีนี้ตั้งรหัส PIN แล้ว กรุณาเข้าสู่ระบบ','Invalid Twitter account.':'บัญชี Twitter ไม่ถูกต้อง','Account not found.':'ไม่พบบัญชีนี้','Not allowed.':'ไม่ได้รับอนุญาต',
+    'Change PIN':'เปลี่ยนรหัส PIN','Update your 4-digit code':'เปลี่ยนรหัส 4 หลักของคุณ','Enter your current PIN, then choose a new 4-digit PIN.':'กรอกรหัส PIN ปัจจุบัน แล้วตั้งรหัส PIN 4 หลักใหม่','Current PIN':'รหัส PIN ปัจจุบัน','New PIN':'รหัส PIN ใหม่','Confirm new PIN':'ยืนยันรหัส PIN ใหม่','PIN updated ✓':'เปลี่ยนรหัส PIN แล้ว ✓',
+    'Users':'ผู้ใช้','Account':'บัญชี','PIN set':'ตั้ง PIN แล้ว','No PIN':'ยังไม่มี PIN','Locked':'ถูกล็อก','No activity yet':'ยังไม่มีกิจกรรม','Latest votes':'โหวตล่าสุด','No votes yet':'ยังไม่มีโหวต',
+    'Registered':'ลงทะเบียนเมื่อ','Last active':'ใช้งานล่าสุด','Check-in days':'วันที่เช็คอิน','Entries':'จำนวนรายการ',
+    'Reset PIN':'รีเซ็ตรหัส PIN','New 4-digit PIN':'รหัส PIN 4 หลักใหม่','Random':'สุ่ม','Set PIN':'ตั้งรหัส PIN','Clear PIN':'ล้างรหัส PIN','Delete account data':'ลบข้อมูลบัญชี','Tap again to confirm':'แตะอีกครั้งเพื่อยืนยัน',
+    'PIN saved ✓':'บันทึกรหัส PIN แล้ว ✓','PIN cleared. They can create a new one at next sign-in.':'ล้างรหัส PIN แล้ว ผู้ใช้ตั้งรหัสใหม่ได้เมื่อเข้าสู่ระบบครั้งถัดไป','Account data deleted.':'ลบข้อมูลบัญชีแล้ว',
+    'Set PIN: give the new code to the fan. Clear PIN: they create their own the next time they sign in.':'ตั้งรหัส PIN: แจ้งรหัสใหม่ให้แฟนคลับ · ล้างรหัส PIN: ให้เขาตั้งรหัสเองเมื่อเข้าสู่ระบบครั้งถัดไป',
+    'Removes this account’s votes, check-ins and PIN. This cannot be undone.':'ลบโหวต เช็คอิน และรหัส PIN ของบัญชีนี้ ไม่สามารถย้อนกลับได้',
+    'Loading…':'กำลังโหลด…','Connection error':'การเชื่อมต่อผิดพลาด','Something went wrong.':'เกิดข้อผิดพลาด'
   };
   const RX = [
     [/^Connection error: ([\s\S]*)$/, 'การเชื่อมต่อผิดพลาด: $1'],
@@ -1866,7 +2225,12 @@ img.stamp{display:block;object-fit:contain}
     [/^(\d+)-day streak$/, 'ต่อเนื่อง $1 วัน'],
     [/^(\d+) check-ins$/, 'เช็คอิน $1 ครั้ง'],
     [/^(\d+) full days$/, 'ครบ 6 แอป $1 วัน'],
-    [/^(.+) already collected today ✓$/, '$1 ทำแล้ววันนี้ ✓']
+    [/^(.+) already collected today ✓$/, '$1 ทำแล้ววันนี้ ✓'],
+    [/^Incorrect PIN\. (\d+) attempts? left\.$/, 'รหัส PIN ไม่ถูกต้อง เหลืออีก $1 ครั้ง'],
+    [/^Too many attempts\. Try again in (\d+) min\.$/, 'ลองผิดหลายครั้งเกินไป ลองใหม่ในอีก $1 นาที'],
+    [/^(\d+) accounts? · (\d+) with PIN$/, '$1 บัญชี · ตั้ง PIN แล้ว $2 บัญชี'],
+    [/^(\d+) apps?$/, '$1 แอป'],
+    [/^(\d+) check-in days?$/, 'เช็คอิน $1 วัน']
   ];
   function tr(s){
     const m = s.match(/^(\s*)([\s\S]*?)(\s*)$/), core = m[2];
@@ -1959,6 +2323,7 @@ img.stamp{display:block;object-fit:contain}
       li('ci', IC.cal, 'Daily Check-in', 'Check in for the day') +
       li('cert', IC.cert, 'Certificate', 'Make your daily certificate') +
       li('guide', IC.doc, 'How to use', 'Steps for using this page') +
+      li('pin', IC.lock, 'Change PIN', 'Update your 4-digit code') +
       li('fan', IC.eye, 'View data', 'See all data') +
       li('admin', IC.lock, 'Admin', 'For admins') +
       '<div class="hv-li" style="cursor:default">' + IC.globe + '<span class="x"><b>Language</b></span><span class="hv-seg"><button type="button" data-l="en">English</button><button type="button" data-l="th">ไทย</button></span></div>' +
@@ -2161,6 +2526,7 @@ img.stamp{display:block;object-fit:contain}
     $('hvToday').textContent = fmt(O.today);
     $('hvTotal').textContent = fmt(O.total);
     drawApps(); drawHist(); drawMe();
+    if(typeof fitApps === 'function') fitApps();
   }
   function load(){
     if(busy) return; busy = true;
@@ -2190,7 +2556,20 @@ img.stamp{display:block;object-fit:contain}
     window.scrollTo(0, 0);
     if(t === 'me') loadMe();
     render();
+    fitApps();
   }
+  /* make the App Vote grid fill exactly one screen (evenly spaced, no empty gap) */
+  function fitApps(){
+    const g = $('hvApps'); if(!g || !g.offsetParent) return;
+    g.style.minHeight = '0'; g.style.marginBottom = '0';
+    const top = g.getBoundingClientRect().top, navTop = nav.getBoundingClientRect().top;
+    const avail = navTop - top - 12;
+    g.style.minHeight = Math.max(0, avail) + 'px';
+    if(g.getBoundingClientRect().height > avail + 1) g.style.marginBottom = (window.innerHeight - navTop + 8) + 'px';
+  }
+  window.addEventListener('resize', fitApps);
+  window.addEventListener('orientationchange', () => setTimeout(fitApps, 200));
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitApps);
   document.body.dataset.tab = 'home';
   nav.addEventListener('click', e => { const b = e.target.closest('button'); if(b) go(b.dataset.t); });
 
@@ -2202,7 +2581,8 @@ img.stamp{display:block;object-fit:contain}
     admin: () => $('adminOpen').click(),
     sw:    () => $('switchAcc').click(),
     vote:  () => go('vote'),
-    guide: () => gov.classList.add('show')
+    guide: () => gov.classList.add('show'),
+    pin:   () => { if(window.fvChangePin) window.fvChangePin(); }
   };
   app.addEventListener('click', e => {
     const ap = e.target.closest('.hv-app'); if(ap && !e.target.closest('.hv-open')) return openInfo(ap.dataset.app);
@@ -2212,7 +2592,7 @@ img.stamp{display:block;object-fit:contain}
   });
   app.addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('hv-app')){ e.preventDefault(); openInfo(e.target.dataset.app); } });
   $('hvSearch').addEventListener('input', () => { if(O) drawHist(); });
-  $('gateOk').addEventListener('click', () => setTimeout(() => { CK = null; render(); loadMe(); }, 150));
+  document.addEventListener('fv:auth', () => { CK = null; render(); loadMe(); });
 
   /* ---------- refresh ---------- */
   const pf = window.pollFeed;
@@ -2223,3 +2603,50 @@ img.stamp{display:block;object-fit:contain}
   setLang(LANG);
 })();
 </script>
+<style>
+/* ===== PIN boxes + account gate ===== */
+.gate-pin[hidden],#gatePin2Wrap[hidden],.gate-forgot[hidden],.link-btn[hidden]{display:none!important}
+.gate-pin{margin-top:4px;text-align:center}
+.gate-pin label,.gate-pin label:first-child{margin:14px 0 8px;text-align:center}
+.pin{display:flex;justify-content:center;gap:10px}
+input.pin-box[type=password]{
+  width:54px;height:60px;padding:0;text-align:center;
+  font-family:var(--display);font-weight:400;font-size:1.7rem;line-height:1;
+  border-radius:18px;caret-color:var(--blue);background:#fff;
+  transition:border-color .15s,background-color .15s,transform .5s cubic-bezier(.3,1.9,.5,1)
+}
+input.pin-box[type=password]:focus{border-color:var(--blue)!important;box-shadow:none;transform:translateY(-2px)}
+input.pin-box[type=password].on{background:var(--blue-l)}
+.pin.shake{animation:pinShake .38s}
+@keyframes pinShake{20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.link-btn{margin-top:12px;background:none;border:0;padding:4px 8px;font:inherit;font-weight:800;font-size:.8rem;color:var(--blue);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.gate-forgot{margin-top:12px}
+#gateAcc[readonly]{background:#f4f4f7;color:var(--muted)}
+
+/* ===== Admin: accounts list + account sheet ===== */
+.u-sum{font-size:.78rem;font-weight:800;color:var(--muted);margin:2px 4px 8px}
+.ulist{display:flex;flex-direction:column}
+.urow{display:flex;align-items:center;gap:10px;width:100%;padding:10px 6px;border:0;border-bottom:1px dotted rgba(20,20,20,.3);border-radius:0;background:none;font:inherit;text-align:left;color:var(--ink);cursor:pointer}
+.urow:last-child{border-bottom:0}
+.urow .ux{flex:1;min-width:0}
+.urow b{display:block;font-weight:800;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.urow small{display:block;font-weight:700;font-size:.68rem;line-height:1.35;color:var(--muted)}
+.urow .tag{flex:none}
+.urow .uch .i{width:1em;height:1em;color:#9a9dab}
+.uav{flex:none;width:36px;height:36px;border-radius:12px;background:var(--sun-l);border:1px solid rgba(20,20,20,.25);display:grid;place-items:center;font-family:var(--display);font-size:1rem}
+#userOv .modal{display:flex;flex-direction:column;overflow:hidden;max-height:86vh;max-height:86svh;padding:20px 18px 18px}
+#userOv .ci-head{flex:none}
+#userOv .msg{flex:none;margin-top:8px}
+#uBody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.u-tags{display:flex;gap:6px;margin:8px 0 0}
+.u-sec{margin-top:16px}
+.u-sec h3{margin:0;font-family:var(--display);font-weight:400;font-size:1.05rem;color:var(--blue)}
+.u-kv{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dotted rgba(20,20,20,.3);font-size:.86rem;font-weight:700}
+.u-kv:last-child{border-bottom:0}
+.u-kv span{color:var(--muted)}
+.u-pinrow{display:flex;gap:8px;align-items:center;margin-top:8px}
+.u-pinrow input{flex:1;min-width:0;text-align:center;letter-spacing:.2em}
+.u-pinrow input::placeholder{letter-spacing:0}
+#userOv .btn{margin-top:12px}
+#dashOv.users-tab #chipbar,#dashOv.users-tab #stats{display:none}
+</style>
