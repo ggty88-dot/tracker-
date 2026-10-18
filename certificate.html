@@ -12,9 +12,9 @@
 <style>
 :root{--ink:#141414;--paper:#f7f5ef;--muted:#5f6272;--blue:#2447d6;--blue-d:#1a36a8;--blue-l:#dde5ff;--sun-l:#fff1b3;--butter:#ffd84d;--red:#d63a30;--display:'Jua','Mali',system-ui,sans-serif;--soft:0 10px 30px rgba(36,71,214,.12),0 2px 6px rgba(20,20,20,.06)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html{-webkit-text-size-adjust:100%}
-body{margin:0;font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:var(--paper);padding:14px 14px 32px;min-height:100svh;-webkit-font-smoothing:antialiased}
-body::before,body::after{content:'';position:fixed;z-index:-2;pointer-events:none}
+html{-webkit-text-size-adjust:100%;background:#fff}
+body{margin:0;font-family:'Nunito',system-ui,sans-serif;color:var(--ink);background:#fff;padding:14px 14px 32px;min-height:100svh;-webkit-font-smoothing:antialiased}
+body::before,body::after{content:none;display:none}
 body::before{width:420px;height:300px;border-radius:64px;transform:rotate(-14deg);background:var(--blue-l);opacity:.7;right:-190px;top:-90px}
 body::after{width:460px;height:260px;border-radius:72px;transform:rotate(12deg);background:var(--sun-l);opacity:.8;left:-210px;bottom:-60px}
 .wrap{position:relative;max-width:440px;margin:0 auto;padding-top:50px}
