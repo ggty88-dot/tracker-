@@ -1160,11 +1160,11 @@ $('dOk').addEventListener('click', () => {
   const k = r => r.c ? 'c|' + r.id : r.account.toLowerCase() + '|' + r.app;
   const scrolling = () => !reduce && items.length > SHOW;
   const CM_ICO = {
-    post: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2447d6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="24" height="24" fill="#dde5ff"/><path d="M6 7h12a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 18 16h-5.5L9 19v-3H6a1.5 1.5 0 0 1-1.5-1.5v-6A1.5 1.5 0 0 1 6 7z"/></svg>'),
-    ann: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#141414" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="24" height="24" fill="#fff0a6"/><path d="M7 10a5 5 0 0 1 10 0c0 4 1.5 5 1.5 5h-13S7 14 7 10z"/><path d="M10.5 18a1.5 1.5 0 0 0 3 0"/></svg>')
+    post: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2447d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5h11A3.5 3.5 0 0 1 21 8v6a3.5 3.5 0 0 1-3.5 3.5H12L8 20.5v-3h-1.5A3.5 3.5 0 0 1 3 14V8a3.5 3.5 0 0 1 3.5-3.5z"/><path d="M8.5 11h.01M12 11h.01M15.5 11h.01" stroke-width="2.6"/></svg>'),
+    ann: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2447d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 15 6 10z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></svg>')
   };
   const CM_LBL = {post: 'Community', ann: 'Announcement'};
-  const rowHtml = (r, isNew) => `<div class="tr"><div class="pill${isNew ? ' new' : ''}"${r.c ? ' data-c="1"' : ''}><img class="ico" src="${r.c ? CM_ICO[r.c] : iconOf(r.app)}" alt=""><span class="who">@${esc(r.account)}</span><span class="ap">${esc(r.c ? CM_LBL[r.c] : r.app)}</span><span class="tm">${esc(r.time)}</span></div></div>`;
+  const rowHtml = (r, isNew) => `<div class="tr"><div class="pill${isNew ? ' new' : ''}"${r.c ? ' data-c="1"' : ''}><img class="ico${r.c ? ' cm' : ''}" src="${r.c ? CM_ICO[r.c] : iconOf(r.app)}" alt=""><span class="who">@${esc(r.account)}</span><span class="ap">${esc(r.c ? CM_LBL[r.c] : r.app)}</span><span class="tm">${esc(r.time)}</span></div></div>`;
   const rowEl = (r, isNew) => { const d = document.createElement('div'); d.innerHTML = rowHtml(r, isNew); return d.firstChild; };
 
   function fill(){
@@ -1695,6 +1695,9 @@ input[type=text],input[type=number],input[type=password],.dd-btn,.dd-list{border
 input:focus,.dd-btn:focus,.dd.open .dd-btn{border-color:var(--blue)!important}
 </style>
 <style>
+/* Recent Activity: icons only (no box / border) */
+#liveTrack .pill .ico{border:0!important;background:none!important;box-shadow:none!important;border-radius:0!important}
+#liveTrack .pill .ico.cm{padding:3px;box-sizing:border-box}
 .pill .crown{flex:none;width:20px;height:20px;margin:0 -3px 0 -2px;line-height:0;transform:rotate(-12deg) translateY(-3px)}
 .pill .crown svg{display:block;width:100%;height:100%}
 </style>
@@ -2300,6 +2303,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   const anchor = root.querySelector('.sub-line');
   const svg = p => '<svg class="hv-ic" viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
   const IC = {
+    shield: svg('<path d="M12 3l7.5 3v5.5c0 4.6-3.1 8.1-7.5 9.5-4.4-1.4-7.5-4.9-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>'),
     home:  svg('<path d="M4 11l8-7 8 7v8.5a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/>'),
     grid:  svg('<rect x="3.5" y="3.5" width="6" height="6" rx="1.6"/><rect x="14.5" y="3.5" width="6" height="6" rx="1.6"/><rect x="3.5" y="14.5" width="6" height="6" rx="1.6"/><rect x="14.5" y="14.5" width="6" height="6" rx="1.6"/>'),
     hist:  svg('<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>'),
@@ -2349,7 +2353,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
       li('guide', IC.doc, 'How to use', 'Steps for using this page') +
       li('pin', IC.lock, 'Change PIN', 'Update your 4-digit code') +
       li('fan', IC.eye, 'Fan access', 'See all data') +
-      li('admin', IC.lock, 'Admin', 'For admins') +
+      li('admin', IC.shield, 'Admin', 'For admins') +
       '<div class="hv-li" style="cursor:default">' + IC.globe + '<span class="x"><b>Language</b></span><span class="hv-seg"><button type="button" data-l="en">English</button><button type="button" data-l="th">ไทย</button></span></div>' +
       li('sw', IC.swap, 'Switch account', 'Change Twitter account') +
     '</div>' +
