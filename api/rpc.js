@@ -250,6 +250,17 @@ async function levelsFor(accounts) {
   return out;
 }
 
+// profile-photo version per account (hash "avs": lower(account) -> timestamp); 0 = no photo
+async function avatarsFor(accounts) {
+  const want = [...new Set(accounts.map(lc))];
+  const out = {};
+  if (!want.length) return out;
+  const vs = (await cmd('HMGET', 'avs', ...want)) || [];
+  want.forEach((a, i) => { out[a] = Number(vs[i]) || 0; });
+  return out;
+}
+const AV_MAX = 80000;            // base64 characters (~60 KB jpeg)
+
 /* ---------- community ---------- */
 const KINDS = ['chat', 'ask', 'share'];
 const C_POSTS = 'cposts', C_SEQ = 'cposts:seq', C_FEED = 'cfeed';
@@ -257,6 +268,9 @@ const POST_MAX = 1000, CMT_MAX = 300;
 const IMG_MAX = 450000;          // base64 characters (~330 KB jpeg)
 const PAGE = 12;
 const REPORT_HIDE = 3;           // this many different reports hide a post from the feed
+// admin accounts (lower-case). Edit this list, or set ADMIN_ACCOUNTS=name1,name2 in Vercel.
+const ADMINS = (process.env.ADMIN_ACCOUNTS || 'markleevotingth').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
+const isAdminAcc = a => ADMINS.includes(lc(a));
 const isId = v => /^\d{1,12}$/.test(String(v == null ? '' : v));
 
 async function rateOk(acc, what, max, sec) {
@@ -275,11 +289,15 @@ async function shapePosts(ids, me) {
     ['SCARD', 'clikes:' + p.id], ['HLEN', 'ccm:' + p.id], ['SISMEMBER', 'clikes:' + p.id, lc(me.account)],
   ]));
   const lv = await levelsFor(posts.map(p => p.account));
+  const av = await avatarsFor(posts.map(p => p.account));
   return posts.map((p, i) => ({
     id: p.id, account: p.account, kind: p.kind, text: p.text, img: !!p.img, t: p.t,
     likes: Number(meta[i * 3]), comments: Number(meta[i * 3 + 1]), liked: Number(meta[i * 3 + 2]) === 1,
     mine: lc(p.account) === lc(me.account),
+    admin: isAdminAcc(p.account),
+    canDel: lc(p.account) === lc(me.account) || isAdminAcc(me.account),
     lv: (lv[lc(p.account)] || levelOf(0)).level,
+    av: av[lc(p.account)] || 0,
   }));
 }
 
@@ -434,7 +452,42 @@ const actions = {
     const me = await sessionUser(token);
     if (!me) return AUTH_ERR;
     const lv = (await levelsFor([me.account]))[lc(me.account)];
-    return { ok: true, ...lv, rules: XP_RULES, ladder: LV_AT };
+    const av = (await avatarsFor([me.account]))[lc(me.account)];
+    return { ok: true, ...lv, rules: XP_RULES, ladder: LV_AT, account: me.account, av };
+  },
+
+  // image = jpeg data URL -> set the profile photo; image = '' -> remove it (back to the mascot)
+  async setAvatar(token, image) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    const a = lc(me.account);
+    if (!image) {
+      await pipe([['DEL', 'avatar:' + a], ['HDEL', 'avs', a]]);
+      return { ok: true, v: 0 };
+    }
+    const pre = 'data:image/jpeg;base64,';
+    const b64 = String(image).startsWith(pre) ? String(image).slice(pre.length) : '';
+    if (!b64 || b64.length > AV_MAX || !b64.startsWith('/9j/') || !/^[A-Za-z0-9+/=]+$/.test(b64)) return bad('Invalid or too large image.');
+    if (!(await rateOk(me.account, 'avatar', 10, 3600))) return bad('Too many changes. Please try again later.');
+    const v = Date.now();
+    await pipe([['SET', 'avatar:' + a, b64], ['HSET', 'avs', a, v]]);
+    return { ok: true, v };
+  },
+
+  // top fans by XP (admin accounts are not ranked)
+  async getLeaderboard(token) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    const flat = (await cmd('HGETALL', USERS)) || [];
+    const accs = [];
+    for (let i = 1; i < flat.length; i += 2) accs.push(JSON.parse(flat[i]).account);
+    const [lv, av] = await Promise.all([levelsFor(accs), avatarsFor(accs)]);
+    const rows = accs.filter(a => !isAdminAcc(a))
+      .map(a => ({ account: a, xp: lv[lc(a)].xp, level: lv[lc(a)].level, av: av[lc(a)] || 0, me: lc(a) === lc(me.account) }))
+      .filter(r => r.xp > 0)
+      .sort((a, b) => b.xp - a.xp || a.account.localeCompare(b.account));
+    const idx = rows.findIndex(r => r.me);
+    return { ok: true, top: rows.slice(0, 20), rank: idx >= 0 ? idx + 1 : 0, total: rows.length };
   },
 
   /* ----- community ----- */
@@ -487,11 +540,12 @@ const actions = {
     for (let i = 1; i < flat.length; i += 2) cms.push(JSON.parse(flat[i]));
     cms.sort((a, b) => a.t - b.t || a.id - b.id);
     const lv = await levelsFor(cms.map(c => c.account));
+    const av = await avatarsFor(cms.map(c => c.account));
     return {
       ok: true, post,
       comments: cms.slice(-100).map(c => ({
         id: c.id, account: c.account, text: c.text, t: c.t,
-        mine: lc(c.account) === lc(me.account), lv: (lv[lc(c.account)] || levelOf(0)).level,
+        mine: lc(c.account) === lc(me.account), admin: isAdminAcc(c.account), canDel: lc(c.account) === lc(me.account) || isAdminAcc(me.account), lv: (lv[lc(c.account)] || levelOf(0)).level, av: av[lc(c.account)] || 0,
       })),
     };
   },
@@ -508,7 +562,8 @@ const actions = {
     const c = { id: cid, account: me.account, text, t: Date.now() };
     await cmd('HSET', 'ccm:' + id, cid, JSON.stringify(c));
     const lv = (await levelsFor([me.account]))[lc(me.account)];
-    return { ok: true, comment: { ...c, mine: true, lv: lv.level } };
+    const av = (await avatarsFor([me.account]))[lc(me.account)];
+    return { ok: true, comment: { ...c, mine: true, admin: isAdminAcc(me.account), canDel: true, lv: lv.level, av } };
   },
 
   async communityLike(token, id) {
@@ -530,14 +585,14 @@ const actions = {
       if (!isId(cid)) return bad('Comment not found.');
       const raw = await cmd('HGET', 'ccm:' + id, cid);
       if (!raw) return { ok: true };
-      if (lc(JSON.parse(raw).account) !== lc(me.account)) return MISMATCH;
+      if (lc(JSON.parse(raw).account) !== lc(me.account) && !isAdminAcc(me.account)) return MISMATCH;
       await cmd('HDEL', 'ccm:' + id, cid);
       return { ok: true };
     }
     const raw = await cmd('HGET', C_POSTS, id);
     if (!raw) return { ok: true };
     const p = JSON.parse(raw);
-    if (lc(p.account) !== lc(me.account)) return MISMATCH;
+    if (lc(p.account) !== lc(me.account) && !isAdminAcc(me.account)) return MISMATCH;
     await pipe([
       ['HDEL', C_POSTS, id], ['ZREM', C_FEED, id], ['ZREM', C_FEED + ':' + p.kind, id],
       ['DEL', 'cimg:' + id], ['DEL', 'clikes:' + id], ['DEL', 'ccm:' + id], ['DEL', 'crep:' + id],
