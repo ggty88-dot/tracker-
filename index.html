@@ -2578,14 +2578,15 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   }
   /* My page: fill exactly one screen (no scrolling); rows share the height, the X credit is the last line */
   function fitMe(){
+    const root = document.documentElement;
+    root.classList.remove('me-lock');
     const v = app.querySelector('.hv-view[data-v="me"]'); if(!v || v.hidden) return;
     v.style.height = '';
     const natural = v.offsetHeight;
-    const h = Math.floor(nav.getBoundingClientRect().top - v.getBoundingClientRect().top - window.scrollY - 10);
+    const h = Math.floor(nav.getBoundingClientRect().top - v.getBoundingClientRect().top - 10);
     if(h <= natural) return;                                  // small screen: keep the natural height, page scrolls
     v.style.height = h + 'px';
-    const over = document.documentElement.scrollHeight - window.innerHeight;
-    if(over > 0) v.style.height = Math.max(natural, h - over) + 'px';
+    root.classList.add('me-lock');                            // fits one screen: lock the page so it cannot scroll
   }
   window.addEventListener('resize', fitMe);
   window.addEventListener('orientationchange', () => setTimeout(fitMe, 200));
@@ -2715,7 +2716,9 @@ input.pin-box[type=password].on{background:var(--blue-l)}
 <style>
 /* ===== My page: one screen, no scrolling; rows share the free height ===== */
 .hv-view[data-v="me"]:not([hidden]){display:flex;flex-direction:column}
-.hv-view[data-v="me"] .hv-list{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;max-height:600px}
+.hv-view[data-v="me"] .hv-list{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;max-height:none}
+body[data-tab="me"] .wrap{padding-bottom:0!important}
+html.me-lock,html.me-lock body{overflow:hidden;overscroll-behavior:none}
 .hv-view[data-v="me"] .hv-list>.hv-li{flex:1 1 auto}
 .hv-view[data-v="me"] .hv-credit{flex:none;margin-top:8px}
 </style>
