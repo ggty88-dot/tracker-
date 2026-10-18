@@ -1670,6 +1670,22 @@ img.stamp{display:block;object-fit:contain}
 .hv-em{flex:none;width:38px;height:38px;border-radius:13px;background:#fff;border:1px solid var(--line,rgba(20,20,20,.14));display:flex;align-items:center;justify-content:center}
 .hv-em svg{width:28px;height:28px;display:block}
 .hv-tx{min-width:0}
+/* ===== App Vote: 2 cards per row ===== */
+#hvApps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+#hvApps .hv-app{margin-bottom:0!important;padding:12px 12px 10px!important;display:flex;flex-direction:column;min-width:0;box-sizing:border-box}
+#hvApps .hv-app .r{flex:1;flex-direction:column;align-items:stretch;gap:8px}
+#hvApps .hv-app .ico{width:46px;height:46px}
+#hvApps .hv-app .x{flex:none}
+#hvApps .hv-app .x b{font-size:.92rem;margin-bottom:5px;overflow-wrap:anywhere}
+#hvApps .hv-app .tag{white-space:normal;font-size:.68rem;padding:2px 8px;line-height:1.35}
+#hvApps .hv-app .hv-open.btn.sm{display:block;box-sizing:border-box;width:100%;text-align:center;margin-top:auto}
+#hvApps .hv-more{margin-top:10px}
+/* ===== inline icons replacing emoji (hearts / gems) ===== */
+.hv-g{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;margin:0 1px;line-height:0}
+.hv-g svg{width:100%;height:100%;display:block}
+.hv-it.tv .hv-tx{font-weight:800;color:var(--ink)}
+/* info sheet app name: same font as the card */
+#hvInfoOv .hv-ih h2{font-family:inherit;font-weight:800;font-size:1.15rem;letter-spacing:0}
 </style>
 <script>
 (function(){
@@ -1697,13 +1713,13 @@ img.stamp{display:block;object-fit:contain}
     },
     'MUNIVERSE': {
       en: [
-        ['How to collect votes', '', ['Watch ads: Watch 20 ads/day (ad lumy 💙)', 'Mission: Play games (ad lumy 💙)', 'Attendance: Daily check-in (receive free lumy 🩶)', 'Roulette: Spin the roulette by purchasing Gold Lumy to use']],
-        ['Voting details', '', ['Pre-vote: Unlimited voting, uses 5 ad lumy 💙 per vote', 'Live-vote: 5 votes/account, limited, uses 50 ad lumy 💙 or 60 gold lumy 💛 per vote', 'Stage M pick: Limited to 10 votes/account/day, uses 10 ad lumy 💙 or 1 gold lumy 💛 per vote (Stage M pick trophy is 100% based on votes)']],
+        ['How to collect votes', '', ['Watch ads: 20 ads/day (ad lumy 💙)', 'Mission: Play games (ad lumy 💙)', 'Attendance: Daily check-in (free lumy 🩶)', 'Roulette: Spin the roulette by purchasing Gold Lumy to use']],
+        ['Voting details', '', ['Pre-vote: Unlimited voting, uses 5 ad lumy 💙 per vote', 'Live-vote: 5 votes/acc, limited, uses 50 ad lumy 💙 or 60 gold lumy 💛 per vote', 'Stage M pick: Limited to 10 votes/acc/day, uses 10 free lumy 🩶, 10 ad lumy 💙 or 1 gold lumy 💛 per vote (Stage M pick trophy is 100% based on votes)']],
         ['Expires', '', ['Free Lumy 🩶: Expires in 30 days', 'Ad Lumy 💙: Expires in 60 days', 'Gold Lumy 💛: Never expires']]
       ],
       th: [
-        ['วิธีสะสมโหวต', '', ['ดูโฆษณา: ดู 20 โฆษณา/วัน (ad lumy 💙)', 'ภารกิจ: เล่นเกม (ad lumy 💙)', 'เช็คอิน: เช็คอินทุกวัน (รับ free lumy 🩶)', 'รูเล็ต: ต้องซื้อ Gold Lumy เพื่อใช้หมุน']],
-        ['รายละเอียดการโหวต', '', ['Pre-vote: โหวตได้ไม่จำกัด ใช้ 5 ad lumy 💙 ต่อ 1 โหวต', 'Live-vote: จำกัด 5 โหวต/บัญชี ใช้ 50 ad lumy 💙 หรือ 60 gold lumy 💛 ต่อ 1 โหวต', 'Stage M pick: จำกัด 10 โหวต/บัญชี/วัน ใช้ 10 ad lumy 💙 หรือ 1 gold lumy 💛 ต่อ 1 โหวต (ถ้วยรางวัล Stage M pick ตัดสินจากคะแนนโหวต 100%)']],
+        ['วิธีสะสมโหวต', '', ['ดูโฆษณา: 20 โฆษณา/วัน (ad lumy 💙)', 'ภารกิจ: เล่นเกม (ad lumy 💙)', 'เช็คอิน: เช็คอินทุกวัน (free lumy 🩶)', 'รูเล็ต: ต้องซื้อ Gold Lumy เพื่อใช้หมุน']],
+        ['รายละเอียดการโหวต', '', ['Pre-vote: โหวตได้ไม่จำกัด ใช้ 5 ad lumy 💙 ต่อ 1 โหวต', 'Live-vote: จำกัด 5 โหวต/บัญชี ใช้ 50 ad lumy 💙 หรือ 60 gold lumy 💛 ต่อ 1 โหวต', 'Stage M pick: จำกัด 10 โหวต/บัญชี/วัน ใช้ 10 free lumy 🩶, 10 ad lumy 💙 หรือ 1 gold lumy 💛 ต่อ 1 โหวต (ถ้วยรางวัล Stage M pick ตัดสินจากคะแนนโหวต 100%)']],
         ['วันหมดอายุ', '', ['Free Lumy 🩶: หมดอายุใน 30 วัน', 'Ad Lumy 💙: หมดอายุใน 60 วัน', 'Gold Lumy 💛: ไม่มีวันหมดอายุ']]
       ]
     },
@@ -1721,12 +1737,12 @@ img.stamp{display:block;object-fit:contain}
     },
     'HIGHER': {
       en: [
-        ['How to collect votes', 'Accumulate 1,750 Rubies/account', ['Attendance: Daily check-in (Daily visit)', 'Lucky draw: Watch ads, random 20 times/day', 'Watch ads: Watch 50 ads/day', 'Mission: Play games']],
-        ['Voting details', '', ['Live-vote: Total use of 250 💎/account', 'Hot stage: Total use of 1,500 💎/account (Can vote 300 💎/day, Hot stage trophy is 100% based on votes)']],
+        ['How to collect votes', 'Collect 1,750 💎/acc', ['Attendance: Daily visit', 'Lucky draw: Watch ads, random 20 times/day', 'Watch ads: Watch 50 ads/day', 'Mission: Play games']],
+        ['Voting details', '', ['Live-vote: Total use of 250 💎/acc', 'Hot stage: Total use of 1,500 💎/acc (Can vote 300 💎/day, Hot stage trophy is 100% based on votes)']],
         ['Expires', '', ['Rubies from Check-in: Expires in 15 days', 'Rubies from Watching Ads: Expires in 30 days', 'Rubies from Missions: Expires in 90 days']]
       ],
       th: [
-        ['วิธีสะสมโหวต', 'สะสมให้ครบ 1,750 Rubies/บัญชี', ['เช็คอิน: เช็คอินทุกวัน (เข้าแอปทุกวัน)', 'Lucky draw: ดูโฆษณา สุ่มได้ 20 ครั้ง/วัน', 'ดูโฆษณา: ดู 50 โฆษณา/วัน', 'ภารกิจ: เล่นเกม']],
+        ['วิธีสะสมโหวต', 'สะสมให้ครบ 1,750 💎/บัญชี', ['เช็คอิน: เข้าแอปทุกวัน', 'Lucky draw: ดูโฆษณา สุ่มได้ 20 ครั้ง/วัน', 'ดูโฆษณา: ดู 50 โฆษณา/วัน', 'ภารกิจ: เล่นเกม']],
         ['รายละเอียดการโหวต', '', ['Live-vote: ใช้รวม 250 💎/บัญชี', 'Hot stage: ใช้รวม 1,500 💎/บัญชี (โหวตได้ 300 💎/วัน ถ้วยรางวัล Hot stage ตัดสินจากคะแนนโหวต 100%)']],
         ['วันหมดอายุ', '', ['Rubies จากเช็คอิน: หมดอายุใน 15 วัน', 'Rubies จากการดูโฆษณา: หมดอายุใน 30 วัน', 'Rubies จากภารกิจ: หมดอายุใน 90 วัน']]
       ]
@@ -1734,7 +1750,7 @@ img.stamp{display:block;object-fit:contain}
     'LINC / TIN': {
       en: [
         ['How to collect votes', '', ['Roulette (on Linc app): Watch ads, spin the roulette 12 times/day (resets every 7:00 AM and 7:00 PM KST)', 'Watch ads (on Tin app): Watch ads 20 times/day (get 6 FP/ad)']],
-        ['Voting details', '', ['Pre-vote: Total use of 1,500 Fan points/account (can vote 10 times per day for 5 days)']],
+        ['Voting details', '', ['Pre-vote: Total use of 1,500 Fan points/acc (can vote 10 times per day for 5 days)']],
         ['Expires', '', ['Fan Point 💗: Expires in 180 days', 'Gem 💎: Never expires']],
         ['Note', '', ['1 email can be used to collect points on both apps']]
       ],
@@ -1748,12 +1764,12 @@ img.stamp{display:block;object-fit:contain}
     'COOGOONG': {
       en: [
         ['How to collect votes', '', ['First use: A pop-up will appear asking to set a 4-digit PIN', 'Attendance: Check in daily at Home page to receive Blue Hearts', 'Roulette: Spin the roulette 1 time', 'Mission: Play games', 'Watch & Get Reward: Watch 20 💙 / ad (every 10 mins)']],
-        ['Voting details', '', ['Pre-vote & Fan Stage pick: 50 💙 = 1 vote', 'Fan’s stage pick trophy is 100% based on votes']],
+        ['Voting details', '', ['Pre-vote & Fan Stage pick: Unlimited votes, 50 💙 = 1 vote', 'Fan’s stage pick trophy is 100% based on votes']],
         ['Expires', '', ['Blue hearts 💙: Expires in 30 days', 'Gold hearts 💛: Never expires']]
       ],
       th: [
         ['วิธีสะสมโหวต', '', ['ครั้งแรกที่ใช้: จะมีป๊อปอัปให้ตั้ง PIN 4 หลัก', 'เช็คอิน: เช็คอินทุกวันที่หน้า Home เพื่อรับหัวใจสีฟ้า', 'รูเล็ต: หมุนรูเล็ตได้ 1 ครั้ง', 'ภารกิจ: เล่นเกม', 'Watch & Get Reward: รับ 20 💙 / โฆษณา (ทุก 10 นาที)']],
-        ['รายละเอียดการโหวต', '', ['Pre-vote & Fan Stage pick: 50 💙 = 1 โหวต', 'ถ้วยรางวัล Fan’s stage pick ตัดสินจากคะแนนโหวต 100%']],
+        ['รายละเอียดการโหวต', '', ['Pre-vote & Fan Stage pick: โหวตได้ไม่จำกัด 50 💙 = 1 โหวต', 'ถ้วยรางวัล Fan’s stage pick ตัดสินจากคะแนนโหวต 100%']],
         ['วันหมดอายุ', '', ['Blue hearts 💙: หมดอายุใน 30 วัน', 'Gold hearts 💛: ไม่มีวันหมดอายุ']]
       ]
     }
@@ -2022,8 +2038,10 @@ img.stamp{display:block;object-fit:contain}
       if(/watch|ดูโฆษณา/.test(L)) return (app === 'LINC / TIN' || app === 'COOGOONG') ? 'cam' : 'clap';
       return '';
     }
-    return function(label, app){
-      const k = kind(label, app), p = PAL[app] || {};
+    const tv = () => svg('<rect x="4" y="9" width="24" height="16.5" rx="4.5" fill="#cdd9ff"/><rect x="7.6" y="12.4" width="12.2" height="9.6" rx="2" fill="#fff" stroke-width="1.4"/><path d="M12 4.5l4 4.5 4-4.5M9.5 25.5v2M22.5 25.5v2"/><circle cx="24" cy="15" r="1.2" fill="#ee5a3a" stroke="none"/><circle cx="24" cy="19.2" r="1.2" fill="#141414" stroke="none"/>');
+    const pct = () => svg('<circle cx="16" cy="16" r="12.5" fill="#ffd84d"/><path d="M21 11l-10 10"/><circle cx="11.6" cy="11.6" r="2.3" fill="#fff"/><circle cx="20.4" cy="20.4" r="2.3" fill="#fff"/>');
+    return function(label, app, force){
+      const k = force || kind(label, app), p = PAL[app] || {};
       switch(k){
         case 'cal':    return cal(p.cal || ['#9ccaf7','#fff']);
         case 'pin':    return pin();
@@ -2036,21 +2054,63 @@ img.stamp{display:block;object-fit:contain}
         case 'cards':  return cards();
         case 'coin':   return coin();
         case 'lock':   return lock(p.lock || '#2f8cf0');
+        case 'tv':     return tv();
+        case 'pct':    return pct();
       }
       return '';
     };
   })();
-  function liHtml(t, app, si, bold){
+  /* ---------- broadcast show + criteria (EDIT HERE) ---------- */
+  const BROADCAST = {
+    'IDOLCHAMP':  'Show Champion',
+    'MUBEAT':     'Show! Music Core',
+    'MUNIVERSE':  'Show! Music Core',
+    'COOGOONG':   'Music Bank',
+    'HIGHER':     'Inkigayo',
+    'LINC / TIN': 'Inkigayo'
+  };
+  const CRITERIA = {
+    'IDOLCHAMP':  [['Pre-vote', '20%']],
+    'MUBEAT':     [['Pre-vote', '5%'], ['Live-vote', '3%']],
+    'MUNIVERSE':  [['Pre-vote', '5%'], ['Live-vote', '3%']],
+    'COOGOONG':   [['Pre-vote', '10%']],
+    'LINC / TIN': [['Pre-vote', '5%']],
+    'HIGHER':     [['Live-vote', '5%']]
+  };
+  const EXTRA_TITLE = { en: ['Broadcast', 'Criteria'], th: ['รายการที่ออกอากาศ', 'เกณฑ์คะแนน'] };
+  function extraSecs(name){
+    const t = EXTRA_TITLE[LANG] || EXTRA_TITLE.en, out = [];
+    if(BROADCAST[name]) out.push([t[0], '', [BROADCAST[name]], 'tv']);
+    if(CRITERIA[name])  out.push([t[1], '', CRITERIA[name].map(c => c[0] + ': ' + c[1]), 'pct']);
+    return out;
+  }
+  /* emoji -> web-theme outline icons (original colors kept) */
+  const GEM = (function(){
+    const w = b => '<span class="hv-g"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">' + b + '</svg></span>';
+    const heart = (c, hi) => w('<path d="M12 20.5S3.5 15 3.5 9.2A4.7 4.7 0 0 1 12 6.8a4.7 4.7 0 0 1 8.5 2.4C20.5 15 12 20.5 12 20.5z" fill="' + c + '"/><path d="M7 9.6a2.5 2.5 0 0 1 2-2.1" stroke="' + hi + '" stroke-width="1.5"/>');
+    const gem = w('<path d="M7 4h10l4.5 5.5L12 20.5 2.5 9.5z" fill="#5ad1f2"/><path d="M2.5 9.5h19M9.5 4L8 9.5l4 11M14.5 4L16 9.5l-4 11" stroke-width="1.3"/>');
+    return {
+      '\uD83D\uDC99': heart('#4f93f2', '#fff'),   // blue heart
+      '\uD83E\uDE76': heart('#9aa0a8', '#fff'),   // grey heart
+      '\uD83D\uDC9B': heart('#ffc93c', '#fff'),   // yellow heart
+      '\uD83D\uDC97': heart('#ff6eb4', '#fff'),   // pink heart
+      '\uD83D\uDC8E': gem                         // gem
+    };
+  })();
+  const emo = h => h.replace(/\uD83D\uDC99|\uD83E\uDE76|\uD83D\uDC9B|\uD83D\uDC97|\uD83D\uDC8E/g, e => GEM[e] || e);
+  function liHtml(t, app, kd, bold){
     const i = t.indexOf(': '), label = i > 0 ? t.slice(0, i) : t;
-    const ic = si === 0 ? EM(label, app) : '';
-    return ic ? '<li class="hv-it"><span class="hv-em">' + ic + '</span><span class="hv-tx">' + bold(t) + '</span></li>' : '<li>' + bold(t) + '</li>';
+    const ic = kd === 'collect' ? EM(label, app) : (kd === 'tv' || kd === 'pct') ? EM(label, app, kd) : '';
+    return ic ? '<li class="hv-it' + (kd === 'tv' ? ' tv' : '') + '"><span class="hv-em">' + ic + '</span><span class="hv-tx">' + bold(t) + '</span></li>' : '<li>' + bold(t) + '</li>';
   }
   function openInfo(name){
     const a = APPS.find(x => x.name === name); if(!a) return;
-    const secs = (INFO[name] && (INFO[name][LANG] || INFO[name].en)) || [];
-    const bold = t => { const i = t.indexOf(': '); return i > 0 ? '<b>' + esc(t.slice(0, i)) + '</b>' + esc(t.slice(i)) : esc(t); };
+    const secs = ((INFO[name] && (INFO[name][LANG] || INFO[name].en)) || []).slice();
+    const xi = secs.findIndex(sc => /^(Expires|วันหมดอายุ)$/.test(sc[0]));
+    secs.splice(xi < 0 ? secs.length : xi, 0, ...extraSecs(name));
+    const bold = t => { const i = t.indexOf(': '); return emo(i > 0 ? '<b>' + esc(t.slice(0, i)) + '</b>' + esc(t.slice(i)) : esc(t)); };
     $('hvInfoIco').src = a.icon; $('hvInfoName').textContent = name;
-    $('hvInfoBody').innerHTML = secs.map((sc, si) => '<div class="hv-sc"><h3>' + esc(sc[0]) + '</h3>' + (sc[1] ? '<p>' + esc(sc[1]) + '</p>' : '') + '<ul>' + sc[2].map(t => liHtml(t, name, si, bold)).join('') + '</ul></div>').join('');
+    $('hvInfoBody').innerHTML = secs.map((sc, si) => '<div class="hv-sc"><h3>' + esc(sc[0]) + '</h3>' + (sc[1] ? '<p>' + emo(esc(sc[1])) + '</p>' : '') + '<ul>' + sc[2].map(t => liHtml(t, name, sc[3] || (si === 0 ? 'collect' : ''), bold)).join('') + '</ul></div>').join('');
     const o = $('hvInfoOpen'), link = APP_LINKS[name];
     o.textContent = LANG === 'th' ? 'ไปที่' : 'Go to';
     if(link && /^https?:\/\//.test(link)){ o.href = link; o.classList.remove('off'); } else { o.removeAttribute('href'); o.classList.add('off'); }
