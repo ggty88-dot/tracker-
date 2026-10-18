@@ -2139,12 +2139,12 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     },
     'COOGOONG': {
       en: [
-        ['How to collect votes', '', ['First use: A pop-up will appear asking to set a 4-digit PIN', 'Attendance: Check in daily at Home page to receive Blue Hearts', 'Roulette: Spin the roulette 1 time', 'Mission: Play games', 'Watch & Get Reward: Watch 20 💙 / ad (every 10 mins)']],
+        ['How to collect votes', '', ['First use: A pop-up will appear asking to set a 4-digit PIN', 'Attendance: Check in daily at Home page to receive Blue Hearts', 'Roulette: Spin the roulette 1 time', 'Mission: Play games', 'Watch & Get Reward: 3 ads every 10 mins, 30 ads in total, 20 💙 / ad']],
         ['Voting details', '', ['Pre-vote & Fan Stage pick: Unlimited votes, 50 💙 = 1 vote', 'Fan’s stage pick trophy is 100% based on votes']],
         ['Expires', '', ['Blue hearts 💙: Expires in 30 days', 'Gold hearts 💛: Never expires']]
       ],
       th: [
-        ['วิธีสะสมโหวต', '', ['ครั้งแรกที่ใช้: จะมีป๊อปอัปให้ตั้ง PIN 4 หลัก', 'เช็คอิน: เช็คอินทุกวันที่หน้า Home เพื่อรับหัวใจสีฟ้า', 'รูเล็ต: หมุนรูเล็ตได้ 1 ครั้ง', 'ภารกิจ: เล่นเกม', 'Watch & Get Reward: รับ 20 💙 / โฆษณา (ทุก 10 นาที)']],
+        ['วิธีสะสมโหวต', '', ['ครั้งแรกที่ใช้: จะมีป๊อปอัปให้ตั้ง PIN 4 หลัก', 'เช็คอิน: เช็คอินทุกวันที่หน้า Home เพื่อรับหัวใจสีฟ้า', 'รูเล็ต: หมุนรูเล็ตได้ 1 ครั้ง', 'ภารกิจ: เล่นเกม', 'Watch & Get Reward: ทุก 10 นาทีดูได้ 3 โฆษณา รวมทั้งหมด 30 โฆษณา โฆษณาละ 20 💙']],
         ['รายละเอียดการโหวต', '', ['Pre-vote & Fan Stage pick: โหวตได้ไม่จำกัด 50 💙 = 1 โหวต', 'ถ้วยรางวัล Fan’s stage pick ตัดสินจากคะแนนโหวต 100%']],
         ['วันหมดอายุ', '', ['Blue hearts 💙: หมดอายุใน 30 วัน', 'Gold hearts 💛: ไม่มีวันหมดอายุ']]
       ]
@@ -2562,6 +2562,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     [].forEach.call(app.querySelectorAll('.hv-seg button'), b => b.classList.toggle('on', b.dataset.l === l));
     render(); drawGuide(); drawMe();
     if(l === 'th'){ walk(document.body); mo.observe(document.body, {childList:true, subtree:true, characterData:true}); }
+    fitMe();
   }
   app.querySelector('.hv-seg').addEventListener('click', e => { const b = e.target.closest('button'); if(b && b.dataset.l !== LANG) setLang(b.dataset.l); });
 
@@ -2573,8 +2574,22 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     window.scrollTo(0, 0);
     if(t === 'me') loadMe();
     render();
-    fitApps();
+    fitApps(); fitMe();
   }
+  /* My page: fill exactly one screen (no scrolling); rows share the height, the X credit is the last line */
+  function fitMe(){
+    const v = app.querySelector('.hv-view[data-v="me"]'); if(!v || v.hidden) return;
+    v.style.height = '';
+    const natural = v.offsetHeight;
+    const h = Math.floor(nav.getBoundingClientRect().top - v.getBoundingClientRect().top - window.scrollY - 10);
+    if(h <= natural) return;                                  // small screen: keep the natural height, page scrolls
+    v.style.height = h + 'px';
+    const over = document.documentElement.scrollHeight - window.innerHeight;
+    if(over > 0) v.style.height = Math.max(natural, h - over) + 'px';
+  }
+  window.addEventListener('resize', fitMe);
+  window.addEventListener('orientationchange', () => setTimeout(fitMe, 200));
+  if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitMe);
   /* make the App Vote grid fill exactly one screen (evenly spaced, no empty gap) */
   function fitApps(){
     const g = $('hvApps'); if(!g || !g.offsetParent) return;
@@ -2696,4 +2711,16 @@ input.pin-box[type=password].on{background:var(--blue-l)}
 .credit.mini{margin:0;padding:2px;border:0;background:none;font-size:.62rem;font-weight:700;color:#a3a6b3;gap:3px}
 .credit.mini .i{width:.9em;height:.9em;color:currentColor}
 .credit.mini:active{background:none;color:var(--blue)}
+</style>
+<style>
+/* ===== My page: one screen, no scrolling; rows share the free height ===== */
+.hv-view[data-v="me"]:not([hidden]){display:flex;flex-direction:column}
+.hv-view[data-v="me"] .hv-list{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;max-height:600px}
+.hv-view[data-v="me"] .hv-list>.hv-li{flex:1 1 auto}
+.hv-view[data-v="me"] .hv-credit{flex:none;margin-top:8px}
+</style>
+<style>
+/* ===== account dialog: one app per row ===== */
+#uBody .chips{flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:8px}
+#uBody .chip{width:100%}
 </style>
