@@ -2552,7 +2552,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   function loadMe(){
     const a = accName();
     if(!/^[A-Za-z0-9_]{1,40}$/.test(a)) return;
-    rpc('getCheckins', a).then(r => { if(r && r.ok){ CK = r; drawMe(); } }).catch(() => {});
+    rpc('getCheckins', a).then(r => { if(r && r.ok){ CK = r; drawMe(); } }).catch(() => {}).then(() => setTimeout(fitMe, 50));
   }
 
   /* ---------- language ---------- */
@@ -2574,7 +2574,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     window.scrollTo(0, 0);
     if(t === 'me') loadMe();
     render();
-    fitApps(); fitMe();
+    fitApps(); fitMe(); setTimeout(fitMe, 250); setTimeout(fitMe, 900);
   }
   /* My page: fill exactly one screen (no scrolling); rows share the height, the X credit is the last line */
   function fitMe(){
@@ -2589,6 +2589,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     root.classList.add('me-lock');                            // fits one screen: lock the page so it cannot scroll
   }
   window.addEventListener('resize', fitMe);
+  if(window.ResizeObserver){ try{ new ResizeObserver(() => { const v = app.querySelector('.hv-view[data-v="me"]'); if(v && !v.hidden && !document.documentElement.classList.contains('me-lock')) fitMe(); }).observe(app); }catch(e){} }
   window.addEventListener('orientationchange', () => setTimeout(fitMe, 200));
   if(document.fonts && document.fonts.ready) document.fonts.ready.then(fitMe);
   /* make the App Vote grid fill exactly one screen (evenly spaced, no empty gap) */
@@ -2718,6 +2719,8 @@ input.pin-box[type=password].on{background:var(--blue-l)}
 .hv-view[data-v="me"]:not([hidden]){display:flex;flex-direction:column}
 .hv-view[data-v="me"] .hv-list{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;max-height:none}
 body[data-tab="me"] .wrap{padding-bottom:0!important}
+/* Admin row: title as a small yellow pill (same look as the "No need to collect" tag) */
+.hv-view[data-v="me"] .hv-li[data-m="admin"] b{display:table;font-size:.72rem;line-height:1.4;padding:1px 10px;border-radius:99px;background:var(--sun-l);border:1px solid var(--line);color:var(--ink);margin-bottom:2px}
 html.me-lock,html.me-lock body{overflow:hidden;overscroll-behavior:none}
 .hv-view[data-v="me"] .hv-list>.hv-li{flex:1 1 auto}
 .hv-view[data-v="me"] .hv-credit{flex:none;margin-top:8px}
