@@ -340,6 +340,24 @@ const actions = {
     return { ok: true };
   },
 
+  // the signed-in fan's own profile: the account always comes from the session token, never from the request
+  async getMyProfile(token) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    const [list, days] = await Promise.all([loadAll(), cmd('SMEMBERS', ciKey(me.account))]);
+    const mine = list.filter(v => lc(v.account) === lc(me.account));      // newest first
+    const latest = [...latestMap(mine).values()].map(v => ({ app: v.app, count: v.count, ts: fmtTs(v.t) }));
+    return {
+      ok: true,
+      account: me.account,
+      created: me.created ? fmtTs(me.created) : '',
+      latest,
+      entries: mine.length,
+      checkins: (days || []).length,
+      last: mine[0] ? fmtTs(mine[0].t) : '',
+    };
+  },
+
   /* ----- admin: user management ----- */
   async adminListUsers(pw) {
     if (roleOf(pw) !== 'admin') return bad('Incorrect password');
