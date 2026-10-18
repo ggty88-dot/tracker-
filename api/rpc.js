@@ -212,6 +212,77 @@ async function checkinData(account, fresh) {
   return { ok: true, account, days, today, streak, fresh: !!fresh, apps, history };
 }
 
+
+/* ---------- levels (XP) ---------- */
+const XP_RULES = { checkin: 20, app: 10, full: 20 };     // check-in day / each app updated that day / all-apps bonus
+const LV_AT = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500];   // XP needed to reach LV.1 ... LV.10
+
+function levelOf(xp) {
+  let lv = 0;
+  for (let i = 0; i < LV_AT.length; i++) if (xp >= LV_AT[i]) lv = i;
+  const max = lv === LV_AT.length - 1;
+  const from = LV_AT[lv], to = max ? from : LV_AT[lv + 1];
+  return { xp, level: lv + 1, from, to, max, pct: max ? 100 : Math.floor(((xp - from) / (to - from)) * 100) };
+}
+
+// XP for several accounts at once (one read of the votes, one pipeline for the check-in sets)
+async function levelsFor(accounts) {
+  const want = [...new Set(accounts.map(lc))];
+  const out = {};
+  if (!want.length) return out;
+  const [list, ci] = await Promise.all([loadAll(), pipe(want.map(a => ['SMEMBERS', ciKey(a)]))]);
+  const per = {};
+  want.forEach(a => { per[a] = {}; });
+  for (const v of list) {
+    const a = lc(v.account);
+    if (!per[a]) continue;
+    const d = dayOf(v.t);
+    (per[a][d] = per[a][d] || new Set()).add(v.app);        // an app counts once per day
+  }
+  want.forEach((a, i) => {
+    let xp = (ci[i] || []).length * XP_RULES.checkin;
+    for (const s of Object.values(per[a])) {
+      xp += s.size * XP_RULES.app;
+      if (s.size >= APPS.length) xp += XP_RULES.full;
+    }
+    out[a] = levelOf(xp);
+  });
+  return out;
+}
+
+/* ---------- community ---------- */
+const KINDS = ['chat', 'ask', 'share'];
+const C_POSTS = 'cposts', C_SEQ = 'cposts:seq', C_FEED = 'cfeed';
+const POST_MAX = 1000, CMT_MAX = 300;
+const IMG_MAX = 450000;          // base64 characters (~330 KB jpeg)
+const PAGE = 12;
+const REPORT_HIDE = 3;           // this many different reports hide a post from the feed
+const isId = v => /^\d{1,12}$/.test(String(v == null ? '' : v));
+
+async function rateOk(acc, what, max, sec) {
+  const k = 'crate:' + what + ':' + lc(acc);
+  const n = Number(await cmd('INCR', k));
+  if (n === 1) await cmd('EXPIRE', k, sec);
+  return n <= max;
+}
+
+async function shapePosts(ids, me) {
+  if (!ids.length) return [];
+  const raws = (await cmd('HMGET', C_POSTS, ...ids)) || [];
+  const posts = raws.filter(Boolean).map(r => JSON.parse(r));
+  if (!posts.length) return [];
+  const meta = await pipe(posts.flatMap(p => [
+    ['SCARD', 'clikes:' + p.id], ['HLEN', 'ccm:' + p.id], ['SISMEMBER', 'clikes:' + p.id, lc(me.account)],
+  ]));
+  const lv = await levelsFor(posts.map(p => p.account));
+  return posts.map((p, i) => ({
+    id: p.id, account: p.account, kind: p.kind, text: p.text, img: !!p.img, t: p.t,
+    likes: Number(meta[i * 3]), comments: Number(meta[i * 3 + 1]), liked: Number(meta[i * 3 + 2]) === 1,
+    mine: lc(p.account) === lc(me.account),
+    lv: (lv[lc(p.account)] || levelOf(0)).level,
+  }));
+}
+
 /* ---------- actions ---------- */
 const actions = {
   async submitVote(token, acc, app, cnt) {
@@ -356,6 +427,136 @@ const actions = {
       checkins: (days || []).length,
       last: mine[0] ? fmtTs(mine[0].t) : '',
     };
+  },
+
+  /* ----- level ----- */
+  async getMyLevel(token) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    const lv = (await levelsFor([me.account]))[lc(me.account)];
+    return { ok: true, ...lv, rules: XP_RULES, ladder: LV_AT };
+  },
+
+  /* ----- community ----- */
+  async communityList(token, kind, offset) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    const feed = KINDS.includes(kind) ? C_FEED + ':' + kind : C_FEED;
+    const off = Math.max(0, Math.floor(Number(offset)) || 0);
+    const ids = (await cmd('ZREVRANGE', feed, off, off + PAGE)) || [];      // one extra id tells us there is more
+    const page = ids.slice(0, PAGE);
+    return { ok: true, more: ids.length > PAGE, next: off + page.length, posts: await shapePosts(page, me) };
+  },
+
+  async communityPost(token, kind, text, image) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    kind = KINDS.includes(kind) ? kind : 'chat';
+    text = String(text || '').replace(/\r\n/g, '\n').trim();
+    if (text.length > POST_MAX) return bad('Post is too long.');
+
+    let b64 = '';
+    if (image) {
+      const pre = 'data:image/jpeg;base64,';
+      b64 = String(image).startsWith(pre) ? String(image).slice(pre.length) : '';
+      if (!b64 || b64.length > IMG_MAX || !b64.startsWith('/9j/') || !/^[A-Za-z0-9+/=]+$/.test(b64)) return bad('Invalid or too large image.');
+    }
+    if (!text && !b64) return bad('Write something first.');
+    if (!(await rateOk(me.account, 'post', 10, 3600))) return bad('You are posting too fast. Please try again later.');
+
+    const id = Number(await cmd('INCR', C_SEQ));
+    const t = Date.now();
+    if (b64) await cmd('SET', 'cimg:' + id, b64);
+    const rec = { id, account: me.account, kind, text, img: !!b64, t };
+    await pipe([
+      ['HSET', C_POSTS, id, JSON.stringify(rec)],
+      ['ZADD', C_FEED, t, id],
+      ['ZADD', C_FEED + ':' + kind, t, id],
+    ]);
+    return { ok: true, post: (await shapePosts([String(id)], me))[0] };
+  },
+
+  async communityGet(token, id) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    if (!isId(id)) return bad('Post not found.');
+    const post = (await shapePosts([String(id)], me))[0];
+    if (!post) return bad('Post not found.');
+    const flat = (await cmd('HGETALL', 'ccm:' + id)) || [];
+    const cms = [];
+    for (let i = 1; i < flat.length; i += 2) cms.push(JSON.parse(flat[i]));
+    cms.sort((a, b) => a.t - b.t || a.id - b.id);
+    const lv = await levelsFor(cms.map(c => c.account));
+    return {
+      ok: true, post,
+      comments: cms.slice(-100).map(c => ({
+        id: c.id, account: c.account, text: c.text, t: c.t,
+        mine: lc(c.account) === lc(me.account), lv: (lv[lc(c.account)] || levelOf(0)).level,
+      })),
+    };
+  },
+
+  async communityComment(token, id, text) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    if (!isId(id) || !Number(await cmd('HEXISTS', C_POSTS, id))) return bad('Post not found.');
+    text = String(text || '').trim();
+    if (!text) return bad('Write something first.');
+    if (text.length > CMT_MAX) return bad('Comment is too long.');
+    if (!(await rateOk(me.account, 'cmt', 30, 3600))) return bad('You are commenting too fast. Please try again later.');
+    const cid = Number(await cmd('INCR', C_SEQ));
+    const c = { id: cid, account: me.account, text, t: Date.now() };
+    await cmd('HSET', 'ccm:' + id, cid, JSON.stringify(c));
+    const lv = (await levelsFor([me.account]))[lc(me.account)];
+    return { ok: true, comment: { ...c, mine: true, lv: lv.level } };
+  },
+
+  async communityLike(token, id) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    if (!isId(id) || !Number(await cmd('HEXISTS', C_POSTS, id))) return bad('Post not found.');
+    const k = 'clikes:' + id, a = lc(me.account);
+    const liked = !Number(await cmd('SISMEMBER', k, a));
+    await cmd(liked ? 'SADD' : 'SREM', k, a);
+    return { ok: true, liked, likes: Number(await cmd('SCARD', k)) };
+  },
+
+  // cid given -> delete that comment, otherwise delete the post (only the author can do either)
+  async communityDelete(token, id, cid) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    if (!isId(id)) return bad('Post not found.');
+    if (cid !== undefined && cid !== null && cid !== '') {
+      if (!isId(cid)) return bad('Comment not found.');
+      const raw = await cmd('HGET', 'ccm:' + id, cid);
+      if (!raw) return { ok: true };
+      if (lc(JSON.parse(raw).account) !== lc(me.account)) return MISMATCH;
+      await cmd('HDEL', 'ccm:' + id, cid);
+      return { ok: true };
+    }
+    const raw = await cmd('HGET', C_POSTS, id);
+    if (!raw) return { ok: true };
+    const p = JSON.parse(raw);
+    if (lc(p.account) !== lc(me.account)) return MISMATCH;
+    await pipe([
+      ['HDEL', C_POSTS, id], ['ZREM', C_FEED, id], ['ZREM', C_FEED + ':' + p.kind, id],
+      ['DEL', 'cimg:' + id], ['DEL', 'clikes:' + id], ['DEL', 'ccm:' + id], ['DEL', 'crep:' + id],
+    ]);
+    return { ok: true };
+  },
+
+  async communityReport(token, id) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    if (!isId(id)) return bad('Post not found.');
+    const raw = await cmd('HGET', C_POSTS, id);
+    if (!raw) return { ok: true, hidden: true };
+    const p = JSON.parse(raw);
+    await cmd('SADD', 'crep:' + id, lc(me.account));
+    const n = Number(await cmd('SCARD', 'crep:' + id));
+    const hidden = n >= REPORT_HIDE;
+    if (hidden) await pipe([['ZREM', C_FEED, id], ['ZREM', C_FEED + ':' + p.kind, id]]);
+    return { ok: true, hidden };
   },
 
   /* ----- admin: user management ----- */
