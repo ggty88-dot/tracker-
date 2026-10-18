@@ -339,7 +339,23 @@ const actions = {
       .filter(v => dayOf(v.t) === today)
       .sort((a, b) => a.t - b.t || a.id - b.id)
       .map(v => ({ id: v.id, account: v.account, app: v.app, time: timeOf(v.t) }));
-    return { ok: true, items };
+    // community posts + admin announcements from today (shown in Recent Activity next to the vote updates)
+    const community = [];
+    try {
+      const ids = (await cmd('ZREVRANGE', C_FEED, 0, 29)) || [];
+      const raws = ids.length ? ((await cmd('HMGET', C_POSTS, ...ids)) || []) : [];
+      raws.filter(Boolean).forEach(r => {
+        const p = JSON.parse(r);
+        if (dayOf(p.t) === today) community.push({ id: 'p' + p.id, c: 'post', account: p.account, time: timeOf(p.t), ts: p.t });
+      });
+      const flat = (await cmd('HGETALL', ANN)) || [];
+      for (let i = 1; i < flat.length; i += 2) {
+        const a = JSON.parse(flat[i]);
+        if (dayOf(a.t) === today) community.push({ id: 'a' + a.id, c: 'ann', account: a.account, time: timeOf(a.t), ts: a.t });
+      }
+      community.sort((x, y) => x.ts - y.ts);
+    } catch (e) { console.error(e); }
+    return { ok: true, items, community };
   },
 
   async getOverview() {
