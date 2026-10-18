@@ -1146,7 +1146,7 @@ $('dOk').addEventListener('click', () => {
 
   function fill(){
     while(items.length && track.children.length < NEED){
-      track.appendChild(rowEl(items[cur % items.length], false));
+      track.appendChild(rowEl(items[Math.floor(cur) % items.length], false));
       cur = (cur + 1) % items.length;
     }
   }
@@ -1165,7 +1165,7 @@ $('dOk').addEventListener('click', () => {
   function rebuild(freshIds){
     track.innerHTML = ''; off = 0; track.style.transform = '';
     if(scrolling()){
-      cur = Math.max(0, items.length - SHOW);   // begin with the latest entries in view
+      cur = Math.max(0, Math.floor(items.length - SHOW));   // whole index only: begin with the latest entries in view
       fill(); start();
     } else {
       stop();
@@ -1955,9 +1955,7 @@ tbody tr:hover td{background:#fafbff}
 .hv-qb:nth-child(4) .c{background:var(--blue);color:#fff}
 .hv-me{background:var(--blue-l);border-color:rgba(36,71,214,.25)}
 .hv-av{background:#fff}
-.hv-app:nth-child(3n+1){background:var(--blue-l)}
-.hv-app:nth-child(3n+2){background:#fff}
-.hv-app:nth-child(3n){background:var(--sun-l)}
+.hv-app,.hv-app:nth-child(n){background:#fff}
 .appcard:nth-child(3n+1){background:var(--blue-l)}
 .appcard:nth-child(3n+2){background:#fff}
 .appcard:nth-child(3n){background:var(--sun-l)}
