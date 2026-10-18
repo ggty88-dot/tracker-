@@ -1670,16 +1670,20 @@ img.stamp{display:block;object-fit:contain}
 .hv-em{flex:none;width:38px;height:38px;border-radius:13px;background:#fff;border:1px solid var(--line,rgba(20,20,20,.14));display:flex;align-items:center;justify-content:center}
 .hv-em svg{width:28px;height:28px;display:block}
 .hv-tx{min-width:0}
-/* ===== App Vote: 2 cards per row ===== */
-#hvApps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
-#hvApps .hv-app{margin-bottom:0!important;padding:12px 12px 10px!important;display:flex;flex-direction:column;min-width:0;box-sizing:border-box}
-#hvApps .hv-app .r{flex:1;flex-direction:column;align-items:stretch;gap:8px}
-#hvApps .hv-app .ico{width:46px;height:46px}
-#hvApps .hv-app .x{flex:none}
-#hvApps .hv-app .x b{font-size:.92rem;margin-bottom:5px;overflow-wrap:anywhere}
-#hvApps .hv-app .tag{white-space:normal;font-size:.68rem;padding:2px 8px;line-height:1.35}
-#hvApps .hv-app .hv-open.btn.sm{display:block;box-sizing:border-box;width:100%;text-align:center;margin-top:auto}
-#hvApps .hv-more{margin-top:10px}
+/* ===== App Vote: compact, 2 per row, fits one screen ===== */
+#hvApps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;align-items:stretch}
+#hvApps .hv-app{margin:0!important;padding:10px 11px 9px!important;border-radius:20px!important;display:flex;flex-direction:column;gap:7px;min-width:0;box-sizing:border-box}
+#hvApps .hv-app .r{display:grid;grid-template-columns:36px minmax(0,1fr);column-gap:8px;row-gap:6px;align-items:center}
+#hvApps .hv-app .ico{width:36px;height:36px;border-radius:11px}
+#hvApps .hv-app .x{display:contents}
+#hvApps .hv-app .tag{grid-column:1/-1}
+#hvApps .hv-app .x b{font-size:.86rem;margin:0;line-height:1.15;overflow-wrap:anywhere}
+#hvApps .hv-app .tag{display:block;width:max-content;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.62rem;padding:1px 8px;line-height:1.4;border-width:1px;box-sizing:border-box}
+#hvApps .hv-act{display:flex;align-items:center;justify-content:space-between;gap:6px}
+#hvApps .hv-act .hv-open.btn.sm{margin:0;padding:3px 14px 4px;font-size:.76rem;flex:none}
+#hvApps .hv-act .hv-more{margin:0;padding:0;border:0;font-size:.72rem;white-space:nowrap}
+#hvApps .hv-app.wide{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+#hvApps .hv-app.wide .r{flex:1;min-width:0}
 /* ===== inline icons replacing emoji (hearts / gems) ===== */
 .hv-g{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.22em;margin:0 1px;line-height:0}
 .hv-g svg{width:100%;height:100%;display:block}
@@ -1699,6 +1703,10 @@ img.stamp{display:block;object-fit:contain}
     'HIGHER':     'https://apps.apple.com/th/app/higher-%ED%95%98%EC%9D%B4%EC%96%B4/id1672001935',
     'MUNIVERSE':  'https://apps.apple.com/th/app/muniverse/id6749677921'
   };
+  // Mnet Plus: info-only card (no vote collecting, not part of the 6 tracked apps)
+  const MNET_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><defs><linearGradient id="mg" gradientUnits="userSpaceOnUse" x1="70" y1="0" x2="322" y2="0"><stop offset="0" stop-color="#f0137f"/><stop offset=".55" stop-color="#f0137f"/><stop offset=".8" stop-color="#b06cf2"/><stop offset="1" stop-color="#35cdef"/></linearGradient></defs><rect width="400" height="400" fill="#fff"/><path d="M268 132H140a70 70 0 0 0-70 70v28a70 70 0 0 0 70 70h112a70 70 0 0 0 70-70v-30" fill="none" stroke="url(#mg)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M148 256v-78l46 48 46-48v78" fill="none" stroke="#f0137f" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><path d="M322 96v38M303 115h38" stroke="#f0137f" stroke-width="13" stroke-linecap="round"/></svg>';
+  const MNET = {name: 'MNET PLUS', icon: 'data:image/svg+xml;utf8,' + encodeURIComponent(MNET_SVG)};
+  APP_LINKS['MNET PLUS'] = 'https://apps.apple.com/th/app/mnet-plus/id6443405421';
   // Voting info per app. Each section: [title, note, [items]]; an item "Label: text" shows the label in bold.
   const INFO = {
     'IDOLCHAMP': {
@@ -1761,6 +1769,14 @@ img.stamp{display:block;object-fit:contain}
         ['หมายเหตุ', '', ['ใช้อีเมลเดียวสะสมแต้มได้ทั้งสองแอป']]
       ]
     },
+    'MNET PLUS': {
+      en: [
+        ['Voting details', 'No need to collect votes', ['Device: 1 device = 1 ID', 'Votes: 1 ID = 5 votes (tap 5 times)']]
+      ],
+      th: [
+        ['รายละเอียดการโหวต', 'ไม่ต้องสะสมโหวต', ['อุปกรณ์: 1 เครื่อง = 1 ID', 'โหวต: 1 ID = 5 โหวต (กด 5 ครั้ง)']]
+      ]
+    },
     'COOGOONG': {
       en: [
         ['How to collect votes', '', ['First use: A pop-up will appear asking to set a 4-digit PIN', 'Attendance: Check in daily at Home page to receive Blue Hearts', 'Roulette: Spin the roulette 1 time', 'Mission: Play games', 'Watch & Get Reward: Watch 20 💙 / ad (every 10 mins)']],
@@ -1800,7 +1816,7 @@ img.stamp{display:block;object-fit:contain}
     'Quick Access':'เมนูลัด','Open voting apps':'เปิดแอปโหวต','Voting Guide':'คู่มือการโหวต','How to collect':'วิธีสะสมโหวต',
     'Daily Check-in':'เช็คอินประจำวัน','Check in for the day':'เช็คอินประจำวัน','Quick Update':'อัปเดตด่วน','Update your totals':'อัปเดตยอดโหวต',
     'Recent Activity':'กิจกรรมล่าสุด','No updates yet today.':'วันนี้ยังไม่มีการอัปเดต','Be the first to update!':'มาเป็นคนแรกกันเลย!',
-    'Go to':'ไปที่','Updated today ✓':'อัปเดตวันนี้แล้ว ✓','Not updated today':'วันนี้ยังไม่อัปเดต','Voting info':'วิธีสะสมโหวต',
+    'No need to collect':'ไม่ต้องสะสมโหวต','Go to':'ไปที่','Updated today ✓':'อัปเดตวันนี้แล้ว ✓','Not updated today':'วันนี้ยังไม่อัปเดต','Voting info':'วิธีสะสมโหวต',
     'Tap an app to see how to collect':'แตะที่แอปเพื่อดูวิธีสะสมโหวต',
     'Everyone’s updates from the last 3 days':'การอัปเดตของทุกคนย้อนหลัง 3 วัน',
     'Today':'วันนี้','Yesterday':'เมื่อวาน','2 days ago':'2 วันที่แล้ว','No updates':'ไม่มีการอัปเดต',
@@ -1979,14 +1995,17 @@ img.stamp{display:block;object-fit:contain}
 
   function drawApps(){
     const done = mineToday(), box = $('hvApps');
-    box.innerHTML = APPS.map(a => {
-      const d = done.has(a.name), link = APP_LINKS[a.name];
+    const card = (a, tagHtml, wide) => {
+      const link = APP_LINKS[a.name];
       const btn = link && /^https?:\/\//.test(link)
         ? '<a class="btn sm hv-open" href="' + esc(link) + '" target="_blank" rel="noopener">Go to</a>'
         : '<button class="btn sm hv-open" type="button" disabled>Go to</button>';
-      return '<div class="hv-app" data-app="' + esc(a.name) + '" role="button" tabindex="0"><div class="r"><img class="ico" src="' + a.icon + '" alt=""><div class="x"><b>' + esc(a.name) + '</b><span class="tag ' + (d ? 'ok' : 'old') + '">' + (d ? 'Updated today ✓' : 'Not updated today') + '</span></div>' + btn + '</div>' +
-        '<div class="hv-more"><span>Voting info</span>' + IC.chev + '</div></div>';
-    }).join('');
+      return '<div class="hv-app' + (wide ? ' wide' : '') + '" data-app="' + esc(a.name) + '" role="button" tabindex="0"><div class="r"><img class="ico" src="' + a.icon + '" alt=""><div class="x"><b>' + esc(a.name) + '</b>' + tagHtml + '</div></div>' +
+        '<div class="hv-act">' + btn + '<div class="hv-more"><span>Voting info</span>' + IC.chev + '</div></div></div>';
+    };
+    box.innerHTML = APPS.map(a => { const d = done.has(a.name);
+      return card(a, '<span class="tag ' + (d ? 'ok' : 'old') + '">' + (d ? 'Updated today ✓' : 'Not updated today') + '</span>', false); }).join('') +
+      card(MNET, '<span class="tag">No need to collect</span>', true);
   }
   const iov = document.createElement('div');
   iov.className = 'ov'; iov.id = 'hvInfoOv';
@@ -2067,7 +2086,8 @@ img.stamp{display:block;object-fit:contain}
     'MUNIVERSE':  'Show! Music Core',
     'COOGOONG':   'Music Bank',
     'HIGHER':     'Inkigayo',
-    'LINC / TIN': 'Inkigayo'
+    'LINC / TIN': 'Inkigayo',
+    'MNET PLUS':  'M Countdown'
   };
   const CRITERIA = {
     'IDOLCHAMP':  [['Pre-vote', '20%']],
@@ -2075,7 +2095,8 @@ img.stamp{display:block;object-fit:contain}
     'MUNIVERSE':  [['Pre-vote', '5%'], ['Live-vote', '3%']],
     'COOGOONG':   [['Pre-vote', '10%']],
     'LINC / TIN': [['Pre-vote', '5%']],
-    'HIGHER':     [['Live-vote', '5%']]
+    'HIGHER':     [['Live-vote', '5%']],
+    'MNET PLUS':  [['Pre-vote', '10%'], ['Live-vote', '10%']]
   };
   const EXTRA_TITLE = { en: ['Broadcast', 'Criteria'], th: ['รายการที่ออกอากาศ', 'เกณฑ์คะแนน'] };
   function extraSecs(name){
@@ -2084,33 +2105,32 @@ img.stamp{display:block;object-fit:contain}
     if(CRITERIA[name])  out.push([t[1], '', CRITERIA[name].map(c => c[0] + ': ' + c[1]), 'pct']);
     return out;
   }
-  /* emoji -> web-theme outline icons (original colors kept) */
+  /* emoji -> web-theme outline icons (original colors kept; Muniverse lumy = stars, Higher rubies = red) */
   const GEM = (function(){
     const w = b => '<span class="hv-g"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">' + b + '</svg></span>';
-    const heart = (c, hi) => w('<path d="M12 20.5S3.5 15 3.5 9.2A4.7 4.7 0 0 1 12 6.8a4.7 4.7 0 0 1 8.5 2.4C20.5 15 12 20.5 12 20.5z" fill="' + c + '"/><path d="M7 9.6a2.5 2.5 0 0 1 2-2.1" stroke="' + hi + '" stroke-width="1.5"/>');
-    const gem = w('<path d="M7 4h10l4.5 5.5L12 20.5 2.5 9.5z" fill="#5ad1f2"/><path d="M2.5 9.5h19M9.5 4L8 9.5l4 11M14.5 4L16 9.5l-4 11" stroke-width="1.3"/>');
-    return {
-      '\uD83D\uDC99': heart('#4f93f2', '#fff'),   // blue heart
-      '\uD83E\uDE76': heart('#9aa0a8', '#fff'),   // grey heart
-      '\uD83D\uDC9B': heart('#ffc93c', '#fff'),   // yellow heart
-      '\uD83D\uDC97': heart('#ff6eb4', '#fff'),   // pink heart
-      '\uD83D\uDC8E': gem                         // gem
+    const heart = c => w('<path d="M12 20.5S3.5 15 3.5 9.2A4.7 4.7 0 0 1 12 6.8a4.7 4.7 0 0 1 8.5 2.4C20.5 15 12 20.5 12 20.5z" fill="' + c + '"/><path d="M7 9.6a2.5 2.5 0 0 1 2-2.1" stroke="#fff" stroke-width="1.5"/>');
+    const star = c => w('<path d="M12 3.4l2.65 5.5 6 .85-4.4 4.2 1.08 6L12 17.1l-5.33 2.85 1.08-6-4.4-4.2 6-.85z" fill="' + c + '"/><path d="M10.2 8.4l1.7-2.5" stroke="#fff" stroke-width="1.4"/>');
+    const gem = c => w('<path d="M7 4h10l4.5 5.5L12 20.5 2.5 9.5z" fill="' + c + '"/><path d="M2.5 9.5h19M9.5 4L8 9.5l4 11M14.5 4L16 9.5l-4 11" stroke-width="1.3"/>');
+    const COL = {'\uD83D\uDC99': '#4f93f2', '\uD83E\uDE76': '#9aa0a8', '\uD83D\uDC9B': '#ffc93c', '\uD83D\uDC97': '#ff6eb4'};
+    return function(e, app){
+      if(e === '\uD83D\uDC8E') return gem(app === 'HIGHER' ? '#f2403a' : '#5ad1f2');
+      return (app === 'MUNIVERSE' ? star : heart)(COL[e]);
     };
   })();
-  const emo = h => h.replace(/\uD83D\uDC99|\uD83E\uDE76|\uD83D\uDC9B|\uD83D\uDC97|\uD83D\uDC8E/g, e => GEM[e] || e);
+  const emo = (h, app) => h.replace(/\uD83D\uDC99|\uD83E\uDE76|\uD83D\uDC9B|\uD83D\uDC97|\uD83D\uDC8E/g, e => GEM(e, app));
   function liHtml(t, app, kd, bold){
     const i = t.indexOf(': '), label = i > 0 ? t.slice(0, i) : t;
     const ic = kd === 'collect' ? EM(label, app) : (kd === 'tv' || kd === 'pct') ? EM(label, app, kd) : '';
     return ic ? '<li class="hv-it' + (kd === 'tv' ? ' tv' : '') + '"><span class="hv-em">' + ic + '</span><span class="hv-tx">' + bold(t) + '</span></li>' : '<li>' + bold(t) + '</li>';
   }
   function openInfo(name){
-    const a = APPS.find(x => x.name === name); if(!a) return;
+    const a = name === MNET.name ? MNET : APPS.find(x => x.name === name); if(!a) return;
     const secs = ((INFO[name] && (INFO[name][LANG] || INFO[name].en)) || []).slice();
     const xi = secs.findIndex(sc => /^(Expires|วันหมดอายุ)$/.test(sc[0]));
     secs.splice(xi < 0 ? secs.length : xi, 0, ...extraSecs(name));
-    const bold = t => { const i = t.indexOf(': '); return emo(i > 0 ? '<b>' + esc(t.slice(0, i)) + '</b>' + esc(t.slice(i)) : esc(t)); };
+    const bold = t => { const i = t.indexOf(': '); return emo(i > 0 ? '<b>' + esc(t.slice(0, i)) + '</b>' + esc(t.slice(i)) : esc(t), name); };
     $('hvInfoIco').src = a.icon; $('hvInfoName').textContent = name;
-    $('hvInfoBody').innerHTML = secs.map((sc, si) => '<div class="hv-sc"><h3>' + esc(sc[0]) + '</h3>' + (sc[1] ? '<p>' + emo(esc(sc[1])) + '</p>' : '') + '<ul>' + sc[2].map(t => liHtml(t, name, sc[3] || (si === 0 ? 'collect' : ''), bold)).join('') + '</ul></div>').join('');
+    $('hvInfoBody').innerHTML = secs.map((sc, si) => '<div class="hv-sc"><h3>' + esc(sc[0]) + '</h3>' + (sc[1] ? '<p>' + emo(esc(sc[1]), name) + '</p>' : '') + '<ul>' + sc[2].map(t => liHtml(t, name, sc[3] || (si === 0 ? 'collect' : ''), bold)).join('') + '</ul></div>').join('');
     const o = $('hvInfoOpen'), link = APP_LINKS[name];
     o.textContent = LANG === 'th' ? 'ไปที่' : 'Go to';
     if(link && /^https?:\/\//.test(link)){ o.href = link; o.classList.remove('off'); } else { o.removeAttribute('href'); o.classList.add('off'); }
