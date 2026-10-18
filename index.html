@@ -490,7 +490,7 @@ html[lang="th"] .hv-qb b{font-size:.9rem!important}
         <div class="mh"><img id="menuBear" alt=""><b id="menuAcc">Not set yet</b></div>
         <button class="mi" id="ciOpen" role="menuitem">Check-in</button>
         <a class="mi" id="certOpen" href="certificate.html" role="menuitem"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.5L7 21l5-3 5 3-1.5-7.5"/></svg>Certificate</a>
-        <button class="mi" id="fanOpen" role="menuitem"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>View data</button>
+        <button class="mi" id="fanOpen" role="menuitem"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>Fan access</button>
         <button class="mi" id="adminOpen" role="menuitem"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Admin</button>
         <button class="mi sep" id="switchAcc" role="menuitem"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13M13 4l4 4-4 4M20 16H7M11 12l-4 4 4 4"/></svg>Switch account</button>
       </div>
@@ -2183,7 +2183,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     'Not set yet':'ยังไม่ได้ตั้งค่า','Your account':'บัญชีของคุณ',
     'Updated today':'อัปเดตวันนี้','Check-ins this month':'เช็คอินเดือนนี้',
     'Update votes':'อัปเดตยอดโหวต','Certificate':'ใบประกาศ','Make your daily certificate':'สร้างใบประกาศประจำวัน',
-    'View data':'ดูข้อมูล','See all data':'ดูข้อมูลทั้งหมด','Admin':'แอดมิน','For admins':'สำหรับผู้ดูแล',
+    'See all data':'ดูข้อมูลทั้งหมด','Admin':'แอดมิน','For admins':'สำหรับผู้ดูแล',
     'Language':'ภาษา','Switch account':'เปลี่ยนบัญชี','Change Twitter account':'เปลี่ยนบัญชี Twitter',
     'Voting':'คู่มือ','Guide':'การโหวต',
     'Update':'อัปเดต','Votes':'ยอดโหวต','Voting as':'โหวตในชื่อ','Latest total votes':'ยอดโหวตรวมล่าสุด','e.g. 1500':'เช่น 1500',
@@ -2341,7 +2341,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
       li('mine', IC.hist, 'My activity', 'Your updates & stats') +
       li('guide', IC.doc, 'How to use', 'Steps for using this page') +
       li('pin', IC.lock, 'Change PIN', 'Update your 4-digit code') +
-      li('fan', IC.eye, 'View data', 'See all data') +
+      li('fan', IC.eye, 'Fan access', 'See all data') +
       li('admin', IC.lock, 'Admin', 'For admins') +
       '<div class="hv-li" style="cursor:default">' + IC.globe + '<span class="x"><b>Language</b></span><span class="hv-seg"><button type="button" data-l="en">English</button><button type="button" data-l="th">ไทย</button></span></div>' +
       li('sw', IC.swap, 'Switch account', 'Change Twitter account') +
@@ -2780,5 +2780,480 @@ input.pin-box[type=password].on{background:var(--blue-l)}
   history.replaceState({tab: curTab, ov: 0}, '');
   [].forEach.call(document.querySelectorAll('.ov.show'), function(el){ if(tracked(el)) order.push(el); });
   reconcile();
+})();
+</script>
+
+<style>
+/* ===== LEVELS + COMMUNITY (added) ===== */
+.lv-b{display:inline-flex;align-items:center;flex:none;padding:1px 9px 2px;border-radius:99px;font-family:var(--display);font-weight:400;font-size:.72rem;line-height:1.35;letter-spacing:.02em;white-space:nowrap;border:1px solid var(--line-2);background:#fff;color:var(--blue)}
+.lv-b[hidden]{display:none}
+.lv-b[data-tier="2"]{background:var(--blue-l);border-color:rgba(36,71,214,.25)}
+.lv-b[data-tier="3"]{background:var(--sun-l);color:var(--ink)}
+.lv-b[data-tier="4"]{background:var(--blue);border-color:var(--blue);color:#fff}
+.lv-b[data-tier="5"]{background:var(--ink);border-color:var(--ink);color:var(--butter)}
+
+/* My page: name row + level bar inside the profile card */
+.hv-me .lv-info{flex:1;min-width:0}
+.hv-me .lv-name{display:flex;align-items:center;gap:8px;min-width:0}
+.hv-me .lv-name b{min-width:0;flex:0 1 auto;max-width:none}
+.lv-tap{display:block;width:100%;margin-top:7px;padding:0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.lv-tap[hidden]{display:none}
+.lv-bar{display:block;height:9px;border-radius:99px;background:#fff;border:1px solid rgba(36,71,214,.22);overflow:hidden}
+.lv-bar i{display:block;height:100%;width:0;border-radius:99px;background-image:repeating-linear-gradient(-45deg,var(--blue) 0 8px,#5b7bf0 8px 16px);background-size:22.63px 22.63px;transition:width .9s cubic-bezier(.34,1.2,.5,1)}
+.lv-meta{display:flex;justify-content:space-between;gap:8px;margin-top:4px;font-weight:800;font-size:.68rem;color:#3c3f4d;line-height:1.2}
+.lv-meta b{display:inline;font-family:'Nunito','Itim',sans-serif;font-weight:800;font-size:inherit;color:var(--ink)}
+
+/* level dialog */
+.lvm .lvm-top{display:flex;align-items:center;gap:10px;margin:10px 0 6px}
+.lvm .lvm-top .lv-b{font-size:.95rem;padding:3px 14px 4px}
+.lvm .lvm-top .nm{font-family:var(--display);font-size:1.15rem;color:var(--blue)}
+.lvm h3{margin:16px 0 4px;font-family:var(--display);font-weight:400;font-size:1.05rem;color:var(--blue)}
+.lvm ul,.lvm ol{list-style:none;margin:0;padding:0}
+.lvm li{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-weight:700;font-size:.85rem;color:#3c3f4d}
+.lvm li:last-child{border-bottom:0}
+.lvm li .g{flex:1;min-width:0}
+.lvm li .p{flex:none;font-weight:800;color:var(--ink)}
+.lvm li.cur{background:var(--sun-l);border-radius:14px;padding-left:8px;padding-right:8px;border-bottom-color:transparent}
+.lvm li.lock{opacity:.55}
+.lv-toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);z-index:80;display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:99px;background:#fff;border:1px solid var(--line-2);box-shadow:var(--soft);font-family:var(--display);font-size:.95rem;transition:transform .45s cubic-bezier(.34,1.4,.5,1)}
+.lv-toast.show{transform:translate(-50%,0)}
+
+/* Community */
+.hv-view[data-v="community"]{padding-bottom:150px}
+.cm-chips{display:flex;gap:6px;margin:0 0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.cm-chips::-webkit-scrollbar{display:none}
+.cm-chip{flex:none;padding:6px 14px 7px;border-radius:99px;border:1px solid var(--line);background:#fff;font:inherit;font-weight:800;font-size:.8rem;color:#3c3f4d;cursor:pointer}
+.cm-chip.on{background:var(--blue-l);border-color:rgba(36,71,214,.3);color:var(--blue)}
+.cm-post{background:#fff;border:1px solid var(--line);border-radius:22px;padding:12px 14px 10px;margin-bottom:10px;cursor:pointer}
+.cm-head{display:flex;align-items:center;gap:10px}
+.cm-av{flex:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:1rem;color:var(--blue);border:1px solid var(--line)}
+.cm-who{flex:1;min-width:0}
+.cm-who .n{display:flex;align-items:center;gap:6px;min-width:0}
+.cm-who .n b{font-weight:800;font-size:.9rem;color:var(--blue);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cm-who small{display:flex;align-items:center;gap:6px;margin-top:1px;font-weight:700;font-size:.7rem;color:var(--muted)}
+.cm-kind{padding:0 8px;border-radius:99px;font-weight:800;font-size:.64rem;line-height:1.6;background:var(--blue-l);color:var(--blue)}
+.cm-kind.ask{background:var(--sun-l);color:var(--ink)}
+.cm-kind.share{background:#dcf5e1;color:#14391f}
+.cm-text{margin:9px 0 0;font-weight:700;font-size:.9rem;line-height:1.55;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.cm-post .cm-text{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.cm-img{display:block;width:100%;max-height:340px;object-fit:cover;margin-top:9px;border-radius:16px;border:1px solid var(--line);background:var(--blue-l)}
+.cm-det .cm-img{max-height:none;object-fit:contain}
+.cm-foot{display:flex;align-items:center;gap:4px;margin-top:8px}
+.cm-act{display:inline-flex;align-items:center;gap:5px;padding:5px 10px 5px 8px;border:0;border-radius:99px;background:none;font:inherit;font-weight:800;font-size:.78rem;color:#6b6e7c;cursor:pointer}
+.cm-act .hv-ic{width:18px;height:18px}
+.cm-act.on{color:var(--red)}
+.cm-act.on .hv-ic{fill:var(--red)}
+.cm-act.sp{margin-left:auto}
+.cm-empty{padding:34px 10px;text-align:center;color:var(--muted);font-weight:700;font-size:.88rem}
+.cm-empty b{display:block;margin-bottom:4px;font-family:var(--display);font-weight:400;font-size:1.1rem;color:var(--ink)}
+.cm-more{display:block;margin:6px auto 0;width:auto!important;padding:8px 22px 9px!important}
+.cm-fab{position:fixed;z-index:21;right:max(16px,calc(50vw - 204px));bottom:calc(76px + env(safe-area-inset-bottom,0px));width:54px;height:54px;border-radius:50%;border:0;background:var(--blue);color:#fff;display:none;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 20px rgba(36,71,214,.35)}
+.cm-fab svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round}
+.cm-fab:active{transform:scale(.94)}
+body[data-tab="community"] .cm-fab{display:flex}
+
+/* dialogs */
+.cm-kinds{display:flex;gap:6px;margin:10px 0}
+.cm-ta{display:block;width:100%;min-height:120px;resize:none;font:inherit;font-weight:700;font-size:.95rem;line-height:1.5;color:var(--ink);background:#fff;border:1px solid var(--line-2);border-radius:18px;padding:12px 14px;outline:none}
+.cm-ta:focus{border-color:var(--blue)}
+.cm-ta::placeholder{color:#9a9dab;font-weight:600}
+.cm-cnt{margin:4px 6px 0;text-align:right;font-weight:800;font-size:.68rem;color:var(--muted)}
+.cm-prev{position:relative;margin-top:8px}
+.cm-prev[hidden]{display:none}
+.cm-prev img{display:block;width:100%;max-height:220px;object-fit:cover;border-radius:16px;border:1px solid var(--line)}
+.cm-prev button{position:absolute;top:6px;right:6px;width:30px;height:30px;border-radius:50%;border:1px solid var(--line-2);background:#fff;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.cm-prev button svg{width:16px;height:16px;fill:none;stroke:var(--ink);stroke-width:2.6;stroke-linecap:round}
+.cm-tools{display:flex;align-items:center;gap:10px;margin-top:10px}
+.cm-photo{display:inline-flex;align-items:center;gap:6px;padding:7px 14px 8px;border-radius:99px;border:1px dashed var(--ink);background:none;font:inherit;font-weight:800;font-size:.82rem;color:var(--ink);cursor:pointer}
+.cm-photo .hv-ic{width:18px;height:18px;color:var(--blue)}
+.cm-tools .btn{margin:0 0 0 auto;width:auto;padding:8px 26px 9px;font-size:1rem}
+.cm-det .cm-post{border:0;padding:0;margin:0;cursor:default}
+.cm-det .cm-text{-webkit-line-clamp:unset;display:block}
+.cm-cl{margin-top:8px}
+.cm-cm{display:flex;gap:9px;padding:9px 0;border-top:1px solid var(--line)}
+.cm-cm .cm-av{width:30px;height:30px;font-size:.85rem}
+.cm-cm .b{flex:1;min-width:0}
+.cm-cm .n{display:flex;align-items:center;gap:6px;font-weight:800;font-size:.8rem;color:var(--blue)}
+.cm-cm .n em{font-style:normal;font-weight:700;font-size:.66rem;color:var(--muted)}
+.cm-cm p{margin:2px 0 0;font-weight:700;font-size:.85rem;line-height:1.45;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.cm-cm .x{align-self:flex-start;border:0;background:none;padding:2px;color:#9a9dab;cursor:pointer}
+.cm-cm .x svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.cm-cbox{display:flex;gap:8px;align-items:center;margin-top:10px}
+.cm-cbox input{flex:1;min-width:0;border-radius:99px!important;padding:10px 16px!important;font-size:.9rem!important}
+.cm-cbox .btn{margin:0;width:auto;padding:8px 18px 9px;font-size:.95rem}
+#cmDetOv .modal,#cmNewOv .modal{padding:16px 16px 18px}
+</style>
+<script>
+(function(){
+  'use strict';
+  if(typeof rpc !== 'function') return;
+
+  /* ---------- helpers ---------- */
+  const isTh = () => document.documentElement.lang === 'th';
+  const L = (en, th) => (isTh() ? th : en);
+  const svg = p => '<svg class="hv-ic" viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
+  const ICN = {
+    chat:  svg('<path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-4.5 3.5V17H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/>'),
+    heart: svg('<path d="M12 20.5S3.5 15 3.5 9.2A4.7 4.7 0 0 1 12 6.8a4.7 4.7 0 0 1 8.5 2.4C20.5 15 12 20.5 12 20.5z"/>'),
+    bubble:svg('<path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 3.5V16A2.5 2.5 0 0 1 4 13.5z"/>'),
+    trash: svg('<path d="M5 7h14M10 7V4.5h4V7M7 7l1 12.5h8L17 7M10 11v5M14 11v5"/>'),
+    flag:  svg('<path d="M6 21V4M6 5h11l-2 4 2 4H6"/>'),
+    photo: svg('<rect x="3.5" y="5" width="17" height="14" rx="3"/><circle cx="9" cy="10.5" r="1.8"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/>')
+  };
+  const X_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const el = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
+  const g = id => document.getElementById(id);
+  const toast = (msg) => {
+    let t = g('lvToast');
+    if(!t){ t = el('<div class="lv-toast" id="lvToast" role="status"></div>'); document.body.appendChild(t); }
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 3200);
+  };
+  const ago = ts => {
+    const s = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+    if(s < 60) return L('just now', 'เมื่อครู่');
+    if(s < 3600) { const m = Math.floor(s / 60); return L(m + 'm ago', m + ' นาทีที่แล้ว'); }
+    if(s < 86400) { const h = Math.floor(s / 3600); return L(h + 'h ago', h + ' ชม.ที่แล้ว'); }
+    if(s < 86400 * 7) { const d = Math.floor(s / 86400); return L(d + 'd ago', d + ' วันที่แล้ว'); }
+    return new Date(ts).toLocaleDateString(isTh() ? 'th-TH' : 'en-GB', {day:'numeric', month:'short'});
+  };
+
+  /* ---------- levels ---------- */
+  const LV_NAMES = [
+    ['Newbie','มือใหม่'], ['Fan','แฟนคลับ'], ['Voter','นักโหวต'], ['Dedicated','ตัวจริง'], ['Super Fan','ซูเปอร์แฟน'],
+    ['Star Voter','สตาร์โหวต'], ['Elite','อีลีท'], ['Master','มาสเตอร์'], ['Legend','ตำนาน'], ['Hall of Fame','หอเกียรติยศ']
+  ];
+  const lvName = n => { const x = LV_NAMES[Math.min(Math.max(n, 1), LV_NAMES.length) - 1]; return isTh() ? x[1] : x[0]; };
+  const tierOf = n => Math.min(5, Math.ceil(Math.max(1, n) / 2));
+  const badge = n => '<span class="lv-b" data-tier="' + tierOf(n) + '">LV.' + n + '</span>';
+  let LV = null;                                  // last level payload for me
+
+  const meCard = document.querySelector('.hv-view[data-v="me"] .hv-me');
+  const nameEl = g('hvMeName');
+  if(meCard && nameEl){
+    const info = nameEl.parentNode;
+    info.classList.add('lv-info');
+    const row = el('<div class="lv-name"></div>');
+    info.insertBefore(row, nameEl);
+    row.appendChild(nameEl);
+    row.insertAdjacentHTML('beforeend', '<span class="lv-b" id="lvBadge" hidden></span>');
+    info.insertAdjacentHTML('beforeend',
+      '<button type="button" class="lv-tap" id="lvTap" hidden>' +
+        '<span class="lv-bar"><i id="lvFill"></i></span>' +
+        '<span class="lv-meta"><span id="lvXp"></span><span id="lvNext"></span></span>' +
+      '</button>');
+  }
+
+  const lvOv = el('<div class="ov" id="lvOv"><div class="modal ci lvm">' +
+    '<div class="ci-head"><h2 id="lvTitle"></h2><button class="xbtn" type="button" id="lvClose" aria-label="Close">' + X_SVG + '</button></div>' +
+    '<div id="lvBody"></div></div></div>');
+  document.body.appendChild(lvOv);
+  g('lvClose').addEventListener('click', () => lvOv.classList.remove('show'));
+  lvOv.addEventListener('click', e => { if(e.target === lvOv) lvOv.classList.remove('show'); });
+
+  function drawLevel(){
+    if(!LV || !g('lvBadge')) return;
+    const b = g('lvBadge'); b.hidden = false; b.textContent = 'LV.' + LV.level; b.dataset.tier = tierOf(LV.level);
+    g('lvTap').hidden = false;
+    g('lvFill').style.width = Math.max(LV.max ? 100 : 4, LV.pct) + '%';
+    g('lvXp').innerHTML = '<b>' + fmt(LV.xp) + '</b>' + (LV.max ? ' XP' : ' / ' + fmt(LV.to) + ' XP');
+    g('lvNext').textContent = LV.max ? L('Max level', 'เลเวลสูงสุด') : L(fmt(LV.to - LV.xp) + ' XP to LV.' + (LV.level + 1), 'อีก ' + fmt(LV.to - LV.xp) + ' XP ถึง LV.' + (LV.level + 1));
+    window.dispatchEvent(new Event('resize'));     // let the My page re-fit one screen
+  }
+  function drawLevelDialog(){
+    if(!LV) return;
+    g('lvTitle').innerHTML = L('My <mark>Level</mark>', '<mark>เลเวล</mark>ของฉัน');
+    const r = LV.rules || {checkin:20, app:10, full:20};
+    const ladder = (LV.ladder || []).map((xp, i) => {
+      const n = i + 1, cls = n === LV.level ? 'cur' : (n > LV.level ? 'lock' : '');
+      return '<li class="' + cls + '">' + badge(n) + '<span class="g">' + esc(lvName(n)) + '</span><span class="p">' + fmt(xp) + ' XP</span></li>';
+    }).join('');
+    g('lvBody').innerHTML =
+      '<div class="lvm-top">' + badge(LV.level) + '<span class="nm">' + esc(lvName(LV.level)) + '</span></div>' +
+      '<div class="lv-tap" style="cursor:default"><span class="lv-bar"><i style="width:' + Math.max(LV.max ? 100 : 4, LV.pct) + '%"></i></span>' +
+      '<span class="lv-meta"><span><b>' + fmt(LV.xp) + '</b>' + (LV.max ? ' XP' : ' / ' + fmt(LV.to) + ' XP') + '</span><span>' +
+      (LV.max ? L('Max level', 'เลเวลสูงสุด') : L(fmt(LV.to - LV.xp) + ' XP to LV.' + (LV.level + 1), 'อีก ' + fmt(LV.to - LV.xp) + ' XP ถึง LV.' + (LV.level + 1))) + '</span></span></div>' +
+      '<h3>' + L('How to earn XP', 'วิธีเก็บ XP') + '</h3><ul>' +
+        '<li><span class="g">' + L('Daily check-in', 'เช็คอินประจำวัน') + '</span><span class="p">+' + r.checkin + ' XP</span></li>' +
+        '<li><span class="g">' + L('Update an app (once per app per day)', 'อัปเดตยอดแอป (นับ 1 ครั้งต่อแอปต่อวัน)') + '</span><span class="p">+' + r.app + ' XP</span></li>' +
+        '<li><span class="g">' + L('Update all 6 apps in one day (bonus)', 'อัปเดตครบทั้ง 6 แอปในวันเดียว (โบนัส)') + '</span><span class="p">+' + r.full + ' XP</span></li>' +
+      '</ul><h3>' + L('Levels', 'ระดับเลเวล') + '</h3><ol>' + ladder + '</ol>';
+  }
+  function loadLevel(){
+    rpc('getMyLevel').then(r => {
+      if(!r || !r.ok) return;
+      const prev = LV; LV = r; drawLevel();
+      const k = 'fv_lv_seen';
+      const seen = Number(store.get(k) || 0);
+      if(seen && r.level > seen) toast(L('Level up! LV.' + r.level + ' · ' + lvName(r.level), 'เลเวลอัป! LV.' + r.level + ' · ' + lvName(r.level)));
+      if(r.level !== seen) store.set(k, String(r.level));
+      if(lvOv.classList.contains('show')) drawLevelDialog();
+    }).catch(() => {});
+  }
+  if(g('lvTap')) g('lvTap').addEventListener('click', () => { drawLevelDialog(); lvOv.classList.add('show'); });
+
+  /* ---------- Community: tab + view ---------- */
+  const app = g('hvApp'), nav = document.querySelector('.hv-tabs');
+  if(!app || !nav) return;
+
+  const view = el('<div class="hv-view" data-v="community" hidden>' +
+    '<h2 class="hv-h" id="cmH"></h2><p class="hv-s" id="cmS"></p>' +
+    '<div class="cm-chips" id="cmChips"></div><div id="cmFeed"></div>' +
+    '<button type="button" class="btn ghost cm-more" id="cmMore" hidden></button></div>');
+  app.appendChild(view);
+
+  const tabBtn = el('<button type="button" data-t="community">' + ICN.chat + '<span id="cmTabLbl">Community</span></button>');
+  const meBtn = nav.querySelector('[data-t="me"]');
+  nav.insertBefore(tabBtn, meBtn);
+
+  const fab = el('<button type="button" class="cm-fab" id="cmFab" aria-label="New post"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>');
+  document.body.appendChild(fab);
+
+  const KINDS = ['chat', 'ask', 'share'];
+  const kindLbl = k => ({all: L('All','ทั้งหมด'), chat: L('Chat','คุยเล่น'), ask: L('Question','ถามตอบ'), share: L('Share','แชร์')})[k];
+  const AVC = ['#dde5ff', '#fff1b3', '#dcf5e1', '#ffe3ef', '#ece3ff'];
+  const avOf = a => { let h = 0; for(let i = 0; i < a.length; i++) h = (h * 31 + a.charCodeAt(i)) >>> 0; return '<span class="cm-av" style="background:' + AVC[h % AVC.length] + '">' + esc(a.charAt(0).toUpperCase()) + '</span>'; };
+
+  let filter = 'all', posts = [], next = 0, more = false, loading = false, loadedOnce = false;
+
+  function drawStatic(){
+    g('cmH').innerHTML = '<mark>' + L('Community', 'คอมมูนิตี้') + '</mark>';
+    g('cmS').textContent = L('Chat, ask and share with fellow fans', 'พูดคุย ถามตอบ และแชร์กับเพื่อนแฟนคลับ');
+    g('cmTabLbl').textContent = L('Community', 'คอมมูนิตี้');
+    g('cmChips').innerHTML = ['all'].concat(KINDS).map(k => '<button type="button" class="cm-chip' + (k === filter ? ' on' : '') + '" data-k="' + k + '">' + kindLbl(k) + '</button>').join('');
+    g('cmMore').textContent = L('Load more', 'ดูเพิ่มเติม');
+    fab.setAttribute('aria-label', L('New post', 'โพสต์ใหม่'));
+  }
+
+  function postHtml(p, full){
+    const mine = p.mine;
+    return '<article class="cm-post" data-id="' + p.id + '">' +
+      '<div class="cm-head">' + avOf(p.account) +
+        '<div class="cm-who"><div class="n"><b>@' + esc(p.account) + '</b>' + badge(p.lv) + '</div>' +
+        '<small>' + ago(p.t) + '<span class="cm-kind ' + p.kind + '">' + kindLbl(p.kind) + '</span></small></div></div>' +
+      (p.text ? '<p class="cm-text">' + esc(p.text) + '</p>' : '') +
+      (p.img ? '<img class="cm-img" loading="lazy" alt="" src="/api/img?id=' + p.id + '">' : '') +
+      '<div class="cm-foot">' +
+        '<button type="button" class="cm-act' + (p.liked ? ' on' : '') + '" data-a="like" aria-label="Like">' + ICN.heart + '<span>' + p.likes + '</span></button>' +
+        '<button type="button" class="cm-act" data-a="open" aria-label="Comments">' + ICN.bubble + '<span>' + p.comments + '</span></button>' +
+        '<button type="button" class="cm-act sp" data-a="' + (mine ? 'del' : 'rep') + '" aria-label="' + (mine ? 'Delete' : 'Report') + '">' + (mine ? ICN.trash : ICN.flag) + '</button>' +
+      '</div></article>';
+  }
+  function drawFeed(){
+    const box = g('cmFeed');
+    if(loading && !posts.length){ box.innerHTML = '<div class="cm-empty">' + L('Loading…', 'กำลังโหลด…') + '</div>'; }
+    else if(!posts.length){
+      box.innerHTML = '<div class="cm-empty"><b>' + L('No posts yet', 'ยังไม่มีโพสต์') + '</b>' + L('Tap + to start the conversation!', 'กด + เพื่อเริ่มคุยเป็นคนแรกกันเลย!') + '</div>';
+    } else box.innerHTML = posts.map(p => postHtml(p)).join('');
+    g('cmMore').hidden = !more;
+  }
+  function loadFeed(reset){
+    if(loading) return;
+    loading = true;
+    if(reset){ next = 0; if(!loadedOnce) posts = []; }
+    drawFeed();
+    rpc('communityList', filter, reset ? 0 : next).then(r => {
+      loading = false; loadedOnce = true;
+      if(r && r.ok){ posts = reset ? r.posts : posts.concat(r.posts); next = r.next; more = r.more; }
+      drawFeed();
+    }).catch(() => { loading = false; drawFeed(); });
+  }
+  const findPost = id => posts.find(p => String(p.id) === String(id));
+
+  function setLike(id, res){
+    const p = findPost(id); if(p){ p.liked = res.liked; p.likes = res.likes; }
+    if(curPost && String(curPost.id) === String(id)){ curPost.liked = res.liked; curPost.likes = res.likes; }
+  }
+  function toggleLike(id){
+    const p = findPost(id) || curPost; if(!p) return;
+    p.liked = !p.liked; p.likes += p.liked ? 1 : -1;          // optimistic
+    drawFeed(); drawDetail();
+    rpc('communityLike', id).then(r => { if(r && r.ok){ setLike(id, r); drawFeed(); drawDetail(); } }).catch(() => {});
+  }
+  function removePost(id){
+    if(!confirm(L('Delete this post?', 'ลบโพสต์นี้ไหม?'))) return;
+    rpc('communityDelete', id).then(r => {
+      if(r && r.ok){ posts = posts.filter(p => String(p.id) !== String(id)); detOv.classList.remove('show'); drawFeed(); }
+      else toast((r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ'));
+    });
+  }
+  function reportPost(id){
+    if(!confirm(L('Report this post?', 'รายงานโพสต์นี้ไหม?'))) return;
+    rpc('communityReport', id).then(r => {
+      if(r && r.ok){
+        toast(L('Thanks, we got your report.', 'ขอบคุณ ได้รับรายงานแล้ว'));
+        if(r.hidden){ posts = posts.filter(p => String(p.id) !== String(id)); detOv.classList.remove('show'); drawFeed(); }
+      } else toast((r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ'));
+    });
+  }
+  function act(a, id){
+    if(a === 'like') toggleLike(id);
+    else if(a === 'open') openDetail(id);
+    else if(a === 'del') removePost(id);
+    else if(a === 'rep') reportPost(id);
+  }
+  g('cmFeed').addEventListener('click', e => {
+    const card = e.target.closest('.cm-post'); if(!card) return;
+    const b = e.target.closest('[data-a]');
+    act(b ? b.dataset.a : 'open', card.dataset.id);
+  });
+  g('cmChips').addEventListener('click', e => {
+    const b = e.target.closest('[data-k]'); if(!b || b.dataset.k === filter) return;
+    filter = b.dataset.k; posts = []; loadedOnce = false; drawStatic(); loadFeed(true);
+  });
+  g('cmMore').addEventListener('click', () => loadFeed(false));
+
+  /* ---------- post detail + comments ---------- */
+  const detOv = el('<div class="ov" id="cmDetOv"><div class="modal ci cm-det">' +
+    '<div class="ci-head"><h2 id="cmDetT"></h2><button class="xbtn" type="button" id="cmDetX" aria-label="Close">' + X_SVG + '</button></div>' +
+    '<div id="cmDetBody"></div>' +
+    '<div class="cm-cbox"><input type="text" id="cmCIn" maxlength="300" autocomplete="off"><button type="button" class="btn sm" id="cmCSend"></button></div>' +
+    '</div></div>');
+  document.body.appendChild(detOv);
+  let curPost = null, curCms = [];
+  g('cmDetX').addEventListener('click', () => detOv.classList.remove('show'));
+  detOv.addEventListener('click', e => { if(e.target === detOv) detOv.classList.remove('show'); });
+
+  function cmHtml(c){
+    return '<div class="cm-cm" data-cid="' + c.id + '">' + avOf(c.account) +
+      '<div class="b"><div class="n">@' + esc(c.account) + badge(c.lv) + '<em>' + ago(c.t) + '</em></div><p>' + esc(c.text) + '</p></div>' +
+      (c.mine ? '<button type="button" class="x" data-del="' + c.id + '" aria-label="Delete">' + ICN.trash + '</button>' : '') + '</div>';
+  }
+  function drawDetail(){
+    if(!curPost || !detOv.classList.contains('show')) return;
+    g('cmDetT').innerHTML = L('<mark>Post</mark>', '<mark>โพสต์</mark>');
+    g('cmCIn').placeholder = L('Write a comment…', 'เขียนความคิดเห็น…');
+    g('cmCSend').textContent = L('Send', 'ส่ง');
+    g('cmDetBody').innerHTML = postHtml(curPost, true) +
+      '<div class="cm-cl">' + (curCms.length ? curCms.map(cmHtml).join('') :
+      '<div class="cm-empty" style="padding:16px 0 6px">' + L('No comments yet', 'ยังไม่มีความคิดเห็น') + '</div>') + '</div>';
+  }
+  function openDetail(id){
+    const p = findPost(id); if(!p) return;
+    curPost = Object.assign({}, p); curCms = [];
+    detOv.classList.add('show'); drawDetail();
+    rpc('communityGet', id).then(r => {
+      if(r && r.ok && curPost && String(curPost.id) === String(id)){ curPost = r.post; curCms = r.comments; drawDetail(); }
+    }).catch(() => {});
+  }
+  g('cmDetBody').addEventListener('click', e => {
+    const d = e.target.closest('[data-del]');
+    if(d){
+      if(!confirm(L('Delete this comment?', 'ลบความคิดเห็นนี้ไหม?'))) return;
+      rpc('communityDelete', curPost.id, d.dataset.del).then(r => {
+        if(r && r.ok){ curCms = curCms.filter(c => String(c.id) !== String(d.dataset.del)); syncCount(); drawDetail(); }
+      });
+      return;
+    }
+    const b = e.target.closest('[data-a]'); if(!b) return;
+    if(b.dataset.a === 'like') toggleLike(curPost.id);
+    else if(b.dataset.a === 'del') removePost(curPost.id);
+    else if(b.dataset.a === 'rep') reportPost(curPost.id);
+  });
+  function syncCount(){
+    curPost.comments = curCms.length;
+    const p = findPost(curPost.id); if(p){ p.comments = curCms.length; drawFeed(); }
+  }
+  let sending = false;
+  function sendComment(){
+    const inp = g('cmCIn'), text = inp.value.trim();
+    if(!text || sending || !curPost) return;
+    sending = true;
+    rpc('communityComment', curPost.id, text).then(r => {
+      sending = false;
+      if(r && r.ok){ inp.value = ''; curCms.push(r.comment); syncCount(); drawDetail(); const bd = detOv.querySelector('.modal'); bd.scrollTop = bd.scrollHeight; }
+      else toast((r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ'));
+    }).catch(() => { sending = false; });
+  }
+  g('cmCSend').addEventListener('click', sendComment);
+  g('cmCIn').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); sendComment(); } });
+
+  /* ---------- new post ---------- */
+  const newOv = el('<div class="ov" id="cmNewOv"><div class="modal ci">' +
+    '<div class="ci-head"><h2 id="cmNewT"></h2><button class="xbtn" type="button" id="cmNewX" aria-label="Close">' + X_SVG + '</button></div>' +
+    '<div class="cm-kinds" id="cmKinds"></div>' +
+    '<textarea class="cm-ta" id="cmTa" maxlength="1000"></textarea><div class="cm-cnt" id="cmCnt">0 / 1000</div>' +
+    '<div class="cm-prev" id="cmPrev" hidden><img alt=""><button type="button" id="cmPrevX" aria-label="Remove">' + X_SVG + '</button></div>' +
+    '<div class="msg" id="cmNewMsg"></div>' +
+    '<div class="cm-tools"><button type="button" class="cm-photo" id="cmPhoto">' + ICN.photo + '<span id="cmPhotoL"></span></button>' +
+    '<input type="file" id="cmFile" accept="image/*" hidden><button type="button" class="btn sm" id="cmPost"></button></div>' +
+    '</div></div>');
+  document.body.appendChild(newOv);
+  let nKind = 'chat', nImg = '', posting = false;
+  const PH = () => ({chat: L('Say something to the fans…', 'พูดคุยกับเพื่อนๆ แฟนคลับ…'), ask: L('Ask a question…', 'ถามเรื่องที่สงสัยได้เลย…'), share: L('Share a tip or news…', 'แชร์เคล็ดลับหรือข่าวสาร…')})[nKind];
+  function drawNew(){
+    g('cmNewT').innerHTML = L('New <mark>post</mark>', '<mark>โพสต์</mark>ใหม่');
+    g('cmKinds').innerHTML = KINDS.map(k => '<button type="button" class="cm-chip' + (k === nKind ? ' on' : '') + '" data-k="' + k + '">' + kindLbl(k) + '</button>').join('');
+    g('cmTa').placeholder = PH();
+    g('cmPhotoL').textContent = L('Add photo', 'เพิ่มรูปภาพ');
+    g('cmPost').textContent = posting ? L('Posting…', 'กำลังโพสต์…') : L('Post', 'โพสต์');
+  }
+  const newMsg = t => { const m = g('cmNewMsg'); m.className = t ? 'msg err' : 'msg'; m.textContent = t || ''; };
+  function openNew(){
+    nKind = KINDS.indexOf(filter) >= 0 ? filter : 'chat'; nImg = ''; posting = false;
+    g('cmTa').value = ''; g('cmCnt').textContent = '0 / 1000'; g('cmPrev').hidden = true; g('cmFile').value = ''; newMsg('');
+    drawNew(); newOv.classList.add('show');
+    setTimeout(() => g('cmTa').focus({preventScroll:true}), 80);
+  }
+  g('cmKinds').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if(b){ nKind = b.dataset.k; drawNew(); } });
+  g('cmTa').addEventListener('input', () => { g('cmCnt').textContent = g('cmTa').value.length + ' / 1000'; });
+  g('cmNewX').addEventListener('click', () => newOv.classList.remove('show'));
+  newOv.addEventListener('click', e => { if(e.target === newOv) newOv.classList.remove('show'); });
+  g('cmPhoto').addEventListener('click', () => g('cmFile').click());
+  g('cmPrevX').addEventListener('click', () => { nImg = ''; g('cmPrev').hidden = true; g('cmFile').value = ''; });
+
+  function compress(file){
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        const s = Math.min(1, 1000 / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.max(1, Math.round(img.naturalWidth * s)), h = Math.max(1, Math.round(img.naturalHeight * s));
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); x.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        let q = .76, out = c.toDataURL('image/jpeg', q);
+        while(out.length > 420000 && q > .35){ q -= .1; out = c.toDataURL('image/jpeg', q); }
+        out.length > 440000 ? rej(new Error('big')) : res(out);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('bad')); };
+      img.src = url;
+    });
+  }
+  g('cmFile').addEventListener('change', () => {
+    const f = g('cmFile').files && g('cmFile').files[0]; if(!f) return;
+    compress(f).then(d => { nImg = d; g('cmPrev').hidden = false; g('cmPrev').querySelector('img').src = d; newMsg(''); })
+      .catch(() => { nImg = ''; newMsg(L('Could not use that image. Try another one.', 'ใช้รูปนี้ไม่ได้ ลองรูปอื่นนะ')); });
+  });
+  g('cmPost').addEventListener('click', () => {
+    const text = g('cmTa').value.trim();
+    if(posting) return;
+    if(!text && !nImg){ newMsg(L('Write something first.', 'พิมพ์อะไรก่อนนะ')); return; }
+    posting = true; drawNew(); newMsg('');
+    rpc('communityPost', nKind, text, nImg).then(r => {
+      posting = false; drawNew();
+      if(r && r.ok){
+        newOv.classList.remove('show');
+        if(filter === 'all' || filter === r.post.kind){ posts.unshift(r.post); drawFeed(); }
+        window.scrollTo(0, 0);
+      } else newMsg((r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ'));
+    }).catch(() => { posting = false; drawNew(); newMsg(L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ')); });
+  });
+  fab.addEventListener('click', openNew);
+
+  /* ---------- wiring: tab changes, language, sign-in ---------- */
+  function onTab(){
+    const t = document.body.dataset.tab;
+    if(t === 'community') loadFeed(true);
+    if(t === 'me') loadLevel();
+  }
+  new MutationObserver(onTab).observe(document.body, {attributes:true, attributeFilter:['data-tab']});
+  new MutationObserver(() => {
+    drawStatic(); drawFeed(); drawLevel(); drawNew(); drawDetail();
+    if(lvOv.classList.contains('show')) drawLevelDialog();
+  }).observe(document.documentElement, {attributes:true, attributeFilter:['lang']});
+  document.addEventListener('fv:auth', () => { LV = null; posts = []; loadedOnce = false; store.set('fv_lv_seen', ''); if(document.body.dataset.tab === 'me') loadLevel(); if(document.body.dataset.tab === 'community') loadFeed(true); });
+
+  drawStatic(); drawFeed();
+  if(document.body.dataset.tab === 'me') loadLevel();
 })();
 </script>
