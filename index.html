@@ -392,6 +392,91 @@ a.xbtn{text-decoration:none}
 .ov-tile b span,.ov-tile b small{font-size:1em;font-weight:inherit;color:inherit}
 .ov-tile b small{color:#3c3f4d}
 </style>
+
+<style>
+/* ===== Layout pass: fill the screen, balanced (text never wraps/hides) ===== */
+body{min-height:100svh}
+.wrap{display:flex!important;flex-direction:column;min-height:calc(100svh - 32px)!important;
+  padding-top:max(14px,env(safe-area-inset-top))!important;
+  padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))!important}
+#hvApp{flex:1;display:flex;flex-direction:column;margin-bottom:0!important}
+#hvHome:not([hidden]){flex:1;display:flex;flex-direction:column}
+
+/* header */
+body[data-tab="home"] h1{margin:4px 0 4px!important;gap:4px!important}
+body[data-tab="home"] .mascot{width:56px!important}
+body[data-tab="home"] .t1{font-size:clamp(1.55rem,6.8vw,1.85rem)!important;line-height:1.1;white-space:nowrap}
+body[data-tab="home"] .t2{font-size:1.05rem!important;margin-top:4px!important}
+body[data-tab="home"] .sub-line{margin:0 0 16px!important;font-size:.85rem!important}
+
+/* stat tiles */
+.hv-tiles2{gap:10px}
+.hv-tile{padding:14px 12px!important;gap:10px!important;border-radius:24px}
+.hv-tile .c{width:42px!important;height:42px!important}
+.hv-tile b{font-size:2.1rem!important;line-height:1}
+.hv-tile small{font-size:.72rem!important;margin-top:3px}
+
+/* quick access */
+.hv-sec{margin:20px 4px 10px!important;font-size:1.15rem!important}
+.hv-q{gap:10px}
+.hv-qb{min-height:68px!important;padding:10px 12px!important;gap:10px!important;border-radius:22px!important;min-width:0}
+.hv-qb .c{width:38px!important;height:38px!important}
+.hv-qb>span:last-child{min-width:0;flex:1}
+.hv-qb b{font-size:.98rem!important;white-space:nowrap}
+.hv-qb small{display:block!important;font-size:.68rem!important;margin-top:2px!important;white-space:nowrap}
+
+/* recent activity: takes the remaining space */
+#hvHome .live{flex:1;display:flex;flex-direction:column;margin-top:18px!important;padding:14px 12px 10px!important;border-radius:26px;min-height:170px}
+.lh{font-size:1.1rem!important;margin:0 4px 8px!important}
+.lh .dot{width:10px;height:10px}
+#hvHome .lv{flex:1;height:auto!important;min-height:100px}
+.tr{height:48px!important;padding:5px 0!important}
+.pill{height:38px!important;gap:9px;padding:0 14px 0 6px!important;font-size:.85rem!important}
+.pill .ico{width:26px!important;height:26px!important}
+.pill .ap,.pill .tm{font-size:.72rem!important}
+.pill .crown{left:39px!important;top:2px!important}
+
+/* My page: link row */
+a.hv-li{text-decoration:none;color:var(--ink)}
+a.hv-li:active{background:var(--blue-l)}
+.hv-li .hv-x{fill:currentColor;stroke:none;width:1.2em;height:1.2em}
+.hv-li{padding:14px 16px!important}
+.hv-me{padding:18px!important}
+</style>
+
+<style>
+/* ===== App Vote: compact cards + info sheet ===== */
+.hv-app{cursor:pointer;padding:14px 14px 10px!important;margin-bottom:12px!important;border-radius:24px!important}
+.hv-app:active{transform:scale(.99)}
+.hv-more{display:flex;align-items:center;gap:2px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line);font-weight:800;font-size:.8rem;color:var(--blue)}
+.hv-more .hv-ic{width:1em;height:1em}
+.hv-ih{display:flex;align-items:center;gap:10px;min-width:0}
+.hv-ih .ico{width:38px;height:38px;border-radius:11px;border:1px solid var(--line)}
+.hv-ih h2{margin:0;font-size:1.25rem}
+#hvInfoBody{margin-top:6px}
+.hv-sc{margin-top:14px}
+.hv-sc h3{margin:0 0 2px;font-family:var(--display);font-weight:400;font-size:1.08rem;color:var(--blue)}
+.hv-sc p{margin:0 0 2px;font-size:.78rem;font-weight:800;color:var(--muted)}
+.hv-sc ul{list-style:none;margin:0;padding:0}
+.hv-sc li{padding:8px 0;border-bottom:1px solid var(--line);font-weight:700;font-size:.86rem;line-height:1.5;color:#3c3f4d}
+.hv-sc li:last-child{border-bottom:0}
+.hv-sc li b{color:var(--ink);font-weight:800}
+.hv-iopen{display:block;text-align:center;text-decoration:none;margin-top:18px!important}
+.hv-iopen.off{opacity:.45;pointer-events:none}
+#hvInfoOv .modal{display:flex;flex-direction:column;overflow:hidden;max-height:86vh;max-height:86svh;padding:20px 18px 18px}
+#hvInfoOv .ci-head{flex:none}
+#hvInfoBody{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;margin-top:2px;padding-bottom:4px}
+.hv-iopen{flex:none;margin-top:12px!important}
+.hv-sc li{padding:7px 0}
+
+</style>
+
+<style>
+/* Thai (Itim) renders smaller than Latin (Jua/Nunito): scale everything up a bit in Thai mode */
+html[lang="th"]{font-size:112.5%}
+html[lang="th"] .hv-qb b{font-size:.9rem!important}
+.hv-qb b,.hv-qb small{overflow:hidden;text-overflow:ellipsis;max-width:100%}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -432,8 +517,6 @@ a.xbtn{text-decoration:none}
       <div class="lv empty" id="liveBox" aria-live="off"><div class="tk" id="liveTrack"></div><div class="none">No updates yet today.<br>Be the first to update!</div></div>
     </div>
   </section>
-
-  <a class="credit" href="https://x.com/markleevotingth" target="_blank" rel="noopener noreferrer" aria-label="@markleevotingth on X"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>markleevotingth</a>
 
 </div>
 
@@ -894,8 +977,15 @@ $('dOk').addEventListener('click', () => {
 
 /* ---------- "Updated today" ticker ---------- */
 (function(){
-  const ROW = 40, VIEW = 120, SHOW = VIEW / ROW, NEED = SHOW + 2, SPEED = 22; // px per second
+  const ROW = 48, SPEED = 22; // px per second
+  let VIEW = 120, SHOW = VIEW / ROW, NEED = Math.ceil(SHOW) + 2;
   const box = $('liveBox'), track = $('liveTrack'), cnt = $('liveCnt');
+  function measure(){
+    const h = box.clientHeight; if(!h) return false;
+    const v = Math.max(ROW * 2, h); if(v === VIEW) return false;
+    VIEW = v; SHOW = VIEW / ROW; NEED = Math.ceil(SHOW) + 2; return true;
+  }
+  if(window.ResizeObserver) new ResizeObserver(() => { if(measure() && items.length) rebuild(new Set()); }).observe(box);
   const reduce = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
   let items = [], seen = new Map(), cur = 0, off = 0, last = 0, raf = 0, paused = false, first = true, busy = false;
   const k = r => r.account.toLowerCase() + '|' + r.app;
@@ -1576,17 +1666,88 @@ img.stamp{display:block;object-fit:contain}
   /* ================= EDIT HERE ================= */
   // Put each app's page link here (https://...). Empty = button disabled.
   const APP_LINKS = {
-    'IDOLCHAMP':  '',
-    'LINC / TIN': '',
-    'MUBEAT':     '',
-    'COOGOONG':   '',
-    'HIGHER':     '',
-    'MUNIVERSE':  ''
+    'IDOLCHAMP':  'https://apps.apple.com/th/app/idolchamp/id1185735018',
+    'LINC / TIN': 'https://apps.apple.com/th/app/linc-%EB%A7%81%ED%81%AC/id6467824343',
+    'MUBEAT':     'https://apps.apple.com/th/app/mubeat-for-kpop-lovers/id1320789688',
+    'COOGOONG':   'https://apps.apple.com/th/app/coogoong/id1641638840',
+    'HIGHER':     'https://apps.apple.com/th/app/higher-%ED%95%98%EC%9D%B4%EC%96%B4/id1672001935',
+    'MUNIVERSE':  'https://apps.apple.com/th/app/muniverse/id6749677921'
   };
-  // Voting info text per app (en / th). Defaults are placeholders; override like:
-  // INFO['MUBEAT'] = {en:'Step 1 ...', th:'ขั้นตอนที่ 1 ...'};
-  const INFO = {};
-  APPS.forEach(a => INFO[a.name] = {en:'Add voting instructions for ' + a.name + ' here.', th:'ใส่วิธีโหวต ' + a.name + ' ตรงนี้'});
+  // Voting info per app. Each section: [title, note, [items]]; an item "Label: text" shows the label in bold.
+  const INFO = {
+    'IDOLCHAMP': {
+      en: [
+        ['How to collect votes', '', ['Attendance: Daily check-in', 'Roulette: Watch ads to spin the roulette (10 times/day)', 'Mini Game: 2 games available to play to collect blue and pink hearts', 'Mission: Play games']],
+        ['Expires', '', ['Ruby Chamsim (Pink Heart): Expires in 90 days', 'Time Chamsim (Blue Heart): Expires at the end of each month']]
+      ],
+      th: [
+        ['วิธีสะสมโหวต', '', ['เช็คอิน: เช็คอินทุกวัน', 'รูเล็ต: ดูโฆษณาเพื่อหมุนรูเล็ต (10 ครั้ง/วัน)', 'มินิเกม: มี 2 เกมให้เล่นเพื่อสะสมหัวใจสีฟ้าและสีชมพู', 'ภารกิจ: เล่นเกม']],
+        ['วันหมดอายุ', '', ['Ruby Chamsim (หัวใจสีชมพู): หมดอายุใน 90 วัน', 'Time Chamsim (หัวใจสีฟ้า): หมดอายุสิ้นเดือนของทุกเดือน']]
+      ]
+    },
+    'MUNIVERSE': {
+      en: [
+        ['How to collect votes', '', ['Watch ads: Watch 20 ads/day (ad lumy 💙)', 'Mission: Play games (ad lumy 💙)', 'Attendance: Daily check-in (receive free lumy 🩶)', 'Roulette: Spin the roulette by purchasing Gold Lumy to use']],
+        ['Voting details', '', ['Pre-vote: Unlimited voting, uses 5 ad lumy 💙 per vote', 'Live-vote: 5 votes/account, limited, uses 50 ad lumy 💙 or 60 gold lumy 💛 per vote', 'Stage M pick: Limited to 10 votes/account/day, uses 10 ad lumy 💙 or 1 gold lumy 💛 per vote (Stage M pick trophy is 100% based on votes)']],
+        ['Expires', '', ['Free Lumy 🩶: Expires in 30 days', 'Ad Lumy 💙: Expires in 60 days', 'Gold Lumy 💛: Never expires']]
+      ],
+      th: [
+        ['วิธีสะสมโหวต', '', ['ดูโฆษณา: ดู 20 โฆษณา/วัน (ad lumy 💙)', 'ภารกิจ: เล่นเกม (ad lumy 💙)', 'เช็คอิน: เช็คอินทุกวัน (รับ free lumy 🩶)', 'รูเล็ต: ต้องซื้อ Gold Lumy เพื่อใช้หมุน']],
+        ['รายละเอียดการโหวต', '', ['Pre-vote: โหวตได้ไม่จำกัด ใช้ 5 ad lumy 💙 ต่อ 1 โหวต', 'Live-vote: จำกัด 5 โหวต/บัญชี ใช้ 50 ad lumy 💙 หรือ 60 gold lumy 💛 ต่อ 1 โหวต', 'Stage M pick: จำกัด 10 โหวต/บัญชี/วัน ใช้ 10 ad lumy 💙 หรือ 1 gold lumy 💛 ต่อ 1 โหวต (ถ้วยรางวัล Stage M pick ตัดสินจากคะแนนโหวต 100%)']],
+        ['วันหมดอายุ', '', ['Free Lumy 🩶: หมดอายุใน 30 วัน', 'Ad Lumy 💙: หมดอายุใน 60 วัน', 'Gold Lumy 💛: ไม่มีวันหมดอายุ']]
+      ]
+    },
+    'MUBEAT': {
+      en: [
+        ['How to collect votes', '', ['Watch ads: Watch 15 ads/day', 'Mission: Play games and complete missions', 'Quiz: Complete the quiz', 'Star Beat: Can be purchased to use for dice rolls or roulette spins']],
+        ['Voting details', '', ['Pre-vote: Unlimited votes', 'Live-vote: Use 150 💗 to exchange for 5 tickets']],
+        ['Expires', '', ['Heartbeats 💗: Expires in 60 days']]
+      ],
+      th: [
+        ['วิธีสะสมโหวต', '', ['ดูโฆษณา: ดู 15 โฆษณา/วัน', 'ภารกิจ: เล่นเกมและทำภารกิจให้สำเร็จ', 'ควิซ: ตอบควิซให้สำเร็จ', 'Star Beat: ซื้อเพื่อใช้ทอยลูกเต๋าหรือหมุนรูเล็ตได้']],
+        ['รายละเอียดการโหวต', '', ['Pre-vote: โหวตได้ไม่จำกัด', 'Live-vote: ใช้ 150 💗 แลกตั๋ว 5 ใบ']],
+        ['วันหมดอายุ', '', ['Heartbeats 💗: หมดอายุใน 60 วัน']]
+      ]
+    },
+    'HIGHER': {
+      en: [
+        ['How to collect votes', 'Accumulate 1,750 Rubies/account', ['Attendance: Daily check-in (Daily visit)', 'Lucky draw: Watch ads, random 20 times/day', 'Watch ads: Watch 50 ads/day', 'Mission: Play games']],
+        ['Voting details', '', ['Live-vote: Total use of 250 💎/account', 'Hot stage: Total use of 1,500 💎/account (Can vote 300 💎/day, Hot stage trophy is 100% based on votes)']],
+        ['Expires', '', ['Rubies from Check-in: Expires in 15 days', 'Rubies from Watching Ads: Expires in 30 days', 'Rubies from Missions: Expires in 90 days']]
+      ],
+      th: [
+        ['วิธีสะสมโหวต', 'สะสมให้ครบ 1,750 Rubies/บัญชี', ['เช็คอิน: เช็คอินทุกวัน (เข้าแอปทุกวัน)', 'Lucky draw: ดูโฆษณา สุ่มได้ 20 ครั้ง/วัน', 'ดูโฆษณา: ดู 50 โฆษณา/วัน', 'ภารกิจ: เล่นเกม']],
+        ['รายละเอียดการโหวต', '', ['Live-vote: ใช้รวม 250 💎/บัญชี', 'Hot stage: ใช้รวม 1,500 💎/บัญชี (โหวตได้ 300 💎/วัน ถ้วยรางวัล Hot stage ตัดสินจากคะแนนโหวต 100%)']],
+        ['วันหมดอายุ', '', ['Rubies จากเช็คอิน: หมดอายุใน 15 วัน', 'Rubies จากการดูโฆษณา: หมดอายุใน 30 วัน', 'Rubies จากภารกิจ: หมดอายุใน 90 วัน']]
+      ]
+    },
+    'LINC / TIN': {
+      en: [
+        ['How to collect votes', '', ['Roulette (on Linc app): Watch ads, spin the roulette 12 times/day (resets every 7:00 AM and 7:00 PM KST)', 'Watch ads (on Tin app): Watch ads 20 times/day (get 6 FP/ad)']],
+        ['Voting details', '', ['Pre-vote: Total use of 1,500 Fan points/account (can vote 10 times per day for 5 days)']],
+        ['Expires', '', ['Fan Point 💗: Expires in 180 days', 'Gem 💎: Never expires']],
+        ['Note', '', ['1 email can be used to collect points on both apps']]
+      ],
+      th: [
+        ['วิธีสะสมโหวต', '', ['รูเล็ต (แอป Linc): ดูโฆษณาเพื่อหมุนรูเล็ต 12 ครั้ง/วัน (รีเซ็ตทุก 7:00 และ 19:00 น. เวลาเกาหลี KST)', 'ดูโฆษณา (แอป Tin): ดู 20 ครั้ง/วัน (ได้ 6 FP/โฆษณา)']],
+        ['รายละเอียดการโหวต', '', ['Pre-vote: ใช้รวม 1,500 Fan points/บัญชี (โหวตได้ 10 ครั้งต่อวัน เป็นเวลา 5 วัน)']],
+        ['วันหมดอายุ', '', ['Fan Point 💗: หมดอายุใน 180 วัน', 'Gem 💎: ไม่มีวันหมดอายุ']],
+        ['หมายเหตุ', '', ['ใช้อีเมลเดียวสะสมแต้มได้ทั้งสองแอป']]
+      ]
+    },
+    'COOGOONG': {
+      en: [
+        ['How to collect votes', '', ['First use: A pop-up will appear asking to set a 4-digit PIN', 'Attendance: Check in daily at Home page to receive Blue Hearts', 'Roulette: Spin the roulette 1 time', 'Mission: Play games', 'Watch & Get Reward: Watch 20 💙 / ad (every 10 mins)']],
+        ['Voting details', '', ['Pre-vote & Fan Stage pick: 50 💙 = 1 vote', 'Fan’s stage pick trophy is 100% based on votes']],
+        ['Expires', '', ['Blue hearts 💙: Expires in 30 days', 'Gold hearts 💛: Never expires']]
+      ],
+      th: [
+        ['วิธีสะสมโหวต', '', ['ครั้งแรกที่ใช้: จะมีป๊อปอัปให้ตั้ง PIN 4 หลัก', 'เช็คอิน: เช็คอินทุกวันที่หน้า Home เพื่อรับหัวใจสีฟ้า', 'รูเล็ต: หมุนรูเล็ตได้ 1 ครั้ง', 'ภารกิจ: เล่นเกม', 'Watch & Get Reward: รับ 20 💙 / โฆษณา (ทุก 10 นาที)']],
+        ['รายละเอียดการโหวต', '', ['Pre-vote & Fan Stage pick: 50 💙 = 1 โหวต', 'ถ้วยรางวัล Fan’s stage pick ตัดสินจากคะแนนโหวต 100%']],
+        ['วันหมดอายุ', '', ['Blue hearts 💙: หมดอายุใน 30 วัน', 'Gold hearts 💛: ไม่มีวันหมดอายุ']]
+      ]
+    }
+  };
   const GUIDE = {
     en:[
       'Vote in each app as usual.',
@@ -1608,13 +1769,13 @@ img.stamp{display:block;object-fit:contain}
   /* ---------- Thai dictionary ---------- */
   const TH = {
     'Vote · Check-in · Certificate':'โหวต · เช็คอิน · ใบประกาศ',
-    'Home':'หน้าหลัก','App Vote':'โหวตแอป','History':'ประวัติ','My':'ของฉัน','App':'แอป','Vote':'โหวต',
+    'Home':'หน้าหลัก','More on X':'เพิ่มเติมบน X','Create yours today':'สร้างของคุณวันนี้','How to use':'วิธีใช้งาน','Steps for using this page':'ขั้นตอนการใช้งานหน้านี้','App Vote':'โหวตแอป','History':'ประวัติ','My':'ของฉัน','App':'แอป','Vote':'โหวต',
     'Participants today':'ผู้เข้าร่วมวันนี้','All-time participants':'ผู้เข้าร่วมทั้งหมด',
     'Quick Access':'เมนูลัด','Open voting apps':'เปิดแอปโหวต','Voting Guide':'คู่มือการโหวต','How to vote':'วิธีโหวต',
     'Daily Check-in':'เช็คอินประจำวัน','Check in for the day':'เช็คอินประจำวัน','Quick Update':'อัปเดตด่วน','Update your totals':'อัปเดตยอดโหวต',
     'Recent Activity':'กิจกรรมล่าสุด','No updates yet today.':'วันนี้ยังไม่มีการอัปเดต','Be the first to update!':'มาเป็นคนแรกกันเลย!',
     'Open app':'เปิดแอป','Updated today ✓':'อัปเดตวันนี้แล้ว ✓','Not updated today':'วันนี้ยังไม่อัปเดต','Voting info':'วิธีโหวต',
-    'Tap Voting info to see how to vote':'แตะ Voting info เพื่อดูวิธีโหวต',
+    'Tap an app to see how to vote':'แตะที่แอปเพื่อดูวิธีโหวต',
     'Everyone’s updates from the last 3 days':'การอัปเดตของทุกคนย้อนหลัง 3 วัน',
     'Today':'วันนี้','Yesterday':'เมื่อวาน','2 days ago':'2 วันที่แล้ว','No updates':'ไม่มีการอัปเดต',
     'Not set yet':'ยังไม่ได้ตั้งค่า','Your account':'บัญชีของคุณ',
@@ -1726,6 +1887,7 @@ img.stamp{display:block;object-fit:contain}
     globe: svg('<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>')
   };
   const qb = (k, ic, t, s) => '<button class="hv-qb" type="button" data-q="' + k + '"><span class="c">' + ic + '</span><span><b>' + t + '</b><small>' + s + '</small></span></button>';
+  const xlink = '<a class="hv-li" href="https://x.com/markleevotingth" target="_blank" rel="noopener noreferrer">' + svg('<path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>').replace('class="hv-ic"', 'class="hv-ic hv-x"') + '<span class="x"><b>More on X</b><small>@markleevotingth</small></span><span class="chv">' + IC.chev + '</span></a>';
   const li = (k, ic, t, s) => '<button class="hv-li" type="button" data-m="' + k + '">' + ic + '<span class="x"><b>' + t + '</b><small>' + s + '</small></span><span class="chv">' + IC.chev + '</span></button>';
 
   const app = document.createElement('div');
@@ -1739,12 +1901,12 @@ img.stamp{display:block;object-fit:contain}
     '<div class="hv-sec">' + IC.bolt + '<span>Quick Access</span></div>' +
     '<div class="hv-q">' +
       qb('vote', IC.grid, 'App Vote', 'Open voting apps') +
-      qb('guide', IC.doc, 'Voting Guide', 'How to vote') +
+      qb('cert', IC.cert, 'Certificate', 'Create yours today') +
       qb('ci', IC.cal, 'Daily Check-in', 'Check in for the day') +
       qb('upd', IC.bolt, 'Quick Update', 'Update your totals') +
     '</div>' +
   '</div>' +
-  '<div class="hv-view" data-v="vote" hidden><h2 class="hv-h">App <mark>Vote</mark></h2><p class="hv-s">Tap Voting info to see how to vote</p><div id="hvApps"></div></div>' +
+  '<div class="hv-view" data-v="vote" hidden><h2 class="hv-h">App <mark>Vote</mark></h2><p class="hv-s">Tap an app to see how to vote</p><div id="hvApps"></div></div>' +
   '<div class="hv-view" data-v="history" hidden><h2 class="hv-h"><mark>History</mark></h2><p class="hv-s">Everyone’s updates from the last 3 days</p>' +
     '<input class="hv-search" id="hvSearch" type="text" placeholder="Search Twitter account" autocomplete="off" autocapitalize="none" spellcheck="false"><div id="hvHist"></div></div>' +
   '<div class="hv-view" data-v="me" hidden>' +
@@ -1754,10 +1916,12 @@ img.stamp{display:block;object-fit:contain}
       li('upd', IC.bolt, 'Update votes', 'Update your totals') +
       li('ci', IC.cal, 'Daily Check-in', 'Check in for the day') +
       li('cert', IC.cert, 'Certificate', 'Make your daily certificate') +
+      li('guide', IC.doc, 'How to use', 'Steps for using this page') +
       li('fan', IC.eye, 'View data', 'See all data') +
       li('admin', IC.lock, 'Admin', 'For admins') +
       '<div class="hv-li" style="cursor:default">' + IC.globe + '<span class="x"><b>Language</b></span><span class="hv-seg"><button type="button" data-l="en">English</button><button type="button" data-l="th">ไทย</button></span></div>' +
       li('sw', IC.swap, 'Switch account', 'Change Twitter account') +
+      xlink +
     '</div>' +
   '</div>';
   anchor.after(app);
@@ -1789,15 +1953,31 @@ img.stamp{display:block;object-fit:contain}
 
   function drawApps(){
     const done = mineToday(), box = $('hvApps');
-    const open = new Set([].map.call(box.querySelectorAll('details[open]'), d => d.dataset.app));
     box.innerHTML = APPS.map(a => {
-      const i = INFO[a.name] || {}, d = done.has(a.name), link = APP_LINKS[a.name];
+      const d = done.has(a.name), link = APP_LINKS[a.name];
       const btn = link && /^https?:\/\//.test(link)
         ? '<a class="btn sm hv-open" href="' + esc(link) + '" target="_blank" rel="noopener">Open app</a>'
         : '<button class="btn sm hv-open" type="button" disabled>Open app</button>';
-      return '<div class="hv-app"><div class="r"><img class="ico" src="' + a.icon + '" alt=""><div class="x"><b>' + esc(a.name) + '</b><span class="tag ' + (d ? 'ok' : 'old') + '">' + (d ? 'Updated today ✓' : 'Not updated today') + '</span></div>' + btn + '</div>' +
-        '<details data-app="' + esc(a.name) + '"' + (open.has(a.name) ? ' open' : '') + '><summary>Voting info</summary><div class="hv-info">' + esc(i[LANG] || i.en || '') + '</div></details></div>';
+      return '<div class="hv-app" data-app="' + esc(a.name) + '" role="button" tabindex="0"><div class="r"><img class="ico" src="' + a.icon + '" alt=""><div class="x"><b>' + esc(a.name) + '</b><span class="tag ' + (d ? 'ok' : 'old') + '">' + (d ? 'Updated today ✓' : 'Not updated today') + '</span></div>' + btn + '</div>' +
+        '<div class="hv-more"><span>Voting info</span>' + IC.chev + '</div></div>';
     }).join('');
+  }
+  const iov = document.createElement('div');
+  iov.className = 'ov'; iov.id = 'hvInfoOv';
+  iov.innerHTML = '<div class="modal ci"><div class="ci-head"><div class="hv-ih"><img class="ico" id="hvInfoIco" alt=""><h2 id="hvInfoName"></h2></div><button class="xbtn" type="button" id="hvInfoClose" aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="hvInfoBody"></div><a class="btn hv-iopen" id="hvInfoOpen" target="_blank" rel="noopener">Open app</a></div>';
+  document.body.appendChild(iov);
+  $('hvInfoClose').addEventListener('click', () => iov.classList.remove('show'));
+  iov.addEventListener('click', e => { if(e.target === iov) iov.classList.remove('show'); });
+  function openInfo(name){
+    const a = APPS.find(x => x.name === name); if(!a) return;
+    const secs = (INFO[name] && (INFO[name][LANG] || INFO[name].en)) || [];
+    const bold = t => { const i = t.indexOf(': '); return i > 0 ? '<b>' + esc(t.slice(0, i)) + '</b>' + esc(t.slice(i)) : esc(t); };
+    $('hvInfoIco').src = a.icon; $('hvInfoName').textContent = name;
+    $('hvInfoBody').innerHTML = secs.map(sc => '<div class="hv-sc"><h3>' + esc(sc[0]) + '</h3>' + (sc[1] ? '<p>' + esc(sc[1]) + '</p>' : '') + '<ul>' + sc[2].map(t => '<li>' + bold(t) + '</li>').join('') + '</ul></div>').join('');
+    const o = $('hvInfoOpen'), link = APP_LINKS[name];
+    o.textContent = LANG === 'th' ? 'เปิดแอป' : 'Open app';
+    if(link && /^https?:\/\//.test(link)){ o.href = link; o.classList.remove('off'); } else { o.removeAttribute('href'); o.classList.add('off'); }
+    $('hvInfoBody').scrollTop = 0; iov.classList.add('show');
   }
   function drawHist(){
     const q = $('hvSearch').value.trim().replace(/^@+/, '').toLowerCase(), me = accName().toLowerCase();
@@ -1868,10 +2048,12 @@ img.stamp{display:block;object-fit:contain}
     guide: () => gov.classList.add('show')
   };
   app.addEventListener('click', e => {
+    const ap = e.target.closest('.hv-app'); if(ap && !e.target.closest('.hv-open')) return openInfo(ap.dataset.app);
     const g = e.target.closest('[data-go]'); if(g) return go(g.dataset.go);
     const q = e.target.closest('[data-q]'); if(q) return ACT[q.dataset.q]();
     const m = e.target.closest('[data-m]'); if(m) return ACT[m.dataset.m]();
   });
+  app.addEventListener('keydown', e => { if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('hv-app')){ e.preventDefault(); openInfo(e.target.dataset.app); } });
   $('hvSearch').addEventListener('input', () => { if(O) drawHist(); });
   $('gateOk').addEventListener('click', () => setTimeout(() => { CK = null; render(); loadMe(); }, 150));
 
