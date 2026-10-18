@@ -247,7 +247,9 @@ input:focus,.dd-btn:focus,.dd.open .dd-btn{box-shadow:none!important}
 @keyframes livepulse{0%{box-shadow:0 0 0 0 rgba(47,180,87,.5)}70%,100%{box-shadow:0 0 0 7px rgba(47,180,87,0)}}
 .lv{position:relative;height:120px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(transparent,#000 12%,#000 88%,transparent)}
 .lv.manual{overflow-y:auto}
-.tk{will-change:transform}
+.tk{will-change:transform;position:absolute;left:0;right:0;top:0} /* out of flow: the box is sized by the page, never by how many rows it holds */
+.lv.manual{overflow:hidden}
+.lv.manual .tk{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .tr{height:40px;padding:3px 0}
 .pill{height:34px;display:flex;align-items:center;gap:9px;padding:0 13px 0 6px;background:var(--paper);border:1px solid rgba(20,20,20,.14);border-radius:99px;font-weight:800;font-size:.85rem}
 .pill.new{animation:newrow 3.5s ease-out}
@@ -2647,4 +2649,19 @@ input.pin-box[type=password].on{background:var(--blue-l)}
 .u-pinrow input::placeholder{letter-spacing:0}
 #userOv .btn{margin-top:12px}
 #dashOv.users-tab #chipbar,#dashOv.users-tab #stats{display:none}
+</style>
+
+<style>
+/* ===== Change PIN dialog: square digit boxes, compact near-square card ===== */
+#cpOv .modal{
+  display:grid;grid-template-columns:92px 1fr;align-items:center;column-gap:10px;row-gap:10px;
+  max-width:350px;padding:20px;
+}
+#cpOv .modal>h2,#cpOv .modal>.hint,#cpOv .modal>.msg,#cpOv .modal>.row{grid-column:1/-1;margin:0}
+#cpOv .modal>h2{margin-bottom:-2px}
+#cpOv .modal>label{margin:0;font-size:.82rem;line-height:1.2;white-space:normal}
+#cpOv .pin{gap:8px;justify-content:flex-end}
+#cpOv input.pin-box[type=password]{width:42px;height:42px;border-radius:14px;font-size:1.4rem}
+#cpOv .modal>.msg:empty{display:none}
+#cpOv .modal>.row{margin-top:2px}
 </style>
