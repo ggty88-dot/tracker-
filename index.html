@@ -747,7 +747,7 @@ const store = {
 /* ---------- API (Vercel) ---------- */
 function showWho(){ const w = document.getElementById('ciWho'), i = document.getElementById('ciAcc'); if(!w || !i) return; const a = String(i.value || '').trim().replace(/^@+/, ''); w.textContent = a ? '@' + a : ''; w.hidden = !a; }
 // actions that act "as me" carry this device's session token as first argument
-const AUTHED = ['submitVote','getAccountSummary','checkIn','getCheckins','whoami','logout','changePin','getMyProfile','getMyLevel','communityList','communityPost','communityGet','communityComment','communityLike','communityDelete','communityReport','setAvatar','getLeaderboard'];
+const AUTHED = ['submitVote','getAccountSummary','checkIn','getCheckins','whoami','logout','changePin','getMyProfile','getMyLevel','communityList','communityPost','communityGet','communityComment','communityLike','communityDelete','communityReport','setAvatar','getLeaderboard','annList','annRead','annPost','annDelete'];
 function rpc(action, ...args){
   if(AUTHED.indexOf(action) >= 0) args = [store.get('fv_token') || ''].concat(args);
   return fetch('/api/rpc', {
@@ -2719,8 +2719,6 @@ input.pin-box[type=password].on{background:var(--blue-l)}
 .hv-view[data-v="me"]:not([hidden]){display:flex;flex-direction:column}
 .hv-view[data-v="me"] .hv-list{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;max-height:none}
 body[data-tab="me"] .wrap{padding-bottom:0!important}
-/* Admin row: title as a small yellow pill (same look as the "No need to collect" tag) */
-.hv-view[data-v="me"] .hv-li[data-m="admin"] b{display:table;font-size:.72rem;line-height:1.4;padding:1px 10px;border-radius:99px;background:var(--sun-l);border:1px solid var(--line);color:var(--ink);margin-bottom:2px}
 html.me-lock,html.me-lock body{overflow:hidden;overscroll-behavior:none}
 .hv-view[data-v="me"] .hv-list>.hv-li{flex:1 1 auto}
 .hv-view[data-v="me"] .hv-credit{flex:none;margin-top:8px}
@@ -2797,6 +2795,28 @@ html.me-lock,html.me-lock body{overflow:hidden;overscroll-behavior:none}
 .lv-b[data-tier="3"]{background:var(--sun-l);color:var(--ink)}
 .lv-b[data-tier="4"]{background:var(--blue);border-color:var(--blue);color:#fff}
 .lv-b[data-tier="5"]{background:var(--ink);border-color:var(--ink);color:var(--butter)}
+.lv-b.adm{background:var(--sun-l);border:1.5px solid #141414;color:#141414;font-size:.6rem;padding:0 7px 1px;line-height:1.4}
+/* Announcements (admin -> everyone), bell on the Community page */
+.hv-view[data-v="community"]{position:relative}
+.ann-bell{position:absolute;top:0;right:0;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.ann-bell .hv-ic{width:21px;height:21px}
+.ann-n{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:var(--red,#e5322d);color:#fff;font:800 .68rem/15px 'Nunito',sans-serif;text-align:center;box-sizing:border-box;border:2px solid #fff}
+.ann-n[hidden],.ann-dot[hidden]{display:none}
+.ann-dot{position:absolute;top:3px;left:calc(50% + 6px);width:10px;height:10px;border-radius:50%;background:var(--red,#e5322d);border:2px solid #fff;box-sizing:border-box}
+#annOv .modal{max-height:86vh;display:flex;flex-direction:column}
+.ann-list{overflow-y:auto;-webkit-overflow-scrolling:touch;margin:8px -4px 0;padding:0 4px;max-height:52vh}
+.ann-it{position:relative;padding:10px 12px;border:1px solid var(--line);border-radius:16px;background:#fff;margin-bottom:8px}
+.ann-it.new{background:var(--blue-l);border-color:rgba(36,71,214,.25)}
+.ann-it p{margin:0;font-weight:700;font-size:.9rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
+.ann-meta{display:flex;align-items:center;gap:8px;margin-top:6px;font-weight:800;font-size:.72rem;color:var(--muted)}
+.ann-meta .nw{padding:0 7px;border-radius:99px;background:var(--blue);color:#fff;font-size:.62rem;line-height:1.5}
+.ann-meta .dl{margin-left:auto;border:0;background:none;color:var(--muted);cursor:pointer;padding:2px}
+.ann-meta .dl .hv-ic{width:17px;height:17px}
+.ann-empty{padding:26px 10px;text-align:center;color:var(--muted);font-weight:700;font-size:.88rem}
+.ann-new{margin-top:6px}
+.ann-new .cm-ta{min-height:64px}
+.ann-new .row2{display:flex;align-items:center;gap:8px;margin-top:6px}
+.ann-new .row2 .cm-cnt{margin:0 auto 0 0}
 
 /* My page: name row + level bar inside the profile card */
 .hv-me .lv-info{flex:1;min-width:0}
@@ -2932,7 +2952,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     pen:   svg('<path d="M4 20l1-4L16.5 4.5a2 2 0 0 1 3 3L8 19z"/>'),
     photo: svg('<rect x="3.5" y="5" width="17" height="14" rx="3"/><circle cx="9" cy="10.5" r="1.8"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/>')
   };
-  const X_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  const X_SVG = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   const el = (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstChild; };
   const g = id => document.getElementById(id);
   const toast = (msg) => {
@@ -2958,7 +2978,7 @@ body[data-tab="community"] .cm-fab{display:flex}
   const lvName = n => { const x = LV_NAMES[Math.min(Math.max(n, 1), LV_NAMES.length) - 1]; return isTh() ? x[1] : x[0]; };
   const tierOf = n => Math.min(5, Math.ceil(Math.max(1, n) / 2));
   const badge = n => '<span class="lv-b" data-tier="' + tierOf(n) + '">LV.' + n + '</span>';
-  const tagOf = x => x.admin ? '<span class="lv-b" data-tier="5">ADMIN</span>' : badge(x.lv);
+  const tagOf = x => x.admin ? '<span class="lv-b adm" data-tier="5">ADMIN</span>' : badge(x.lv);
   let LV = null;                                  // last level payload for me
   let LB = null;                                  // leaderboard payload
 
@@ -3346,10 +3366,78 @@ body[data-tab="community"] .cm-fab{display:flex}
   });
   fab.addEventListener('click', openNew);
 
+  /* ---------- Announcements (admin -> everyone) ---------- */
+  const ANN = {items: [], unread: 0, last: 0, admin: false};
+  let annSeen = 0, annBusy = false;
+  const bell = el('<button type="button" class="ann-bell" id="annBell" aria-label="Announcements">' + svg('<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9z"/><path d="M10 19a2 2 0 0 0 4 0"/>') + '<span class="ann-n" id="annN" hidden></span></button>');
+  view.appendChild(bell);
+  const tabDot = el('<span class="ann-dot" hidden></span>');
+  tabBtn.appendChild(tabDot);
+  const annOv = el('<div class="ov" id="annOv"><div class="modal ci">' +
+    '<div class="ci-head"><h2 id="annT"></h2><button class="xbtn" type="button" id="annX" aria-label="Close">' + X_SVG + '</button></div>' +
+    '<div class="ann-list" id="annList"></div>' +
+    '<div class="ann-new" id="annNew" hidden><textarea class="cm-ta" id="annTa" maxlength="500"></textarea>' +
+    '<div class="msg" id="annMsg"></div>' +
+    '<div class="row2"><div class="cm-cnt" id="annCnt">0 / 500</div><button type="button" class="btn sm" id="annPost"></button></div></div>' +
+    '</div></div>');
+  document.body.appendChild(annOv);
+  function drawBadge(){
+    const n = ANN.unread;
+    g('annN').textContent = n > 9 ? '9+' : String(n); g('annN').hidden = !n; tabDot.hidden = !n;
+  }
+  function drawAnn(){
+    g('annT').innerHTML = L('<mark>Announcements</mark>', '<mark>ประกาศ</mark>');
+    g('annList').innerHTML = ANN.items.length ? ANN.items.map(x =>
+      '<div class="ann-it' + (x.id > annSeen ? ' new' : '') + '"><p>' + esc(x.text) + '</p><div class="ann-meta">' +
+      (x.id > annSeen ? '<span class="nw">' + L('New', 'ใหม่') + '</span>' : '') + '<span>' + ago(x.t) + '</span>' +
+      (ANN.admin ? '<button type="button" class="dl" data-del="' + x.id + '" aria-label="Delete">' + ICN.trash + '</button>' : '') +
+      '</div></div>').join('') : '<div class="ann-empty">' + L('No announcements yet', 'ยังไม่มีประกาศ') + '</div>';
+    g('annNew').hidden = !ANN.admin;
+    g('annTa').placeholder = L('Write an announcement for the fans…', 'เขียนประกาศถึงแฟน ๆ…');
+    g('annPost').textContent = annBusy ? L('Posting…', 'กำลังส่ง…') : L('Announce', 'ประกาศ');
+  }
+  function loadAnn(){
+    if(!store.get('fv_token')) return;
+    rpc('annList').then(r => {
+      if(r && r.ok){ ANN.items = r.items; ANN.unread = r.unread; ANN.last = r.last; ANN.admin = r.admin; if(annOv.classList.contains('show')) drawAnn(); drawBadge(); }
+    }).catch(() => {});
+  }
+  function openAnn(){
+    annSeen = ANN.last; g('annMsg').textContent = ''; drawAnn(); annOv.classList.add('show');
+    const top = ANN.items.reduce((m, x) => Math.max(m, x.id), 0);
+    if(ANN.unread){ ANN.unread = 0; ANN.last = top; drawBadge(); rpc('annRead').catch(() => {}); }
+  }
+  bell.addEventListener('click', openAnn);
+  g('annX').addEventListener('click', () => annOv.classList.remove('show'));
+  annOv.addEventListener('click', e => { if(e.target === annOv) annOv.classList.remove('show'); });
+  g('annTa').addEventListener('input', () => { g('annCnt').textContent = g('annTa').value.length + ' / 500'; });
+  g('annPost').addEventListener('click', () => {
+    const text = g('annTa').value.trim(), msg = g('annMsg');
+    if(!text || annBusy) return;
+    annBusy = true; msg.textContent = ''; drawAnn();
+    rpc('annPost', text).then(r => {
+      annBusy = false;
+      if(r && r.ok){
+        ANN.items.unshift(r.item); ANN.last = r.item.id; annSeen = Math.max(annSeen, r.item.id);
+        g('annTa').value = ''; g('annCnt').textContent = '0 / 500'; drawAnn(); toast(L('Announcement sent', 'ส่งประกาศแล้ว'));
+      } else { drawAnn(); msg.className = 'msg err'; msg.textContent = (r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ'); }
+    }).catch(() => { annBusy = false; drawAnn(); });
+  });
+  g('annList').addEventListener('click', e => {
+    const b = e.target.closest('[data-del]'); if(!b) return;
+    if(!window.confirm(L('Delete this announcement?', 'ลบประกาศนี้ไหม?'))) return;
+    const id = Number(b.dataset.del);
+    rpc('annDelete', id).then(r => { if(r && r.ok){ ANN.items = ANN.items.filter(x => x.id !== id); drawAnn(); } }).catch(() => {});
+  });
+  new MutationObserver(() => { if(annOv.classList.contains('show')) drawAnn(); }).observe(document.documentElement, {attributes:true, attributeFilter:['lang']});
+  setInterval(() => { if(!document.hidden) loadAnn(); }, 90000);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) loadAnn(); });
+  loadAnn();
+
   /* ---------- wiring: tab changes, language, sign-in ---------- */
   function onTab(){
     const t = document.body.dataset.tab;
-    if(t === 'community') loadFeed(true);
+    if(t === 'community'){ loadFeed(true); loadAnn(); }
     if(t === 'me') loadLevel();
   }
   new MutationObserver(onTab).observe(document.body, {attributes:true, attributeFilter:['data-tab']});
@@ -3357,7 +3445,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     drawStatic(); drawFeed(); drawLevel(); drawNew(); drawDetail();
     if(lvOv.classList.contains('show')) drawLevelDialog();
   }).observe(document.documentElement, {attributes:true, attributeFilter:['lang']});
-  document.addEventListener('fv:auth', () => { LV = null; myAcc = ''; myAv = 0; drawAvatar(); posts = []; loadedOnce = false; store.set('fv_lv_seen', ''); if(document.body.dataset.tab === 'me') loadLevel(); if(document.body.dataset.tab === 'community') loadFeed(true); });
+  document.addEventListener('fv:auth', () => { ANN.items = []; ANN.unread = 0; ANN.admin = false; drawBadge(); loadAnn(); LV = null; myAcc = ''; myAv = 0; drawAvatar(); posts = []; loadedOnce = false; store.set('fv_lv_seen', ''); if(document.body.dataset.tab === 'me') loadLevel(); if(document.body.dataset.tab === 'community') loadFeed(true); });
 
   drawStatic(); drawFeed();
   if(document.body.dataset.tab === 'me') loadLevel();
