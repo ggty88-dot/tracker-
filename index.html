@@ -750,7 +750,7 @@ const store = {
 /* ---------- API (Vercel) ---------- */
 function showWho(){ const w = document.getElementById('ciWho'), i = document.getElementById('ciAcc'); if(!w || !i) return; const a = String(i.value || '').trim().replace(/^@+/, ''); w.textContent = a ? '@' + a : ''; w.hidden = !a; }
 // actions that act "as me" carry this device's session token as first argument
-const AUTHED = ['submitVote','getAccountSummary','checkIn','getCheckins','whoami','logout','changePin','getMyProfile','getMyLevel','communityList','communityPost','communityGet','communityComment','communityLike','communityDelete','communityReport','setAvatar','getLeaderboard','annList','annRead','annPost','annDelete','chatList','chatSend','chatDelete'];
+const AUTHED = ['submitVote','getAccountSummary','checkIn','getCheckins','whoami','logout','changePin','getMyProfile','getMyLevel','communityList','communityPost','communityGet','communityComment','communityLike','communityDelete','communityReport','communitySeen','setAvatar','getLeaderboard','annList','annRead','annPost','annDelete','chatList','chatSend','chatDelete'];
 function rpc(action, ...args){
   if(AUTHED.indexOf(action) >= 0) args = [store.get('fv_token') || ''].concat(args);
   return fetch('/api/rpc', {
@@ -2957,8 +2957,10 @@ html.chat-lock,html.chat-lock body{overflow:hidden;overscroll-behavior:none}
 .ann-n{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:var(--red,#e5322d);color:#fff;font:800 .68rem/15px 'Nunito',sans-serif;text-align:center;box-sizing:border-box;border:2px solid #fff}
 .ann-n[hidden],.ann-dot[hidden]{display:none}
 .ann-dot{position:absolute;top:0;left:calc(50% + 3px);min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:var(--red,#e5322d);border:2px solid #fff;box-sizing:border-box;color:#fff;font:800 .62rem/14px 'Nunito',sans-serif;text-align:center}
-#annOv .modal{max-height:86vh;display:flex;flex-direction:column}
-.ann-list{overflow-y:auto;-webkit-overflow-scrolling:touch;margin:8px -4px 0;padding:0 4px;max-height:52vh}
+#annOv .modal{max-height:86vh;max-height:86svh;display:flex;flex-direction:column;overflow:hidden}
+#annOv .ci-head{flex:none}
+.ann-list{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;margin:8px -4px 0;padding:0 4px}
+.ann-new{flex:none}
 .ann-it{position:relative;padding:10px 12px;border:1px solid var(--line);border-radius:16px;background:#fff;margin-bottom:8px}
 .ann-it.new{background:var(--blue-l);border-color:rgba(36,71,214,.25)}
 .ann-it p{margin:0;font-weight:700;font-size:.9rem;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
@@ -2968,7 +2970,7 @@ html.chat-lock,html.chat-lock body{overflow:hidden;overscroll-behavior:none}
 .ann-meta .dl .hv-ic{width:17px;height:17px}
 .ann-empty{padding:26px 10px;text-align:center;color:var(--muted);font-weight:700;font-size:.88rem}
 .ann-new{margin-top:6px}
-.ann-new .cm-ta{min-height:64px}
+.ann-new .cm-ta{min-height:52px;height:52px}
 .ann-new .row2{display:flex;align-items:center;gap:8px;margin-top:6px}
 .ann-new .row2 .cm-cnt{margin:0 auto 0 0}
 
@@ -3013,6 +3015,8 @@ html.chat-lock,html.chat-lock body{overflow:hidden;overscroll-behavior:none}
 .cm-who small{display:flex;align-items:center;gap:6px;margin-top:1px;font-weight:700;font-size:.7rem;color:var(--muted)}
 .cm-kind{padding:0 8px;border-radius:99px;font-weight:800;font-size:.64rem;line-height:1.6;background:var(--blue-l);color:var(--blue)}
 .cm-kind.ask{background:var(--sun-l);color:var(--ink)}
+.cm-kind.ann{background:var(--sun-l);color:var(--ink)}
+.cm-post.new{background:#fffbe3;border-color:#f0e3a3}
 .cm-kind.share{background:#dcf5e1;color:#14391f}
 .cm-text{margin:9px 0 0;font-weight:700;font-size:.9rem;line-height:1.55;color:var(--ink);white-space:pre-wrap;overflow-wrap:anywhere}
 .cm-post .cm-text{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
@@ -3291,7 +3295,7 @@ body[data-tab="community"] .cm-fab{display:flex}
   document.body.appendChild(fab);
 
   const KINDS = ['chat', 'ask', 'share'];
-  const kindLbl = k => ({all: L('All','ทั้งหมด'), chat: L('Chat','คุยเล่น'), ask: L('Question','ถามตอบ'), share: L('Share','แชร์')})[k];
+  const kindLbl = k => ({all: L('All','ทั้งหมด'), chat: L('Chat','คุยเล่น'), ask: L('Question','ถามตอบ'), share: L('Share','แชร์'), ann: L('Announcement','ประกาศ')})[k];
   const AVC = ['#dde5ff', '#fff1b3', '#dcf5e1', '#ffe3ef', '#ece3ff'];
   const avOf = (a, v) => { if(v) return '<span class="cm-av img"><img alt="" loading="lazy" src="/api/img?u=' + encodeURIComponent(a) + '&v=' + v + '"></span>'; let h = 0; for(let i = 0; i < a.length; i++) h = (h * 31 + a.charCodeAt(i)) >>> 0; return '<span class="cm-av" style="background:' + AVC[h % AVC.length] + '">' + esc(a.charAt(0).toUpperCase()) + '</span>'; };
 
@@ -3308,7 +3312,7 @@ body[data-tab="community"] .cm-fab{display:flex}
 
   function postHtml(p, full){
     const mine = p.canDel || p.mine;
-    return '<article class="cm-post" data-id="' + p.id + '">' +
+    return '<article class="cm-post' + (!full && isNew(p) ? ' new' : '') + '" data-id="' + p.id + '">' +
       '<div class="cm-head">' + avOf(p.account, p.av) +
         '<div class="cm-who"><div class="n"><b>@' + esc(p.account) + '</b>' + tagOf(p) + '</div>' +
         '<small>' + ago(p.t) + '<span class="cm-kind ' + p.kind + '">' + kindLbl(p.kind) + '</span></small></div></div>' +
@@ -3592,7 +3596,16 @@ body[data-tab="community"] .cm-fab{display:flex}
   if(window.visualViewport) window.visualViewport.addEventListener('resize', fitChat);
 
   /* ---------- Announcements (admin -> everyone) ---------- */
-  const ANN = {items: [], unread: 0, last: 0, admin: false};
+  const ANN = {items: [], unread: 0, last: 0, admin: false, pnew: 0, ready: false};
+  let PSEEN = 0, ySince = null, seenBusy = false;     // last Community visit (server), baseline for the pale-yellow "unread" posts
+  const inCm = () => document.body.dataset.tab === 'community';
+  // unread = someone else's post newer than the last visit; an announcement post stays unread until the bell is opened
+  const isNew = p => !p.mine && (p.kind === 'ann' ? ANN.ready && (p.annId || 0) > ANN.last : (ySince !== null && p.t > ySince));
+  function markSeen(){
+    if(seenBusy || !store.get('fv_token')) return;
+    seenBusy = true;
+    rpc('communitySeen').then(r => { seenBusy = false; if(r && r.ok){ if(r.t > PSEEN) PSEEN = r.t; ANN.pnew = 0; drawBadge(); } }).catch(() => { seenBusy = false; });
+  }
   let annSeen = 0, annBusy = false, annAuto = false, annAutoDone = false;
   const bell = el('<button type="button" class="ann-bell" id="annBell" aria-label="Announcements">' + svg('<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9z"/><path d="M10 19a2 2 0 0 0 4 0"/>') + '<span class="ann-n" id="annN" hidden></span></button>');
   view.appendChild(bell);
@@ -3616,9 +3629,9 @@ body[data-tab="community"] .cm-fab{display:flex}
     '</div></div>');
   document.body.appendChild(annOv);
   function drawBadge(){
-    const n = ANN.unread;
-    const s = n > 9 ? '9+' : String(n);
-    g('annN').textContent = s; g('annN').hidden = !n; tabDot.textContent = s; tabDot.hidden = !n;
+    const n = ANN.unread, t = n + (ANN.pnew || 0);                 // bell: unopened announcements; tab: those + unread posts
+    const s = n > 9 ? '9+' : String(n), ts = t > 9 ? '9+' : String(t);
+    g('annN').textContent = s; g('annN').hidden = !n; tabDot.textContent = ts; tabDot.hidden = !t;
   }
   function drawAnn(){
     g('annT').innerHTML = L('<mark>Announcements</mark>', '<mark>ประกาศ</mark>');
@@ -3635,14 +3648,20 @@ body[data-tab="community"] .cm-fab{display:flex}
   function loadAnn(){
     if(!store.get('fv_token')) return;
     rpc('annList').then(r => {
-      if(r && r.ok){ ANN.items = r.items; ANN.unread = r.unread; ANN.last = r.last; ANN.admin = r.admin; if(annOv.classList.contains('show')) drawAnn(); drawBadge();
+      if(r && r.ok){ const first = !ANN.ready || (ySince === null && inCm());
+        ANN.items = r.items; ANN.unread = r.unread; ANN.last = r.last; ANN.admin = r.admin; ANN.ready = true;
+        if(r.pseen > PSEEN) PSEEN = r.pseen;
+        ANN.pnew = r.pseen >= PSEEN ? (r.pnew || 0) : 0;
+        if(ySince === null && inCm()) ySince = PSEEN;
+        if(annOv.classList.contains('show')) drawAnn(); drawBadge();
+        if(inCm()){ if(ANN.pnew) markSeen(); if(first) drawFeed(); }
         if(!annAutoDone){ annAutoDone = true; if(r.unread) setTimeout(() => { if(!document.querySelector('.ov.show')) openAnn(true); }, 700); } }
     }).catch(() => {});
   }
   function openAnn(auto){
     annAuto = auto === true; annSeen = ANN.last; g('annMsg').textContent = ''; drawAnn(); annOv.classList.add('show');
     const top = ANN.items.reduce((m, x) => Math.max(m, x.id), 0);
-    if(ANN.unread){ ANN.unread = 0; ANN.last = top; drawBadge(); rpc('annRead').catch(() => {}); }
+    if(ANN.unread){ ANN.unread = 0; ANN.last = top; drawBadge(); drawFeed(); rpc('annRead').catch(() => {}); }
   }
   bell.addEventListener('click', () => openAnn(false));
   g('annX').addEventListener('click', () => annOv.classList.remove('show'));
@@ -3657,6 +3676,7 @@ body[data-tab="community"] .cm-fab{display:flex}
       if(r && r.ok){
         ANN.items.unshift(r.item); ANN.last = r.item.id; annSeen = Math.max(annSeen, r.item.id);
         g('annTa').value = ''; g('annCnt').textContent = '0 / 500'; drawAnn(); toast(L('Announcement sent', 'ส่งประกาศแล้ว'));
+        if(!chatMode()) loadFeed(true);                      // the announcement is also a Community post now
       } else { drawAnn(); msg.className = 'msg err'; msg.textContent = (r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ'); }
     }).catch(() => { annBusy = false; drawAnn(); });
   });
@@ -3667,14 +3687,14 @@ body[data-tab="community"] .cm-fab{display:flex}
     rpc('annDelete', id).then(r => { if(r && r.ok){ ANN.items = ANN.items.filter(x => x.id !== id); drawAnn(); } }).catch(() => {});
   });
   new MutationObserver(() => { if(annOv.classList.contains('show')) drawAnn(); }).observe(document.documentElement, {attributes:true, attributeFilter:['lang']});
-  setInterval(() => { if(!document.hidden) loadAnn(); }, 90000);
+  setInterval(() => { if(!document.hidden) loadAnn(); }, 60000);
   document.addEventListener('visibilitychange', () => { if(!document.hidden) loadAnn(); });
   loadAnn();
 
   /* ---------- wiring: tab changes, language, sign-in ---------- */
   function onTab(){
     const t = document.body.dataset.tab;
-    if(t === 'community'){ if(filter === 'chat') loadChat(true); else loadFeed(true); loadAnn(); }
+    if(t === 'community'){ ySince = PSEEN || null; if(filter === 'chat') loadChat(true); else loadFeed(true); loadAnn(); setTimeout(() => { if(inCm()) markSeen(); }, 1200); }
     applyChat();
     if(t === 'me') loadLevel();
   }
@@ -3683,7 +3703,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     drawStatic(); drawFeed(); drawLevel(); drawNew(); drawDetail(); if(chatMode()) drawChat(false);
     if(lvOv.classList.contains('show')) drawLevelDialog();
   }).observe(document.documentElement, {attributes:true, attributeFilter:['lang']});
-  document.addEventListener('fv:auth', () => { ANN.items = []; ANN.unread = 0; ANN.admin = false; drawBadge(); loadAnn(); LV = null; myAcc = ''; myAv = 0; drawAvatar(); posts = []; loadedOnce = false; store.set('fv_lv_seen', ''); if(document.body.dataset.tab === 'me') loadLevel(); if(document.body.dataset.tab === 'community'){ chMsgs = []; chLast = 0; if(filter === 'chat') loadChat(true); else loadFeed(true); } });
+  document.addEventListener('fv:auth', () => { ANN.items = []; ANN.unread = 0; ANN.pnew = 0; ANN.ready = false; PSEEN = 0; ySince = null; ANN.admin = false; drawBadge(); loadAnn(); LV = null; myAcc = ''; myAv = 0; drawAvatar(); posts = []; loadedOnce = false; store.set('fv_lv_seen', ''); if(document.body.dataset.tab === 'me') loadLevel(); if(document.body.dataset.tab === 'community'){ chMsgs = []; chLast = 0; if(filter === 'chat') loadChat(true); else loadFeed(true); } });
 
   drawStatic(); drawFeed(); applyChat();
   if(document.body.dataset.tab === 'me') loadLevel();
