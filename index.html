@@ -2212,14 +2212,14 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     },
     'MUBEAT': {
       en: [
-        ['How to collect votes', '', ['Watch ads: Watch 50 ads/day (5 ads = 1 ticket)', 'Mission: Play games and complete missions', 'Star Beat: Can be purchased to exchange for voting tickets']],
-        ['Voting details', '', ['Pre-vote: Unlimited votes', 'Live-vote: -']],
-        ['Expires', '', ['Voting Ticket: Expires in 90 days', 'Live Voting Ticket: Expires in 30 days']]
+        ['How to collect votes', '', ['#k', 'Watch ads: Watch 50 ads/day (5 ads = 1 ticket)', 'Mission: Play games and complete missions', 'Star Beat: Can be purchased to exchange for voting tickets', '#m', 'Watch ads: Watch 15 ads/day', 'Mission: Play games and complete missions', 'Quiz: Complete the quiz', 'Star Beat: Can be purchased to use for dice rolls or roulette spins']],
+        ['Voting details', '', ['{k}Pre-vote: Unlimited votes|Live-vote: -', '{m}Pre-vote: Unlimited votes|Live-vote: Use 150 💗 to exchange for 5 tickets']],
+        ['Expires', '', ['{k}Voting Ticket: Expires in 90 days|Live Voting Ticket: Expires in 30 days', '{m}Heartbeats 💗: Expires in 60 days']]
       ],
       th: [
-        ['วิธีสะสมโหวต', '', ['ดูโฆษณา: ดู 50 โฆษณา/วัน (5 โฆษณา = 1 ตั๋ว)', 'ภารกิจ: เล่นเกมและทำภารกิจให้สำเร็จ', 'Star Beat: ซื้อเพื่อนำไปแลกตั๋วโหวตได้']],
-        ['รายละเอียดการโหวต', '', ['Pre-vote: โหวตได้ไม่จำกัด', 'Live-vote: -']],
-        ['วันหมดอายุ', '', ['ตั๋วโหวต: หมดอายุใน 90 วัน', 'ตั๋ว Live Voting: หมดอายุใน 30 วัน']]
+        ['วิธีสะสมโหวต', '', ['#k', 'ดูโฆษณา: ดู 50 โฆษณา/วัน (5 โฆษณา = 1 ตั๋ว)', 'ภารกิจ: เล่นเกมและทำภารกิจให้สำเร็จ', 'Star Beat: ซื้อเพื่อนำไปแลกตั๋วโหวตได้', '#m', 'ดูโฆษณา: ดู 15 โฆษณา/วัน', 'ภารกิจ: เล่นเกมและทำภารกิจให้สำเร็จ', 'ควิซ: ตอบควิซให้สำเร็จ', 'Star Beat: ซื้อเพื่อใช้ทอยลูกเต๋าหรือหมุนรูเล็ตได้']],
+        ['รายละเอียดการโหวต', '', ['{k}Pre-vote: โหวตได้ไม่จำกัด|Live-vote: -', '{m}Pre-vote: โหวตได้ไม่จำกัด|Live-vote: ใช้ 150 💗 แลกตั๋ว 5 ใบ']],
+        ['วันหมดอายุ', '', ['{k}ตั๋วโหวต: หมดอายุใน 90 วัน|ตั๋ว Live Voting: หมดอายุใน 30 วัน', '{m}Heartbeats 💗: หมดอายุใน 60 วัน']]
       ]
     },
     'HIGHER': {
@@ -2580,7 +2580,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   /* ---------- broadcast show + criteria (EDIT HERE) ---------- */
   const BROADCAST = {
     'IDOLCHAMP':  'Show Champion',
-    'MUBEAT':     'SHOW K-POP',
+    'MUBEAT':     ['Show K-POP', 'Show! Music Core'],
     'MUNIVERSE':  'Show! Music Core',
     'COOGOONG':   'Music Bank',
     'HIGHER':     'Inkigayo',
@@ -2589,7 +2589,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   };
   const CRITERIA = {
     'IDOLCHAMP':  [['Pre-vote', '20%']],
-    'MUBEAT':     [['Pre-vote', '15%'], ['Live-vote', '15%']],
+    'MUBEAT':     ['{k}Pre-vote: 15%|Live-vote: 15%', '{m}Pre-vote: 5%|Live-vote: 3%'],
     'MUNIVERSE':  [['Pre-vote', '5%'], ['Live-vote', '3%']],
     'COOGOONG':   [['Pre-vote', '10%']],
     'LINC / TIN': [['Pre-vote', '5%']],
@@ -2599,9 +2599,9 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   const EXTRA_TITLE = { en: ['Broadcast', 'Criteria'], th: ['รายการที่ออกอากาศ', 'เกณฑ์คะแนน'] };
   function extraSecs(name){
     const t = EXTRA_TITLE[LANG] || EXTRA_TITLE.en, out = [];
-    const bc = BROADCAST[name], bcT = bc && typeof bc === 'object' ? (bc[LANG] || bc.en) : bc;
-    if(bcT) out.push([t[0], '', [bcT], 'tv']);
-    if(CRITERIA[name])  out.push([t[1], '', CRITERIA[name].map(c => c[0] + ': ' + c[1]), 'pct']);
+    const bc = BROADCAST[name], bcT = Array.isArray(bc) ? bc : (bc && typeof bc === 'object' ? [bc[LANG] || bc.en] : (bc ? [bc] : []));
+    if(bcT.length) out.push([t[0], '', bcT, 'tv']);
+    if(CRITERIA[name])  out.push([t[1], '', CRITERIA[name].map(c => typeof c === 'string' ? c : c[0] + ': ' + c[1]), 'pct']);
     return out;
   }
   /* emoji -> web-theme outline icons (original colors kept; Muniverse lumy = stars, Higher rubies = red) */
@@ -2617,7 +2617,33 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     };
   })();
   const emo = (h, app) => h.replace(/\uD83D\uDC99|\uD83E\uDE76|\uD83D\uDC9B|\uD83D\uDC97|\uD83D\uDC8E/g, e => GEM(e, app));
+  const SHOWN = {k: 'Show K-POP', m: 'Show! Music Core'};
+  /* MUBEAT: one block per show under "Broadcast" (Show K-POP first, then Show! Music Core) */
+  function splitShows(items){
+    const o = {k: [], m: []}; let cur = null;
+    items.forEach(t => {
+      const g = /^#([km])$/.exec(t), tm = /^\{([km])\}/.exec(t);
+      if(g){ cur = g[1]; return; }
+      if(tm){ t.slice(3).split('|').forEach(x => o[tm[1]].push(x)); return; }
+      if(cur) o[cur].push(t);
+    });
+    return o;
+  }
+  function mubeatBody(base, name, bold){
+    const t = EXTRA_TITLE[LANG] || EXTRA_TITLE.en;
+    const parts = base.map(sc => ({title: sc[0], by: splitShows(sc[2])}));
+    parts.push({title: t[1], by: splitShows(CRITERIA[name])});
+    const last = parts.length - 1;
+    return '<div class="hv-sc"><h3>' + esc(t[0]) + '</h3></div>' + ['k', 'm'].map(k =>
+      '<div class="hv-show"><span class="hv-tag ' + k + '">' + SHOWN[k] + '</span>' +
+      parts.map((p, i) => '<div class="hv-sc"><h4>' + esc(p.title) + '</h4><ul>' +
+        p.by[k].map(x => liHtml(x, name, i === 0 ? 'collect' : i === last ? 'pct' : '', bold)).join('') + '</ul></div>').join('') +
+      '</div>').join('');
+  }
   function liHtml(t, app, kd, bold){
+    const gm = /^#([km])$/.exec(t), tm = /^\{([km])\}/.exec(t);
+    if(gm) return '<li class="hv-grp"><span class="hv-tag ' + gm[1] + '">' + SHOWN[gm[1]] + '</span></li>';
+    if(tm) return '<li class="hv-tg"><span class="hv-tag ' + tm[1] + '">' + SHOWN[tm[1]] + '</span><span class="hv-tx">' + t.slice(3).split('|').map(bold).join('<br>') + '</span></li>';
     const i = t.indexOf(': '), label = i > 0 ? t.slice(0, i) : t;
     const ic = kd === 'collect' ? EM(label, app) : (kd === 'tv' || kd === 'pct') ? EM(label, app, kd) : '';
     return ic ? '<li class="hv-it' + (kd === 'tv' ? ' tv' : '') + '"><span class="hv-em">' + ic + '</span><span class="hv-tx">' + bold(t) + '</span></li>' : '<li>' + bold(t) + '</li>';
@@ -2625,11 +2651,12 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   function openInfo(name){
     const a = name === MNET.name ? MNET : APPS.find(x => x.name === name); if(!a) return;
     const secs = ((INFO[name] && (INFO[name][LANG] || INFO[name].en)) || []).slice();
+    const base = secs.slice();
     const xi = secs.findIndex(sc => /^(Expires|วันหมดอายุ)$/.test(sc[0]));
     secs.splice(xi < 0 ? secs.length : xi, 0, ...extraSecs(name));
     const bold = t => { const i = t.indexOf(': '); return emo(i > 0 ? '<b>' + esc(t.slice(0, i)) + '</b>' + esc(t.slice(i)) : esc(t), name); };
     $('hvInfoIco').src = a.icon; $('hvInfoName').textContent = name;
-    $('hvInfoBody').innerHTML = secs.map((sc, si) => '<div class="hv-sc"><h3>' + esc(sc[0]) + '</h3>' + (sc[1] ? '<p>' + emo(esc(sc[1]), name) + '</p>' : '') + '<ul>' + sc[2].map(t => liHtml(t, name, sc[3] || (si === 0 ? 'collect' : ''), bold)).join('') + '</ul></div>').join('');
+    $('hvInfoBody').innerHTML = name === 'MUBEAT' ? mubeatBody(base, name, bold) : secs.map((sc, si) => '<div class="hv-sc"><h3>' + esc(sc[0]) + '</h3>' + (sc[1] ? '<p>' + emo(esc(sc[1]), name) + '</p>' : '') + '<ul>' + sc[2].map(t => liHtml(t, name, sc[3] || (si === 0 ? 'collect' : ''), bold)).join('') + '</ul></div>').join('');
     [['hvInfoApple', APP_LINKS[name]], ['hvInfoAndroid', PLAY_LINKS[name]]].forEach(([id, link]) => {
       const o = $(id);
       if(isUrl(link)){ o.href = link; o.classList.remove('off'); } else { o.removeAttribute('href'); o.classList.add('off'); }
@@ -3793,4 +3820,17 @@ body[data-tab="community"] .cm-fab{display:flex}
 /* chat: keyboard open -> hide the tab bar, chat fills the visible area */
 html.chat-kb .hv-tabs{display:none}
 html.chat-kb .ch-box{border-radius:0}
+</style>
+<style>
+/* show pills inside the app info dialog (MUBEAT: Show K-POP / Show! Music Core) */
+.hv-show{margin-top:14px}
+.hv-show + .hv-show{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+.hv-show > .hv-tag{font-size:.78rem}
+.hv-show h4{margin:0 0 2px;font-family:var(--display);font-weight:400;font-size:1rem;color:var(--blue)}
+.hv-tag{flex:none;display:inline-block;font-size:.68rem;font-weight:800;line-height:1.5;padding:1px 9px 2px;border-radius:99px;white-space:nowrap}
+.hv-tag.k{background:var(--blue-l);color:var(--blue)}
+.hv-tag.m{background:var(--sun-l);color:var(--ink)}
+.hv-sc li.hv-grp{border-bottom:0;padding:10px 0 2px}
+.hv-sc li.hv-tg{display:flex;align-items:flex-start;gap:10px}
+.hv-sc li.hv-tg .hv-tag{margin-top:2px}
 </style>
