@@ -2118,6 +2118,16 @@ img.stamp{display:block;object-fit:contain}
 /* ===== Go to button: smaller ===== */
 .hv-app .hv-open.btn.sm{padding:4px 14px 5px;font-size:.82rem;border-width:1.5px}
 #hvInfoOv .hv-iopen.btn{width:auto;min-width:120px;align-self:center;padding:6px 18px 7px;font-size:.92rem;border-width:1.5px;margin-top:10px!important}
+/* ===== store icon buttons (App Store / Google Play) ===== */
+.hv-st svg,.hv-iopen svg{display:block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.hv-sts{display:flex;align-items:center;gap:5px;flex:none}
+#hvApps .hv-act .hv-st.btn.sm{display:inline-flex;align-items:center;justify-content:center;padding:4px 9px 4px;line-height:0}
+#hvApps .hv-act .hv-st svg{width:16px;height:16px}
+#hvApps .hv-act .hv-more{min-width:0;gap:2px}
+#hvApps .hv-act .hv-more span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem}
+.hv-iacts{display:flex;justify-content:center;align-items:center;gap:12px;flex:none;margin-top:10px}
+#hvInfoOv .hv-iacts .hv-iopen.btn{display:inline-flex;align-items:center;justify-content:center;width:auto;min-width:84px;margin:0!important;padding:7px 22px 8px;line-height:0;align-self:auto}
+#hvInfoOv .hv-iacts .hv-iopen svg{width:22px;height:22px}
 /* ===== emoji rows in Voting info ===== */
 .hv-sc li.hv-it{display:flex;align-items:center;gap:11px}
 .hv-em{flex:none;width:38px;height:38px;border-radius:13px;background:#fff;border:1px solid var(--line,rgba(20,20,20,.14));display:flex;align-items:center;justify-content:center}
@@ -2166,6 +2176,26 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   const MNET_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect width="400" height="400" fill="#fff"/><g transform="translate(200 204) scale(1.12) translate(-200 -204)" fill="none" stroke="#1f3a7a" stroke-linecap="round" stroke-linejoin="round"><path d="M268 132H140a70 70 0 0 0-70 70v28a70 70 0 0 0 70 70h112a70 70 0 0 0 70-70v-30" stroke-width="24"/><path d="M148 256v-78l46 48 46-48v78" stroke-width="24"/><path d="M322 96v38M303 115h38" stroke-width="13"/></g></svg>';
   const MNET = {name: 'MNET PLUS', icon: 'data:image/svg+xml;utf8,' + encodeURIComponent(MNET_SVG)};
   APP_LINKS['MNET PLUS'] = 'https://apps.apple.com/th/app/mnet-plus/id6443405421';
+  // Google Play links (Android)
+  const PLAY_LINKS = {
+    'IDOLCHAMP':  'https://play.google.com/store/apps/details?id=com.nwz.ichampclient',
+    'LINC / TIN': 'https://play.google.com/store/apps/details?id=io.stayge.youmeonapp',
+    'MUBEAT':     'https://play.google.com/store/apps/details?id=com.vlending.apps.mubeat',
+    'COOGOONG':   'https://play.google.com/store/apps/details?id=com.contentsmadang.fancast',
+    'HIGHER':     'https://play.google.com/store/apps/details?id=com.dalcomsoft.mysu.a',
+    'MUNIVERSE':  'https://play.google.com/store/apps/details?id=com.tnk.muniverse',
+    'MNET PLUS':  'https://play.google.com/store/apps/details?id=world.mnetplus'
+  };
+  // web-theme outline icons (follow the button text color)
+  const ST_APPLE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.6c-1.3-.9-2.9-1.2-4.3-.5-2.2 1.1-3 4-2.2 6.8.8 2.8 2.5 5.6 4.3 5.6 1 0 1.5-.6 2.2-.6s1.2.6 2.2.6c1.8 0 3.5-2.6 4.2-4.4-2.2-1-2.9-3.9-.8-5.6-.9-1.2-2.2-1.8-3.5-1.8-.8 0-1.4.3-2.1.9z"/><path d="M12.2 6.8c0-1.9 1-3.3 2.8-4"/></svg>';
+  const ST_ANDROID = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 10.2a5.5 5.5 0 0 1 11 0z"/><path d="M8.6 5.4L7.4 3.6M15.4 5.4l1.2-1.8"/><circle cx="9.6" cy="7.7" r=".7" fill="currentColor" stroke="none"/><circle cx="14.4" cy="7.7" r=".7" fill="currentColor" stroke="none"/><rect x="6.5" y="11.2" width="11" height="7.6" rx="2"/><path d="M3.9 12v4.4M20.1 12v4.4M9.7 18.8v2.4M14.3 18.8v2.4"/></svg>';
+  const isUrl = u => !!u && /^https?:\/\//.test(u);
+  const storeBtns = name => {
+    const one = (url, cls, label, ico) => isUrl(url)
+      ? '<a class="btn sm hv-open hv-st ' + cls + '" href="' + esc(url) + '" target="_blank" rel="noopener" aria-label="' + label + '" title="' + label + '">' + ico + '</a>'
+      : '<button class="btn sm hv-open hv-st ' + cls + '" type="button" disabled aria-label="' + label + '" title="' + label + '">' + ico + '</button>';
+    return '<div class="hv-sts">' + one(APP_LINKS[name], 'ios', 'App Store', ST_APPLE) + one(PLAY_LINKS[name], 'and', 'Google Play', ST_ANDROID) + '</div>';
+  };
   // Voting info per app. Each section: [title, note, [items]]; an item "Label: text" shows the label in bold.
   const INFO = {
     'IDOLCHAMP': {
@@ -2478,10 +2508,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   function drawApps(){
     const done = mineToday(), box = $('hvApps');
     const card = (a, tagHtml, wide) => {
-      const link = APP_LINKS[a.name];
-      const btn = link && /^https?:\/\//.test(link)
-        ? '<a class="btn sm hv-open" href="' + esc(link) + '" target="_blank" rel="noopener">Go to</a>'
-        : '<button class="btn sm hv-open" type="button" disabled>Go to</button>';
+      const btn = storeBtns(a.name);
       return '<div class="hv-app' + (wide ? ' wide' : '') + '" data-app="' + esc(a.name) + '" role="button" tabindex="0"><div class="r"><img class="ico" src="' + a.icon + '" alt=""><div class="x"><b>' + esc(a.name) + '</b>' + tagHtml + '</div></div>' +
         '<div class="hv-act">' + btn + '<div class="hv-more"><span>Voting info</span>' + IC.chev + '</div></div></div>';
     };
@@ -2491,7 +2518,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   }
   const iov = document.createElement('div');
   iov.className = 'ov'; iov.id = 'hvInfoOv';
-  iov.innerHTML = '<div class="modal ci"><div class="ci-head"><div class="hv-ih"><img class="ico" id="hvInfoIco" alt=""><h2 id="hvInfoName"></h2></div><button class="xbtn" type="button" id="hvInfoClose" aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="hvInfoBody"></div><a class="btn hv-iopen" id="hvInfoOpen" target="_blank" rel="noopener">Go to</a></div>';
+  iov.innerHTML = '<div class="modal ci"><div class="ci-head"><div class="hv-ih"><img class="ico" id="hvInfoIco" alt=""><h2 id="hvInfoName"></h2></div><button class="xbtn" type="button" id="hvInfoClose" aria-label="Close"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div><div id="hvInfoBody"></div><div class="hv-iacts"><a class="btn hv-iopen" id="hvInfoApple" target="_blank" rel="noopener" aria-label="App Store" title="App Store">' + ST_APPLE + '</a><a class="btn hv-iopen" id="hvInfoAndroid" target="_blank" rel="noopener" aria-label="Google Play" title="Google Play">' + ST_ANDROID + '</a></div></div>';
   document.body.appendChild(iov);
   $('hvInfoClose').addEventListener('click', () => iov.classList.remove('show'));
   iov.addEventListener('click', e => { if(e.target === iov) iov.classList.remove('show'); });
@@ -2613,9 +2640,10 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     const bold = t => { const i = t.indexOf(': '); return emo(i > 0 ? '<b>' + esc(t.slice(0, i)) + '</b>' + esc(t.slice(i)) : esc(t), name); };
     $('hvInfoIco').src = a.icon; $('hvInfoName').textContent = name;
     $('hvInfoBody').innerHTML = secs.map((sc, si) => '<div class="hv-sc"><h3>' + esc(sc[0]) + '</h3>' + (sc[1] ? '<p>' + emo(esc(sc[1]), name) + '</p>' : '') + '<ul>' + sc[2].map(t => liHtml(t, name, sc[3] || (si === 0 ? 'collect' : ''), bold)).join('') + '</ul></div>').join('');
-    const o = $('hvInfoOpen'), link = APP_LINKS[name];
-    o.textContent = LANG === 'th' ? 'ไปที่' : 'Go to';
-    if(link && /^https?:\/\//.test(link)){ o.href = link; o.classList.remove('off'); } else { o.removeAttribute('href'); o.classList.add('off'); }
+    [['hvInfoApple', APP_LINKS[name]], ['hvInfoAndroid', PLAY_LINKS[name]]].forEach(([id, link]) => {
+      const o = $(id);
+      if(isUrl(link)){ o.href = link; o.classList.remove('off'); } else { o.removeAttribute('href'); o.classList.add('off'); }
+    });
     $('hvInfoBody').scrollTop = 0; iov.classList.add('show');
   }
   function drawHist(){
