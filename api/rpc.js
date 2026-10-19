@@ -186,12 +186,13 @@ async function hasData(acc) {                                      // account us
 }
 
 /* ---------- today feed + check-in helpers ---------- */
-const TZ = 'Asia/Bangkok';
-const dayOf = t => new Date(t).toLocaleDateString('sv-SE', { timeZone: TZ });
+const TZ = 'Asia/Bangkok';                  // clock shown to people (Thai time)
+const DAY_TZ = 'Asia/Seoul';                // a "day" starts at midnight Korea time = 22:00 Thai, like the voting apps
+const dayOf = t => new Date(t).toLocaleDateString('sv-SE', { timeZone: DAY_TZ });
 const timeOf = t => new Date(t).toLocaleTimeString('sv-SE', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
 const ciKey = a => 'checkin:' + a.toLowerCase();
 
-// apps this account has updated, grouped by day (YYYY-MM-DD, Bangkok time)
+// apps this account has updated, grouped by day (YYYY-MM-DD, Korea time)
 async function appsByDay(account) {
   const list = await loadAll();
   const acc = account.toLowerCase();
