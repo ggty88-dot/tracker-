@@ -110,7 +110,7 @@ function summaryFor(list, account) {
 async function adminData(role) {
   const list = await loadAll();
   const lm = latestMap(list);
-  const shape = v => ({ row: v.id, account: v.account, app: v.app, count: v.count, ts: fmtTs(v.t) });
+  const shape = v => ({ row: v.id, account: v.account, app: v.app, count: v.count, ...(v.tickets != null ? { tickets: v.tickets } : {}), ts: fmtTs(v.t) });
   return {
     ok: true,
     role,
@@ -316,22 +316,38 @@ async function shapePosts(ids, me) {
 
 /* ---------- actions ---------- */
 const actions = {
-  async submitVote(token, acc, app, cnt) {
+  async submitVote(token, acc, app, cnt, tix) {
     const me = await sessionUser(token);
     if (!me) return AUTH_ERR;
     if (lc(cleanAcc(acc)) !== lc(me.account)) return MISMATCH;
     const account = me.account;
-    const count = Math.floor(Number(cnt));
-    const err = checkEntry(account, app, count);
+    // MUBEAT records two numbers (heartbeats + tickets); either one may be left blank = keep the previous value
+    const blank = v => v === null || v === undefined || String(v).trim() === '';
+    const isMB = app === 'MUBEAT';
+    let count = isMB && blank(cnt) ? undefined : Math.floor(Number(cnt));
+    let tickets;
+    if (isMB) {
+      if (!blank(tix)) {
+        tickets = Math.floor(Number(tix));
+        if (!Number.isInteger(tickets) || tickets < 0 || tickets > 1e9) return bad('Please enter a valid ticket count.');
+      }
+      if (count === undefined && tickets === undefined) return bad('Please enter heartbeats or tickets.');
+    }
+    const err = checkEntry(account, app, count === undefined ? 1 : count);
     if (err) return bad(err);
 
     const list = await loadAll();
     const prevRec = latestMap(list).get(account.toLowerCase() + '|' + app);
+    if (isMB) {
+      if (count === undefined) count = prevRec ? prevRec.count : 0;
+      if (tickets === undefined && prevRec && prevRec.tickets != null) tickets = prevRec.tickets;
+    }
     const id = Number(await cmd('INCR', SEQ));
     const rec = { id, account, app, count, t: Date.now() };
+    if (tickets !== undefined) rec.tickets = tickets;
     await cmd('HSET', HASH, id, JSON.stringify(rec));
 
-    const res = { ok: true, account, app, count, prev: prevRec ? prevRec.count : null };
+    const res = { ok: true, account, app, count, tickets: tickets === undefined ? null : tickets, prev: prevRec ? prevRec.count : null, prevTickets: prevRec && prevRec.tickets != null ? prevRec.tickets : null };
     if (account === SPECIAL) res.summary = summaryFor([rec, ...list], account);
     return res;
   },
@@ -464,7 +480,7 @@ const actions = {
     if (!me) return AUTH_ERR;
     const [list, days] = await Promise.all([loadAll(), cmd('SMEMBERS', ciKey(me.account))]);
     const mine = list.filter(v => lc(v.account) === lc(me.account));      // newest first
-    const latest = [...latestMap(mine).values()].map(v => ({ app: v.app, count: v.count, ts: fmtTs(v.t) }));
+    const latest = [...latestMap(mine).values()].map(v => ({ app: v.app, count: v.count, ...(v.tickets != null ? { tickets: v.tickets } : {}), ts: fmtTs(v.t) }));
     return {
       ok: true,
       account: me.account,
@@ -808,7 +824,7 @@ const actions = {
       getUser(account), loadAll(), cmd('SMEMBERS', ciKey(account)), lockLeft(account),
     ]);
     const mine = list.filter(v => lc(v.account) === lc(account));       // newest first
-    const latest = [...latestMap(mine).values()].map(v => ({ app: v.app, count: v.count, ts: fmtTs(v.t) }));
+    const latest = [...latestMap(mine).values()].map(v => ({ app: v.app, count: v.count, ...(v.tickets != null ? { tickets: v.tickets } : {}), ts: fmtTs(v.t) }));
     return {
       ok: true,
       account: u ? u.account : (mine[0] ? mine[0].account : account),
@@ -864,10 +880,12 @@ const actions = {
 
     const account = cleanAcc(next && next.account);
     const count = Math.floor(Number(next && next.count));
-    const err = checkEntry(account, next && next.app, count);
+    const err = checkEntry(account, next && next.app, next && next.app === 'MUBEAT' && count === 0 ? 1 : count);   // MUBEAT may have 0 heartbeats (tickets only)
     if (err) return bad(err);
 
-    await cmd('HSET', HASH, cur.id, JSON.stringify({ ...cur, account, app: next.app, count }));
+    const upd = { ...cur, account, app: next.app, count };
+    if (upd.app !== 'MUBEAT') delete upd.tickets;           // tickets only exist for MUBEAT
+    await cmd('HSET', HASH, cur.id, JSON.stringify(upd));
     return adminData('admin');
   },
 
