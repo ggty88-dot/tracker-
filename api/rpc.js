@@ -278,6 +278,7 @@ const ANN = 'cann', ANN_SEQ = 'cann:seq', ANN_READ = 'cann:read';   // announcem
 const ANN_MAX = 500, ANN_KEEP = 50;
 const CHAT = 'cchat', CHAT_M = 'cchat:m', CHAT_SEQ = 'cchat:seq';   // chat room: ids (zset), id -> JSON, counter
 const CHAT_MAX = 300, CHAT_KEEP = 500, CHAT_FIRST = 50;
+const C_SEEN = 'cseen';          // account -> time (ms) it last looked at the Community tab (drives the unread number)
 const REPORT_HIDE = 3;           // this many different reports hide a post from the feed
 // admin accounts (lower-case). Edit this list, or set ADMIN_ACCOUNTS=name1,name2 in Vercel.
 const ADMINS = (process.env.ADMIN_ACCOUNTS || 'markleevotingth').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
@@ -302,7 +303,7 @@ async function shapePosts(ids, me) {
   const lv = await levelsFor(posts.map(p => p.account));
   const av = await avatarsFor(posts.map(p => p.account));
   return posts.map((p, i) => ({
-    id: p.id, account: p.account, kind: p.kind, text: p.text, img: !!p.img, t: p.t,
+    id: p.id, account: p.account, kind: p.kind, text: p.text, img: !!p.img, t: p.t, annId: p.annId || 0,
     likes: Number(meta[i * 3]), comments: Number(meta[i * 3 + 1]), liked: Number(meta[i * 3 + 2]) === 1,
     mine: lc(p.account) === lc(me.account),
     admin: isAdminAcc(p.account),
@@ -355,7 +356,7 @@ const actions = {
       const raws = ids.length ? ((await cmd('HMGET', C_POSTS, ...ids)) || []) : [];
       raws.filter(Boolean).forEach(r => {
         const p = JSON.parse(r);
-        if (dayOf(p.t) === today) community.push({ id: 'p' + p.id, c: 'post', account: p.account, time: timeOf(p.t), ts: p.t });
+        if (p.kind !== 'ann' && dayOf(p.t) === today) community.push({ id: 'p' + p.id, c: 'post', account: p.account, time: timeOf(p.t), ts: p.t });
       });
       const flat = (await cmd('HGETALL', ANN)) || [];
       for (let i = 1; i < flat.length; i += 2) {
@@ -697,13 +698,33 @@ const actions = {
   async annList(token) {
     const me = await sessionUser(token);
     if (!me) return AUTH_ERR;
-    const [flat, rd] = await Promise.all([cmd('HGETALL', ANN), cmd('HGET', ANN_READ, lc(me.account))]);
+    const acc = lc(me.account);
+    const [flat, rd, sn] = await Promise.all([cmd('HGETALL', ANN), cmd('HGET', ANN_READ, acc), cmd('HGET', C_SEEN, acc)]);
     const items = [];
     for (let i = 1; i < (flat || []).length; i += 2) { try { items.push(JSON.parse(flat[i])); } catch (e) { /* skip bad row */ } }
     items.sort((x, y) => y.id - x.id);
     const list = items.slice(0, ANN_KEEP);
     const last = Number(rd) || 0;
-    return { ok: true, admin: isAdminAcc(me.account), last, unread: list.filter(x => x.id > last).length, items: list };
+    // community posts newer than the last visit to the Community tab. Own posts and announcement posts are not counted
+    // here (announcements keep their own unread count until the bell is opened).
+    let pseen = Number(sn) || 0, pnew = 0;
+    if (!pseen) { pseen = Date.now(); await cmd('HSET', C_SEEN, acc, pseen); }       // first time: start counting from now
+    else {
+      const ids = (await cmd('ZRANGEBYSCORE', C_FEED, '(' + pseen, '+inf', 'LIMIT', 0, 100)) || [];
+      if (ids.length) {
+        const raws = (await cmd('HMGET', C_POSTS, ...ids)) || [];
+        pnew = raws.filter(Boolean).map(r => JSON.parse(r)).filter(p => p.kind !== 'ann' && lc(p.account) !== acc).length;
+      }
+    }
+    return { ok: true, admin: isAdminAcc(me.account), last, unread: list.filter(x => x.id > last).length, items: list, pnew, pseen };
+  },
+
+  async communitySeen(token) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    const t = Date.now();
+    await cmd('HSET', C_SEEN, lc(me.account), t);
+    return { ok: true, t };
   },
 
   async annRead(token) {
@@ -723,8 +744,14 @@ const actions = {
     if (text.length > ANN_MAX) return bad('Announcement is too long.');
     if (!(await rateOk(me.account, 'ann', 20, 3600))) return bad('You are posting too fast. Please try again later.');
     const id = Number(await cmd('INCR', ANN_SEQ));
-    const item = { id, text, t: Date.now(), account: me.account };
-    await pipe([['HSET', ANN, id, JSON.stringify(item)], ['HSET', ANN_READ, lc(me.account), id], ['HDEL', ANN, id - ANN_KEEP]]);
+    const pid = Number(await cmd('INCR', C_SEQ));                       // every announcement is also posted to the Community feed
+    const t = Date.now();
+    const item = { id, text, t, account: me.account, pid };
+    const post = { id: pid, account: me.account, kind: 'ann', text, img: false, t, annId: id };
+    await pipe([
+      ['HSET', ANN, id, JSON.stringify(item)], ['HSET', ANN_READ, lc(me.account), id], ['HDEL', ANN, id - ANN_KEEP],
+      ['HSET', C_POSTS, pid, JSON.stringify(post)], ['ZADD', C_FEED, t, pid], ['ZADD', C_FEED + ':ann', t, pid],
+    ]);
     return { ok: true, item };
   },
 
@@ -733,7 +760,14 @@ const actions = {
     if (!me) return AUTH_ERR;
     if (!isAdminAcc(me.account)) return MISMATCH;
     if (!isId(id)) return bad('Not found.');
+    const raw = await cmd('HGET', ANN, id);
+    let pid = 0;
+    try { pid = raw ? Number(JSON.parse(raw).pid) || 0 : 0; } catch (e) { /* ignore */ }
     await cmd('HDEL', ANN, id);
+    if (pid) await pipe([                                                // remove its Community post too
+      ['HDEL', C_POSTS, pid], ['ZREM', C_FEED, pid], ['ZREM', C_FEED + ':ann', pid],
+      ['DEL', 'cimg:' + pid], ['DEL', 'clikes:' + pid], ['DEL', 'ccm:' + pid], ['DEL', 'crep:' + pid],
+    ]);
     return { ok: true };
   },
 
