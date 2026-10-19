@@ -1259,7 +1259,7 @@ $('dOk').addEventListener('click', () => {
 
 /* ---------- daily check-in ---------- */
 (function(){
-  const TZ = 'Asia/Bangkok';
+  const TZ = 'Asia/Seoul';          // the day rolls over at midnight Korea time (22:00 Thai), same as the server
   const todayStr = () => new Date().toLocaleDateString('sv-SE', {timeZone: TZ});
   const valid = a => /^[A-Za-z0-9_]{1,40}$/.test(a);
 
