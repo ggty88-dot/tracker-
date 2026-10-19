@@ -286,6 +286,7 @@ const ANN_MAX = 500, ANN_KEEP = 50;
 const CHAT = 'cchat', CHAT_M = 'cchat:m', CHAT_SEQ = 'cchat:seq';   // chat room: ids (zset), id -> JSON, counter
 const CHAT_MAX = 300, CHAT_KEEP = 500, CHAT_FIRST = 50;
 const C_SEEN = 'cseen';          // account -> time (ms) it last looked at the Community tab (drives the unread number)
+const LIKERS_PUBLIC = false;      // true = every signed-in fan can see who liked; false = admins only
 const REPORT_HIDE = 3;           // this many different reports hide a post from the feed
 // admin accounts (lower-case). Edit this list, or set ADMIN_ACCOUNTS=name1,name2 in Vercel.
 const ADMINS = (process.env.ADMIN_ACCOUNTS || 'markleevotingth').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
@@ -596,26 +597,49 @@ const actions = {
     return {
       ok: true, post,
       comments: cms.slice(-100).map(c => ({
-        id: c.id, account: c.account, text: c.text, t: c.t,
+        id: c.id, account: c.account, text: c.text, t: c.t, img: !!c.img,
         mine: lc(c.account) === lc(me.account), admin: isAdminAcc(c.account), canDel: lc(c.account) === lc(me.account) || isAdminAcc(me.account), lv: (lv[lc(c.account)] || levelOf(0)).level, av: av[lc(c.account)] || 0,
       })),
     };
   },
 
-  async communityComment(token, id, text) {
+  async communityComment(token, id, text, image) {
     const me = await sessionUser(token);
     if (!me) return AUTH_ERR;
     if (!isId(id) || !Number(await cmd('HEXISTS', C_POSTS, id))) return bad('Post not found.');
     text = String(text || '').trim();
-    if (!text) return bad('Write something first.');
+    let b64 = '';
+    if (image) {
+      const pre = 'data:image/jpeg;base64,';
+      b64 = String(image).startsWith(pre) ? String(image).slice(pre.length) : '';
+      if (!b64 || b64.length > IMG_MAX || !b64.startsWith('/9j/') || !/^[A-Za-z0-9+/=]+$/.test(b64)) return bad('Invalid or too large image.');
+    }
+    if (!text && !b64) return bad('Write something first.');
     if (text.length > CMT_MAX) return bad('Comment is too long.');
     if (!(await rateOk(me.account, 'cmt', 30, 3600))) return bad('You are commenting too fast. Please try again later.');
-    const cid = Number(await cmd('INCR', C_SEQ));
+    const cid = Number(await cmd('INCR', C_SEQ));        // same counter as posts, so /api/img?id= never clashes
     const c = { id: cid, account: me.account, text, t: Date.now() };
+    if (b64) { c.img = true; await cmd('SET', 'cimg:' + cid, b64); }
     await cmd('HSET', 'ccm:' + id, cid, JSON.stringify(c));
     const lv = (await levelsFor([me.account]))[lc(me.account)];
     const av = (await avatarsFor([me.account]))[lc(me.account)];
-    return { ok: true, comment: { ...c, mine: true, admin: isAdminAcc(me.account), canDel: true, lv: lv.level, av } };
+    return { ok: true, comment: { ...c, img: !!b64, mine: true, admin: isAdminAcc(me.account), canDel: true, lv: lv.level, av } };
+  },
+
+  // who liked a post (newest names are not tracked; the list is the set of accounts)
+  async communityLikers(token, id) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    if (!LIKERS_PUBLIC && !isAdminAcc(me.account)) return MISMATCH;
+    if (!isId(id)) return bad('Post not found.');
+    const names = ((await cmd('SMEMBERS', 'clikes:' + id)) || []).map(String).sort();
+    // show the account's original spelling when we have it
+    let users = names;
+    if (names.length) {
+      const raws = (await cmd('HMGET', USERS, ...names)) || [];
+      users = names.map((n, i) => { try { return raws[i] ? JSON.parse(raws[i]).account : n; } catch (e) { return n; } });
+    }
+    return { ok: true, users, count: users.length };
   },
 
   async communityLike(token, id) {
@@ -638,16 +662,20 @@ const actions = {
       const raw = await cmd('HGET', 'ccm:' + id, cid);
       if (!raw) return { ok: true };
       if (lc(JSON.parse(raw).account) !== lc(me.account) && !isAdminAcc(me.account)) return MISMATCH;
-      await cmd('HDEL', 'ccm:' + id, cid);
+      await pipe([['HDEL', 'ccm:' + id, cid], ['DEL', 'cimg:' + cid]]);
       return { ok: true };
     }
     const raw = await cmd('HGET', C_POSTS, id);
     if (!raw) return { ok: true };
     const p = JSON.parse(raw);
     if (lc(p.account) !== lc(me.account) && !isAdminAcc(me.account)) return MISMATCH;
+    const cflat = (await cmd('HGETALL', 'ccm:' + id)) || [];
+    const cimgs = [];
+    for (let i = 0; i < cflat.length; i += 2) cimgs.push(['DEL', 'cimg:' + cflat[i]]);   // comment photos go with the post
     await pipe([
       ['HDEL', C_POSTS, id], ['ZREM', C_FEED, id], ['ZREM', C_FEED + ':' + p.kind, id],
       ['DEL', 'cimg:' + id], ['DEL', 'clikes:' + id], ['DEL', 'ccm:' + id], ['DEL', 'crep:' + id],
+      ...cimgs,
     ]);
     return { ok: true };
   },
