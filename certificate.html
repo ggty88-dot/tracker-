@@ -107,7 +107,7 @@ const store = {
   set(k,v){ try { localStorage.setItem(k,v); } catch(e){ mem[k] = v; } }
 };
 const clean = v => String(v || '').trim().replace(/^@+/, '').replace(/[^A-Za-z0-9_]/g, '').slice(0, 40);
-const today = () => new Date().toLocaleDateString('en-GB', {timeZone:'Asia/Bangkok'}); // DD/MM/YYYY
+const today = () => new Date().toLocaleDateString('en-GB', {timeZone:'Asia/Seoul'}); // DD/MM/YYYY (the voting day rolls over at midnight Korea time = 22:00 Thai)
 const loadImg = src => { const i = new Image(); i.onload = () => draw(); i.src = src; return i; };
 const tplImg = loadImg(TPL_SRC), icoImg = {};
 Object.keys(ICONS).forEach(k => icoImg[k] = loadImg(ICONS[k]));
