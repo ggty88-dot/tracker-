@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Molo2 voting space</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1639,6 +1639,12 @@ html .hv-tabs button{--px:1;--py:1}
   document.addEventListener('visibilitychange', release);
 })();
 </script>
+<style>
+/* iOS zooms the page when a field under 16px is focused: keep every field at 16px so the screen never zooms */
+html body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+html body textarea,
+html body select{font-size:16px!important}
+</style>
 </body>
 </html>
 <style>
@@ -2851,7 +2857,7 @@ html.chat-lock,html.chat-lock body{overflow:hidden;overscroll-behavior:none}
 .ch-s button{border:0;background:none;color:var(--muted);padding:0;cursor:pointer;display:inline-flex}
 .ch-s svg{width:14px;height:14px}
 .ch-in{display:flex;gap:8px;align-items:center;padding-top:8px}
-.ch-in input{flex:1;min-width:0;border-radius:99px!important;padding:11px 16px!important;font-size:.92rem!important}
+.ch-in input{flex:1;min-width:0;border-radius:99px!important;padding:11px 16px!important;font-size:16px!important}
 .ch-in .btn{margin:0;width:auto;padding:9px 20px 10px;font-size:.95rem}
 /* Announcements (admin -> everyone), bell on the Community page */
 .hv-view[data-v="community"]{position:relative}
@@ -2965,7 +2971,7 @@ body[data-tab="community"] .cm-fab{display:flex}
 .cm-cm .x{align-self:flex-start;border:0;background:none;padding:2px;color:#9a9dab;cursor:pointer}
 .cm-cm .x svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .cm-cbox{display:flex;gap:8px;align-items:center;margin-top:10px}
-.cm-cbox input{flex:1;min-width:0;border-radius:99px!important;padding:10px 16px!important;font-size:.9rem!important}
+.cm-cbox input{flex:1;min-width:0;border-radius:99px!important;padding:10px 16px!important;font-size:16px!important}
 .cm-cbox .btn{margin:0;width:auto;padding:8px 18px 9px;font-size:.95rem}
 .cm-av.img{overflow:hidden;background:#fff}
 .cm-av img{display:block;width:100%;height:100%;object-fit:cover}
