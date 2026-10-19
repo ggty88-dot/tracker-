@@ -749,7 +749,7 @@ const store = {
 /* ---------- API (Vercel) ---------- */
 function showWho(){ const w = document.getElementById('ciWho'), i = document.getElementById('ciAcc'); if(!w || !i) return; const a = String(i.value || '').trim().replace(/^@+/, ''); w.textContent = a ? '@' + a : ''; w.hidden = !a; }
 // actions that act "as me" carry this device's session token as first argument
-const AUTHED = ['submitVote','getAccountSummary','checkIn','getCheckins','whoami','logout','changePin','getMyProfile','getMyLevel','communityList','communityPost','communityGet','communityComment','communityLike','communityDelete','communityReport','setAvatar','getLeaderboard','annList','annRead','annPost','annDelete'];
+const AUTHED = ['submitVote','getAccountSummary','checkIn','getCheckins','whoami','logout','changePin','getMyProfile','getMyLevel','communityList','communityPost','communityGet','communityComment','communityLike','communityDelete','communityReport','setAvatar','getLeaderboard','annList','annRead','annPost','annDelete','chatList','chatSend','chatDelete'];
 function rpc(action, ...args){
   if(AUTHED.indexOf(action) >= 0) args = [store.get('fv_token') || ''].concat(args);
   return fetch('/api/rpc', {
@@ -2857,6 +2857,9 @@ html.chat-lock,html.chat-lock body{overflow:hidden;overscroll-behavior:none}
 .hv-view[data-v="community"]{position:relative}
 .ann-bell{position:absolute;top:0;right:0;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .ann-bell .hv-ic{width:21px;height:21px}
+.ann-refresh{right:48px}
+.ann-refresh.spin .hv-ic{animation:annSpin .7s linear infinite}
+@keyframes annSpin{to{transform:rotate(360deg)}}
 .ann-n{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:var(--red,#e5322d);color:#fff;font:800 .68rem/15px 'Nunito',sans-serif;text-align:center;box-sizing:border-box;border:2px solid #fff}
 .ann-n[hidden],.ann-dot[hidden]{display:none}
 .ann-dot{position:absolute;top:0;left:calc(50% + 3px);min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:var(--red,#e5322d);border:2px solid #fff;box-sizing:border-box;color:#fff;font:800 .62rem/14px 'Nunito',sans-serif;text-align:center}
@@ -3499,6 +3502,15 @@ body[data-tab="community"] .cm-fab{display:flex}
   let annSeen = 0, annBusy = false, annAuto = false, annAutoDone = false;
   const bell = el('<button type="button" class="ann-bell" id="annBell" aria-label="Announcements">' + svg('<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9z"/><path d="M10 19a2 2 0 0 0 4 0"/>') + '<span class="ann-n" id="annN" hidden></span></button>');
   view.appendChild(bell);
+  const refBtn = el('<button type="button" class="ann-bell ann-refresh" id="cmRefresh" aria-label="Refresh">' + svg('<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>') + '</button>');
+  view.appendChild(refBtn);
+  refBtn.addEventListener('click', () => {
+    if(refBtn.classList.contains('spin')) return;
+    refBtn.classList.add('spin');
+    if(chatMode()) loadChat(true); else loadFeed(true);
+    loadAnn();
+    setTimeout(() => refBtn.classList.remove('spin'), 900);
+  });
   const tabDot = el('<span class="ann-dot" hidden></span>');
   tabBtn.appendChild(tabDot);
   const annOv = el('<div class="ov" id="annOv"><div class="modal ci">' +
