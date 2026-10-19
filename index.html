@@ -481,6 +481,29 @@ html[lang="th"]{font-size:112.5%}
 html[lang="th"] .hv-qb b{font-size:.9rem!important}
 .hv-qb b,.hv-qb small{overflow:hidden;text-overflow:ellipsis;max-width:100%}
 </style>
+
+<style>
+/* ===== Focus apps: one row, greyed-out apps ===== */
+.dd-list li.off{color:#9a9caa;cursor:not-allowed;font-weight:700}
+.dd-list li.off:hover,.dd-list li.off.act{background:transparent}
+.dd-list li.off .ico{filter:grayscale(1);opacity:.45}
+.chip.off{color:#9a9caa;border-color:#c9cad3}.chip.off img{filter:grayscale(1);opacity:.45;border-color:#c9cad3}
+.ci-app.lock{cursor:not-allowed}.ci-app.lock img{opacity:.22}
+.hv-focus{margin-top:8px;background:#fbefbd;border:1px solid var(--ink);border-radius:20px;padding:8px 10px}
+.hv-focus .fh{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-family:var(--display);font-weight:400;font-size:.95rem;line-height:1.2}
+.hv-focus .fc{display:flex;flex-wrap:nowrap;gap:5px;overflow:hidden}
+.hv-focus .fchip{display:flex;align-items:center;gap:4px;padding:3px 8px;border:1.5px solid var(--ink);border-radius:999px;background:#fff;font-weight:800;font-size:.72rem;line-height:1.3;white-space:nowrap;flex:0 1 auto;min-width:0}
+.hv-focus .fchip i{width:7px;height:7px;border-radius:50%;display:block;flex:none}
+body[data-tab="home"] .hv-sec{margin:8px 2px 6px}
+body[data-tab="home"] .hv-tile{padding:7px 10px}
+body[data-tab="home"] .hv-tile b{font-size:1.5rem}
+body[data-tab="home"] .hv-qb{min-height:46px;padding:6px 9px}
+body[data-tab="home"] #hvHome .live{margin-top:8px;min-height:120px;padding:8px 10px 2px!important}
+body[data-tab="home"] #hvHome .lv{min-height:70px}
+body[data-tab="home"] h1{margin-bottom:6px}
+body[data-tab="home"] body,body[data-tab="home"]{padding-top:8px}
+@media(max-width:340px){.hv-focus .fchip{font-size:.64rem;padding:3px 6px}}
+</style>
 </head>
 <body>
 <div class="wrap">
@@ -735,6 +758,13 @@ const APPS = [
   {name:'HIGHER',     icon:'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 400%22%3E%3Cdefs%3E%3CclipPath id=%22c5%22%3E%3Crect width=%22400%22 height=%22400%22 rx=%2288%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path=%22url%28%23c5%29%22%3E%3Crect width=%22400%22 height=%22400%22 fill=%22%23fff%22/%3E%3Cg fill=%22%231f3a7a%22 stroke=%22%231f3a7a%22 stroke-width=%2210%22 stroke-linejoin=%22round%22%3E%0A%3Cpolygon points=%22178%2C180 244%2C178 183%2C315 118%2C315%22/%3E%0A%3Cpolygon points=%22214%2C82 284%2C82 283%2C89 213%2C89%22 stroke-width=%228%22/%3E%0A%3Cpolygon points=%22206%2C104 278%2C104 276%2C116 204%2C116%22 stroke-width=%228%22/%3E%0A%3Cpolygon points=%22187%2C134 262%2C134 257%2C159 181%2C159%22 stroke-width=%228%22/%3E%3C/g%3E%3C/g%3E%3Crect x=%221.5%22 y=%221.5%22 width=%22397%22 height=%22397%22 rx=%2287%22 fill=%22none%22 stroke=%22%23d6e3f5%22 stroke-width=%223%22/%3E%3C/svg%3E'},
   {name:'MUNIVERSE',  icon:'data:image/svg+xml;utf8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 400 400%22%3E%3Cdefs%3E%3CclipPath id=%22c6%22%3E%3Crect width=%22400%22 height=%22400%22 rx=%2288%22/%3E%3C/clipPath%3E%3C/defs%3E%3Cg clip-path=%22url%28%23c6%29%22%3E%3Crect width=%22400%22 height=%22400%22 fill=%22%23fff%22/%3E%3Cpath d=%22M80 270L170 180%22 stroke=%22%231f3a7a%22 stroke-width=%2252%22 stroke-linecap=%22round%22/%3E%0A%3Cpath d=%22M217 87Q222 120 255 125Q222 130 217 163Q212 130 179 125Q212 120 217 87Z%22 fill=%22%231f3a7a%22/%3E%0A%3Cpath d=%22M208 260L280 175%22 stroke=%22%231f3a7a%22 stroke-width=%2250%22 stroke-linecap=%22round%22/%3E%0A%3Cpath d=%22M283 282V150Q283 125 308 125Q337 125 337 150V282Z%22 fill=%22%231f3a7a%22/%3E%3C/g%3E%3Crect x=%221.5%22 y=%221.5%22 width=%22397%22 height=%22397%22 rx=%2287%22 fill=%22none%22 stroke=%22%23d6e3f5%22 stroke-width=%223%22/%3E%3C/svg%3E'}
 ];
+/* ================= FOCUS APPS (edit here) =================
+   Only these apps can be updated this month. Others show greyed-out and can't be picked.
+   Leave the list empty [] to open every app again. */
+const FOCUS_APPS = ['IDOLCHAMP', 'MUBEAT', 'LINC / TIN'];
+const FOCUS_DOT = {'IDOLCHAMP':'#ee77b0', 'MUBEAT':'#7b3fe4', 'LINC / TIN':'#3a5bf0'};
+const isFocus = n => !FOCUS_APPS.length || FOCUS_APPS.indexOf(n) > -1;
+const ACTIVE = APPS.filter(a => isFocus(a.name));   // apps that are open for updates
 const SPECIAL = '10694';
 let fanMode = false;
 const CHEV = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
@@ -775,20 +805,20 @@ function makeDD(root, items, opts){
   const ic = it => it.icon ? `<img class="ico" src="${it.icon}" alt="">` : (it.html || '');
   function render(){
     list.innerHTML = items.map((it,i) =>
-      `<li role="option" data-i="${i}" aria-selected="${it.value===val}">${ic(it)}<span>${esc(it.label)}</span></li>`).join('');
+      `<li role="option" data-i="${i}" aria-selected="${it.value===val}"${it.disabled ? ' class="off" aria-disabled="true"' : ''}>${ic(it)}<span>${esc(it.label)}</span></li>`).join('');
     const cur = items.find(x => x.value === val);
     btn.innerHTML = (cur ? `${ic(cur)}<span>${esc(cur.label)}</span>` : `<span class="ph">${esc(opts.placeholder||'')}</span>`) +
       `<span class="chev">${CHEV}</span>`;
   }
   function hl(){ [...list.children].forEach((li,i) => li.classList.toggle('act', i === act)); }
   function open(o){ root.classList.toggle('open', o); btn.setAttribute('aria-expanded', o); act = -1; hl(); }
-  function pick(i){ val = items[i].value; render(); open(false); if(opts.onChange) opts.onChange(val); }
+  function pick(i){ if(items[i].disabled) return; val = items[i].value; render(); open(false); if(opts.onChange) opts.onChange(val); }
   btn.addEventListener('click', () => open(!root.classList.contains('open')));
   list.addEventListener('click', e => { const li = e.target.closest('li'); if(li) pick(+li.dataset.i); });
   btn.addEventListener('keydown', e => {
     const o = root.classList.contains('open');
-    if(e.key === 'ArrowDown'){ e.preventDefault(); if(!o) open(true); act = Math.min(items.length-1, act+1); hl(); }
-    else if(e.key === 'ArrowUp'){ e.preventDefault(); act = Math.max(0, act-1); hl(); }
+    if(e.key === 'ArrowDown'){ e.preventDefault(); if(!o) open(true); let n = act + 1; while(n < items.length && items[n].disabled) n++; if(n < items.length) act = n; hl(); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); let n = act - 1; while(n >= 0 && items[n].disabled) n--; if(n >= 0) act = n; hl(); }
     else if(e.key === 'Enter' && o && act >= 0){ e.preventDefault(); pick(act); }
     else if(e.key === 'Escape'){ open(false); }
   });
@@ -798,7 +828,7 @@ function makeDD(root, items, opts){
 }
 
 /* ---------- main form ---------- */
-const appDD = makeDD($('dd'), APPS.map(a => ({value:a.name, label:a.name, icon:a.icon})), {
+const appDD = makeDD($('dd'), APPS.map(a => ({value:a.name, label:a.name, icon:a.icon, disabled:!isFocus(a.name)})), {
   placeholder:'Select an app',
   onChange: () => syncApp()
 });
@@ -843,6 +873,7 @@ $('submit').addEventListener('click', () => {
   const msg = $('msg');
   if(!acc) return setMsg(msg, 'Please enter your Twitter account.', 'err');
   if(!app) return setMsg(msg, 'Please select an app.', 'err');
+  if(!isFocus(app)) return setMsg(msg, 'This app is not open for updates this month.', 'err');
   let tk = null;
   if(app === 'MUBEAT'){
     // heartbeats and tickets are each optional, but at least one is needed (blank = keep the previous value)
@@ -1131,9 +1162,12 @@ window.fvOpenMine = function(){
   rpc('getMyProfile').then(r => {
     if(!r || !r.ok){ $('uBody').innerHTML = '<div class="empty">' + esc((r && r.message) || 'Something went wrong.') + '</div>'; return; }
     $('uTitle').textContent = '@' + r.account;
-    const chips = r.latest.length
-      ? r.latest.map(v => '<div class="chip"><img src="' + iconOf(v.app) + '" alt="">' + esc(v.app) + ': ' + fmt(v.count) + curIcon(v.app) + (v.tickets != null ? ' · ' + fmt(v.tickets) + LB_TICKET : '') + '</div>').join('')
-      : '<div class="hint" style="margin:0">No updates yet</div>';
+    const byApp = {}; r.latest.forEach(v => { byApp[v.app] = v; });
+    const chips = APPS.map(a => {
+      if(!isFocus(a.name)) return '<div class="chip off"><img src="' + a.icon + '" alt="">' + esc(a.name) + ': -</div>';   // not open yet
+      const v = byApp[a.name];
+      return '<div class="chip"><img src="' + a.icon + '" alt="">' + esc(a.name) + ': ' + fmt(v ? v.count : 0) + curIcon(a.name) + (v && v.tickets != null ? ' · ' + fmt(v.tickets) + LB_TICKET : '') + '</div>';
+    }).join('');
     const kv = (k, v) => '<div class="u-kv"><span>' + k + '</span><b>' + v + '</b></div>';
     $('uBody').innerHTML =
       '<div class="u-sec" style="margin-top:6px"><h3>Latest updates</h3><div class="chips" style="margin-top:6px">' + chips + '</div></div>' +
@@ -1344,12 +1378,12 @@ $('dOk').addEventListener('click', () => {
     $('ciLbl').textContent = done ? 'Done for today ✓' : 'Tap to get';
 
     // energy bar: one segment per app collected today
-    const k = APPS.filter(a => got.has(a.name)).length, full = k === APPS.length;
-    curPct = k / APPS.length * 100; paintEnergy();
+    const k = ACTIVE.filter(a => got.has(a.name)).length, full = k === ACTIVE.length;
+    curPct = k / ACTIVE.length * 100; paintEnergy();
     $('ciEnergy').classList.toggle('full', full);
-    $('ciHint').textContent = full ? 'All 6 collected! History unlocked' : 'Collect all 6 apps today to unlock history';
+    $('ciHint').textContent = full ? 'All ' + ACTIVE.length + ' collected! History unlocked' : 'Collect all ' + ACTIVE.length + ' apps today to unlock history';
     $('ciApps').innerHTML = APPS.map(a =>
-      `<button type="button" class="ci-app${got.has(a.name) ? ' on' : ''}" data-app="${esc(a.name)}" title="${esc(a.name)}" aria-label="${esc(a.name)}"><img src="${a.icon}" alt=""></button>`).join('');
+      `<button type="button" class="ci-app${got.has(a.name) ? ' on' : ''}${isFocus(a.name) ? '' : ' lock'}" data-app="${esc(a.name)}" title="${esc(a.name)}" aria-label="${esc(a.name)}"><img src="${a.icon}" alt=""></button>`).join('');
   }
   function applyData(r){ cur = r; cache[r.account.toLowerCase()] = r; render(); }
   function fetchFor(acc){
@@ -1396,6 +1430,7 @@ $('dOk').addEventListener('click', () => {
   $('ciApps').addEventListener('click', e => {
     const b = e.target.closest('.ci-app'); if(!b) return;
     const name = b.dataset.app;
+    if(!isFocus(name)) return msg(name + ' is not open for updates yet', 'err');
     if(b.classList.contains('on')) return msg(name + ' already collected today ✓', 'ok');
     const acc = normAcc($('ciAcc').value);
     if(valid(acc) && !$('account').value){ $('account').value = acc; checkSpecial(); }
@@ -1406,7 +1441,7 @@ $('dOk').addEventListener('click', () => {
 
   // history unlocks when all 6 apps are collected today
   let histYm = '';
-  const isFull = () => APPS.every(a => cur && (cur.apps || []).indexOf(a.name) >= 0);
+  const isFull = () => ACTIVE.every(a => cur && (cur.apps || []).indexOf(a.name) >= 0);
   const monthName = (y, m, o) => new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', Object.assign({timeZone: 'UTC'}, o));
   function drawHist(){
     const hist = (cur && cur.history) || {}, daysSet = new Set((cur && cur.days) || []);
@@ -1416,9 +1451,9 @@ $('dOk').addEventListener('click', () => {
     let rows = '', full = 0, checked = 0;
     for(let d = last; d >= 1; d--){
       const ds = histYm + '-' + String(d).padStart(2, '0'), g = new Set(hist[ds] || []), c = daysSet.has(ds);
-      if(g.size === APPS.length) full++;
+      if(g.size === ACTIVE.length) full++;
       if(c) checked++;
-      rows += `<div class="hrow${ds === t ? ' today' : ''}"><span class="hd">${d} ${mon}</span><span class="hm">${c ? stamp(ds) : ''}</span><span class="hi">${APPS.map(a => `<img class="${g.has(a.name) ? '' : 'off'}" src="${a.icon}" alt="">`).join('')}</span><span class="hn">${g.size}/${APPS.length}</span></div>`;
+      rows += `<div class="hrow${ds === t ? ' today' : ''}"><span class="hd">${d} ${mon}</span><span class="hm">${c ? stamp(ds) : ''}</span><span class="hi">${ACTIVE.map(a => `<img class="${g.has(a.name) ? '' : 'off'}" src="${a.icon}" alt="">`).join('')}</span><span class="hn">${g.size}/${ACTIVE.length}</span></div>`;
     }
     const arrow = p => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="${p}"/></svg>`;
     $('ciHist').innerHTML =
@@ -1647,7 +1682,7 @@ $('updOpen').addEventListener('click', openUpd);
 $('updClose').addEventListener('click', () => $('updOv').classList.remove('show'));
 $('updOv').addEventListener('click', e => { if(e.target === $('updOv')) $('updOv').classList.remove('show'); });
 
-$('stTot').textContent = '/' + APPS.length;
+$('stTot').textContent = '/' + ACTIVE.length;
 </script>
 <style>
 /* ===== BOUNCY PRESS (cute press-in + springy pop-back on every button) ===== */
@@ -2493,13 +2528,15 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
       qb('ci', IC.cal, 'Daily Check-in', 'Check in for the day') +
       qb('upd', IC.bolt, 'Quick Update', 'Update your totals') +
     '</div>' +
+    (FOCUS_APPS.length ? '<div class="hv-focus"><div class="fh"><svg class="hv-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg><span>Focus apps this month</span></div><div class="fc">' +
+      FOCUS_APPS.map(n => '<span class="fchip"><i style="background:' + (FOCUS_DOT[n] || '#2447d6') + '"></i>' + esc(n) + '</span>').join('') + '</div></div>' : '') +
   '</div>' +
   '<div class="hv-view" data-v="vote" hidden><h2 class="hv-h">App <mark>Vote</mark></h2><p class="hv-s">Tap an app to see how to collect</p><div id="hvApps"></div></div>' +
   '<div class="hv-view" data-v="history" hidden><h2 class="hv-h"><mark>History</mark></h2><p class="hv-s">Everyone’s updates from the last 3 days</p>' +
     '<input class="hv-search" id="hvSearch" type="text" placeholder="Search Twitter account" autocomplete="off" autocapitalize="none" spellcheck="false"><div id="hvHist"></div></div>' +
   '<div class="hv-view" data-v="me" hidden>' +
     '<div class="hv-me"><span class="hv-av"><img id="hvAv" alt=""></span><div><b id="hvMeName">Not set yet</b><small>Your account</small></div></div>' +
-    '<div class="hv-tiles"><div class="ov-tile sun"><b id="hvMeApps">0/6</b><span>Updated today</span></div><div class="ov-tile blue"><b id="hvMeCi">0</b><span>Check-ins this month</span></div></div>' +
+    '<div class="hv-tiles"><div class="ov-tile sun"><b id="hvMeApps">0/3</b><span>Updated today</span></div><div class="ov-tile blue"><b id="hvMeCi">0</b><span>Check-ins this month</span></div></div>' +
     '<div class="hv-list">' +
       li('upd', IC.bolt, 'Update votes', 'Update your totals') +
       li('ci', IC.cal, 'Daily Check-in', 'Check in for the day') +
@@ -2548,7 +2585,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
         '<div class="hv-act"><div class="hv-more"><span>Voting info</span>' + IC.chev + '</div></div></div>';
     };
     box.innerHTML = APPS.map(a => { const d = done.has(a.name);
-      return card(a, '<span class="tag ' + (d ? 'ok' : 'old') + '">' + (d ? 'Updated today ✓' : 'Not updated today') + '</span>', false); }).join('') +
+      return card(a, !isFocus(a.name) ? '<span class="tag old">Not open yet</span>' : '<span class="tag ' + (d ? 'ok' : 'old') + '">' + (d ? 'Updated today ✓' : 'Not updated today') + '</span>', false); }).join('') +
       card(MNET, '<span class="tag">No need to collect</span>', true);
   }
   const iov = document.createElement('div');
@@ -2723,7 +2760,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   function drawMe(){
     const a = accName();
     $('hvMeName').textContent = a ? '@' + a : 'Not set yet';
-    $('hvMeApps').textContent = mineToday().size + '/' + APPS.length;
+    $('hvMeApps').textContent = mineToday().size + '/' + (FOCUS_APPS.length || APPS.length);
     if(CK && a && CK.account.toLowerCase() === a.toLowerCase()){
       const ym = CK.today.slice(0, 7);
       $('hvMeCi').textContent = CK.days.filter(d => d.indexOf(ym) === 0).length;
@@ -3273,7 +3310,7 @@ body[data-tab="community"] .cm-fab{display:flex}
       '<h3>' + L('How to earn XP', 'วิธีเก็บ XP') + '</h3><ul>' +
         '<li><span class="g">' + L('Daily check-in', 'เช็คอินประจำวัน') + '</span><span class="p">+' + r.checkin + ' XP</span></li>' +
         '<li><span class="g">' + L('Update an app (once per app per day)', 'อัปเดตยอดแอป (นับ 1 ครั้งต่อแอปต่อวัน)') + '</span><span class="p">+' + r.app + ' XP</span></li>' +
-        '<li><span class="g">' + L('Update all 6 apps in one day (bonus)', 'อัปเดตครบทั้ง 6 แอปในวันเดียว (โบนัส)') + '</span><span class="p">+' + r.full + ' XP</span></li>' +
+        '<li><span class="g">' + L('Update all ' + ACTIVE.length + ' open apps in one day (bonus)', 'อัปเดตครบทั้ง ' + ACTIVE.length + ' แอปที่เปิดในวันเดียว (โบนัส)') + '</span><span class="p">+' + r.full + ' XP</span></li>' +
       '</ul>' + boardHtml() + '<h3>' + L('Levels', 'ระดับเลเวล') + '</h3><ol>' + ladder + '</ol>';
   }
   function loadLevel(){
