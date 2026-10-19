@@ -2832,13 +2832,34 @@ html.me-lock,html.me-lock body,html.home-lock,html.home-lock body{overflow:hidde
 .lv-b[data-tier="4"]{background:var(--blue);border-color:var(--blue);color:#fff}
 .lv-b[data-tier="5"]{background:var(--ink);border-color:var(--ink);color:var(--butter)}
 .lv-b.adm{background:var(--sun-l);border:1.5px solid #141414;color:#141414;font-size:.6rem;padding:0 7px 1px;line-height:1.4}
+/* Chat room (Chat tab) */
+html.chat-mode .cm-fab{display:none!important}
+html.chat-lock,html.chat-lock body{overflow:hidden;overscroll-behavior:none}
+.ch-box{display:flex;flex-direction:column;min-height:260px}
+.ch-box[hidden]{display:none}
+.cm-more[hidden]{display:none!important}
+.ch-list{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:4px 2px 8px;display:flex;flex-direction:column;gap:10px}
+.ch-m{display:flex;gap:8px;align-items:flex-end}
+.ch-m.mine{flex-direction:row-reverse}
+.ch-m .cm-av{width:30px;height:30px;font-size:.85rem}
+.ch-b{max-width:78%;min-width:0}
+.ch-n{display:flex;align-items:center;gap:6px;margin:0 0 3px 6px;font-weight:800;font-size:.74rem;color:var(--blue)}
+.ch-t{background:#fff;border:1px solid var(--line);border-radius:18px 18px 18px 6px;padding:8px 13px;font-weight:700;font-size:.9rem;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
+.ch-m.mine .ch-t{background:var(--blue);border-color:var(--blue);color:#fff;border-radius:18px 18px 6px 18px}
+.ch-s{display:flex;align-items:center;gap:6px;margin:3px 6px 0;font-weight:800;font-size:.66rem;color:var(--muted)}
+.ch-m.mine .ch-s{justify-content:flex-end}
+.ch-s button{border:0;background:none;color:var(--muted);padding:0;cursor:pointer;display:inline-flex}
+.ch-s svg{width:14px;height:14px}
+.ch-in{display:flex;gap:8px;align-items:center;padding-top:8px}
+.ch-in input{flex:1;min-width:0;border-radius:99px!important;padding:11px 16px!important;font-size:.92rem!important}
+.ch-in .btn{margin:0;width:auto;padding:9px 20px 10px;font-size:.95rem}
 /* Announcements (admin -> everyone), bell on the Community page */
 .hv-view[data-v="community"]{position:relative}
 .ann-bell{position:absolute;top:0;right:0;width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .ann-bell .hv-ic{width:21px;height:21px}
 .ann-n{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;padding:0 5px;border-radius:99px;background:var(--red,#e5322d);color:#fff;font:800 .68rem/15px 'Nunito',sans-serif;text-align:center;box-sizing:border-box;border:2px solid #fff}
 .ann-n[hidden],.ann-dot[hidden]{display:none}
-.ann-dot{position:absolute;top:3px;left:calc(50% + 6px);width:10px;height:10px;border-radius:50%;background:var(--red,#e5322d);border:2px solid #fff;box-sizing:border-box}
+.ann-dot{position:absolute;top:0;left:calc(50% + 3px);min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:var(--red,#e5322d);border:2px solid #fff;box-sizing:border-box;color:#fff;font:800 .62rem/14px 'Nunito',sans-serif;text-align:center}
 #annOv .modal{max-height:86vh;display:flex;flex-direction:column}
 .ann-list{overflow-y:auto;-webkit-overflow-scrolling:touch;margin:8px -4px 0;padding:0 4px;max-height:52vh}
 .ann-it{position:relative;padding:10px 12px;border:1px solid var(--line);border-radius:16px;background:#fff;margin-bottom:8px}
@@ -3161,7 +3182,8 @@ body[data-tab="community"] .cm-fab{display:flex}
   const view = el('<div class="hv-view" data-v="community" hidden>' +
     '<h2 class="hv-h" id="cmH"></h2><p class="hv-s" id="cmS"></p>' +
     '<div class="cm-chips" id="cmChips"></div><div id="cmFeed"></div>' +
-    '<button type="button" class="btn ghost cm-more" id="cmMore" hidden></button></div>');
+    '<button type="button" class="btn ghost cm-more" id="cmMore" hidden></button>' +
+    '<div class="ch-box" id="cmChat" hidden><div class="ch-list" id="chList"></div><div class="ch-in"><input type="text" id="chIn" maxlength="300" autocomplete="off"><button type="button" class="btn sm" id="chSend"></button></div></div></div>');
   app.appendChild(view);
 
   const tabBtn = el('<button type="button" data-t="community">' + ICN.chat + '<span id="cmTabLbl">Community</span></button>');
@@ -3207,7 +3229,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     else if(!posts.length){
       box.innerHTML = '<div class="cm-empty"><b>' + L('No posts yet', 'ยังไม่มีโพสต์') + '</b>' + L('Tap + to start the conversation!', 'กด + เพื่อเริ่มคุยเป็นคนแรกกันเลย!') + '</div>';
     } else box.innerHTML = posts.map(p => postHtml(p)).join('');
-    g('cmMore').hidden = !more;
+    g('cmMore').hidden = !more || chatMode();
   }
   function loadFeed(reset){
     if(loading) return;
@@ -3261,7 +3283,8 @@ body[data-tab="community"] .cm-fab{display:flex}
   });
   g('cmChips').addEventListener('click', e => {
     const b = e.target.closest('[data-k]'); if(!b || b.dataset.k === filter) return;
-    filter = b.dataset.k; posts = []; loadedOnce = false; drawStatic(); loadFeed(true);
+    filter = b.dataset.k; posts = []; loadedOnce = false; drawStatic(); applyChat();
+    if(filter === 'chat') loadChat(true); else loadFeed(true);
   });
   g('cmMore').addEventListener('click', () => loadFeed(false));
 
@@ -3341,18 +3364,19 @@ body[data-tab="community"] .cm-fab{display:flex}
     '<input type="file" id="cmFile" accept="image/*" hidden><button type="button" class="btn sm" id="cmPost"></button></div>' +
     '</div></div>');
   document.body.appendChild(newOv);
-  let nKind = 'chat', nImg = '', posting = false;
+  const PKINDS = ['ask', 'share'];
+  let nKind = 'ask', nImg = '', posting = false;
   const PH = () => ({chat: L('Say something to the fans…', 'พูดคุยกับเพื่อนๆ แฟนคลับ…'), ask: L('Ask a question…', 'ถามเรื่องที่สงสัยได้เลย…'), share: L('Share a tip or news…', 'แชร์เคล็ดลับหรือข่าวสาร…')})[nKind];
   function drawNew(){
     g('cmNewT').innerHTML = L('New <mark>post</mark>', '<mark>โพสต์</mark>ใหม่');
-    g('cmKinds').innerHTML = KINDS.map(k => '<button type="button" class="cm-chip' + (k === nKind ? ' on' : '') + '" data-k="' + k + '">' + kindLbl(k) + '</button>').join('');
+    g('cmKinds').innerHTML = PKINDS.map(k => '<button type="button" class="cm-chip' + (k === nKind ? ' on' : '') + '" data-k="' + k + '">' + kindLbl(k) + '</button>').join('');
     g('cmTa').placeholder = PH();
     g('cmPhotoL').textContent = L('Add photo', 'เพิ่มรูปภาพ');
     g('cmPost').textContent = posting ? L('Posting…', 'กำลังโพสต์…') : L('Post', 'โพสต์');
   }
   const newMsg = t => { const m = g('cmNewMsg'); m.className = t ? 'msg err' : 'msg'; m.textContent = t || ''; };
   function openNew(){
-    nKind = KINDS.indexOf(filter) >= 0 ? filter : 'chat'; nImg = ''; posting = false;
+    nKind = PKINDS.indexOf(filter) >= 0 ? filter : 'ask'; nImg = ''; posting = false;
     g('cmTa').value = ''; g('cmCnt').textContent = '0 / 1000'; g('cmPrev').hidden = true; g('cmFile').value = ''; newMsg('');
     drawNew(); newOv.classList.add('show');
     setTimeout(() => g('cmTa').focus({preventScroll:true}), 80);
@@ -3402,9 +3426,77 @@ body[data-tab="community"] .cm-fab{display:flex}
   });
   fab.addEventListener('click', openNew);
 
+  /* ---------- Chat room (the Chat tab) ---------- */
+  const chatBox = g('cmChat'), chList = g('chList'), chIn = g('chIn');
+  let chMsgs = [], chLast = 0, chBusy = false, chSending = false, chTimer = 0, chTick = 0;
+  function chatMode(){ return document.body.dataset.tab === 'community' && filter === 'chat'; }
+  const fmtT = t => { const d = new Date(t), n = new Date(), p = v => String(v).padStart(2, '0'), hm = p(d.getHours()) + ':' + p(d.getMinutes()); return d.toDateString() === n.toDateString() ? hm : d.getDate() + '/' + (d.getMonth() + 1) + ' ' + hm; };
+  function chHtml(m){
+    return '<div class="ch-m' + (m.mine ? ' mine' : '') + '" data-id="' + m.id + '">' + (m.mine ? '' : avOf(m.account, m.av)) +
+      '<div class="ch-b">' + (m.mine ? '' : '<div class="ch-n">@' + esc(m.account) + tagOf(m) + '</div>') +
+      '<div class="ch-t">' + esc(m.text) + '</div>' +
+      '<div class="ch-s"><span>' + fmtT(m.t) + '</span>' + (m.canDel ? '<button type="button" data-del="' + m.id + '" aria-label="Delete">' + ICN.trash + '</button>' : '') + '</div></div></div>';
+  }
+  const chNear = () => chList.scrollHeight - chList.scrollTop - chList.clientHeight < 90;
+  function drawChat(stick){
+    const keep = chList.scrollTop;
+    chList.innerHTML = chMsgs.length ? chMsgs.map(chHtml).join('') : '<div class="cm-empty" style="margin:auto"><b>' + L('No messages yet', 'ยังไม่มีข้อความ') + '</b>' + L('Say hi to everyone!', 'ทักทายทุกคนได้เลย!') + '</div>';
+    g('chSend').textContent = L('Send', 'ส่ง'); chIn.placeholder = L('Message...', 'พิมพ์ข้อความ...');
+    chList.scrollTop = stick ? chList.scrollHeight : keep;
+  }
+  function loadChat(reset){
+    if(chBusy) return; chBusy = true;
+    rpc('chatList', reset ? 0 : chLast).then(r => {
+      chBusy = false;
+      if(!(r && r.ok)) return;
+      if(reset){ const stick = !chMsgs.length || chNear(); chMsgs = r.messages; chLast = chMsgs.reduce((m, x) => Math.max(m, x.id), 0); drawChat(stick); }
+      else if(r.messages.length){
+        const have = new Set(chMsgs.map(x => x.id)), add = r.messages.filter(x => !have.has(x.id));
+        if(add.length){ const stick = chNear(); chMsgs = chMsgs.concat(add).slice(-300); chLast = chMsgs.reduce((m, x) => Math.max(m, x.id), 0); drawChat(stick); }
+      }
+    }).catch(() => { chBusy = false; });
+  }
+  function sendChat(){
+    const text = chIn.value.trim(); if(!text || chSending) return;
+    chSending = true;
+    rpc('chatSend', text).then(r => {
+      chSending = false;
+      if(r && r.ok){
+        chIn.value = '';
+        if(r.message && !chMsgs.some(x => x.id === r.message.id)){ chMsgs.push(r.message); chLast = Math.max(chLast, r.message.id); }
+        drawChat(true);
+      } else toast((r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ'));
+    }).catch(() => { chSending = false; });
+  }
+  g('chSend').addEventListener('pointerdown', e => e.preventDefault());   // keep the keyboard open
+  g('chSend').addEventListener('click', sendChat);
+  chIn.addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); sendChat(); } });
+  chList.addEventListener('click', e => {
+    const b = e.target.closest('[data-del]'); if(!b) return;
+    if(!confirm(L('Delete this message?', 'ลบข้อความนี้ไหม?'))) return;
+    const id = Number(b.dataset.del);
+    rpc('chatDelete', id).then(r => { if(r && r.ok){ chMsgs = chMsgs.filter(x => x.id !== id); drawChat(false); } else toast((r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ')); }).catch(() => {});
+  });
+  function fitChat(){
+    const root = document.documentElement;
+    if(!chatMode()){ root.classList.remove('chat-lock'); chatBox.style.height = ''; return; }
+    const h = Math.floor(nav.getBoundingClientRect().top - chatBox.getBoundingClientRect().top - 8);
+    if(h >= 260){ chatBox.style.height = h + 'px'; root.classList.add('chat-lock'); if(window.scrollY) window.scrollTo(0, 0); }
+  }
+  function applyChat(){
+    const on = chatMode();
+    document.documentElement.classList.toggle('chat-mode', on);
+    chatBox.hidden = !on; g('cmFeed').hidden = on; if(on) g('cmMore').hidden = true;
+    if(on && !chTimer) chTimer = setInterval(() => { if(!document.hidden && chatMode()) loadChat(++chTick % 6 === 0); }, 5000);
+    if(!on && chTimer){ clearInterval(chTimer); chTimer = 0; }
+    fitChat(); if(on){ setTimeout(fitChat, 150); setTimeout(fitChat, 600); }
+  }
+  window.addEventListener('resize', fitChat);
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', fitChat);
+
   /* ---------- Announcements (admin -> everyone) ---------- */
   const ANN = {items: [], unread: 0, last: 0, admin: false};
-  let annSeen = 0, annBusy = false;
+  let annSeen = 0, annBusy = false, annAuto = false, annAutoDone = false;
   const bell = el('<button type="button" class="ann-bell" id="annBell" aria-label="Announcements">' + svg('<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9z"/><path d="M10 19a2 2 0 0 0 4 0"/>') + '<span class="ann-n" id="annN" hidden></span></button>');
   view.appendChild(bell);
   const tabDot = el('<span class="ann-dot" hidden></span>');
@@ -3419,31 +3511,34 @@ body[data-tab="community"] .cm-fab{display:flex}
   document.body.appendChild(annOv);
   function drawBadge(){
     const n = ANN.unread;
-    g('annN').textContent = n > 9 ? '9+' : String(n); g('annN').hidden = !n; tabDot.hidden = !n;
+    const s = n > 9 ? '9+' : String(n);
+    g('annN').textContent = s; g('annN').hidden = !n; tabDot.textContent = s; tabDot.hidden = !n;
   }
   function drawAnn(){
     g('annT').innerHTML = L('<mark>Announcements</mark>', '<mark>ประกาศ</mark>');
-    g('annList').innerHTML = ANN.items.length ? ANN.items.map(x =>
+    const shown = annAuto ? ANN.items.filter(x => x.id > annSeen) : ANN.items;
+    g('annList').innerHTML = shown.length ? shown.map(x =>
       '<div class="ann-it' + (x.id > annSeen ? ' new' : '') + '"><p>' + esc(x.text) + '</p><div class="ann-meta">' +
       (x.id > annSeen ? '<span class="nw">' + L('New', 'ใหม่') + '</span>' : '') + '<span>' + ago(x.t) + '</span>' +
-      (ANN.admin ? '<button type="button" class="dl" data-del="' + x.id + '" aria-label="Delete">' + ICN.trash + '</button>' : '') +
+      (ANN.admin && !annAuto ? '<button type="button" class="dl" data-del="' + x.id + '" aria-label="Delete">' + ICN.trash + '</button>' : '') +
       '</div></div>').join('') : '<div class="ann-empty">' + L('No announcements yet', 'ยังไม่มีประกาศ') + '</div>';
-    g('annNew').hidden = !ANN.admin;
+    g('annNew').hidden = !ANN.admin || annAuto;
     g('annTa').placeholder = L('Write an announcement for the fans…', 'เขียนประกาศถึงแฟน ๆ…');
     g('annPost').textContent = annBusy ? L('Posting…', 'กำลังส่ง…') : L('Announce', 'ประกาศ');
   }
   function loadAnn(){
     if(!store.get('fv_token')) return;
     rpc('annList').then(r => {
-      if(r && r.ok){ ANN.items = r.items; ANN.unread = r.unread; ANN.last = r.last; ANN.admin = r.admin; if(annOv.classList.contains('show')) drawAnn(); drawBadge(); }
+      if(r && r.ok){ ANN.items = r.items; ANN.unread = r.unread; ANN.last = r.last; ANN.admin = r.admin; if(annOv.classList.contains('show')) drawAnn(); drawBadge();
+        if(!annAutoDone){ annAutoDone = true; if(r.unread) setTimeout(() => { if(!document.querySelector('.ov.show')) openAnn(true); }, 700); } }
     }).catch(() => {});
   }
-  function openAnn(){
-    annSeen = ANN.last; g('annMsg').textContent = ''; drawAnn(); annOv.classList.add('show');
+  function openAnn(auto){
+    annAuto = auto === true; annSeen = ANN.last; g('annMsg').textContent = ''; drawAnn(); annOv.classList.add('show');
     const top = ANN.items.reduce((m, x) => Math.max(m, x.id), 0);
     if(ANN.unread){ ANN.unread = 0; ANN.last = top; drawBadge(); rpc('annRead').catch(() => {}); }
   }
-  bell.addEventListener('click', openAnn);
+  bell.addEventListener('click', () => openAnn(false));
   g('annX').addEventListener('click', () => annOv.classList.remove('show'));
   annOv.addEventListener('click', e => { if(e.target === annOv) annOv.classList.remove('show'); });
   g('annTa').addEventListener('input', () => { g('annCnt').textContent = g('annTa').value.length + ' / 500'; });
@@ -3473,17 +3568,18 @@ body[data-tab="community"] .cm-fab{display:flex}
   /* ---------- wiring: tab changes, language, sign-in ---------- */
   function onTab(){
     const t = document.body.dataset.tab;
-    if(t === 'community'){ loadFeed(true); loadAnn(); }
+    if(t === 'community'){ if(filter === 'chat') loadChat(true); else loadFeed(true); loadAnn(); }
+    applyChat();
     if(t === 'me') loadLevel();
   }
   new MutationObserver(onTab).observe(document.body, {attributes:true, attributeFilter:['data-tab']});
   new MutationObserver(() => {
-    drawStatic(); drawFeed(); drawLevel(); drawNew(); drawDetail();
+    drawStatic(); drawFeed(); drawLevel(); drawNew(); drawDetail(); if(chatMode()) drawChat(false);
     if(lvOv.classList.contains('show')) drawLevelDialog();
   }).observe(document.documentElement, {attributes:true, attributeFilter:['lang']});
-  document.addEventListener('fv:auth', () => { ANN.items = []; ANN.unread = 0; ANN.admin = false; drawBadge(); loadAnn(); LV = null; myAcc = ''; myAv = 0; drawAvatar(); posts = []; loadedOnce = false; store.set('fv_lv_seen', ''); if(document.body.dataset.tab === 'me') loadLevel(); if(document.body.dataset.tab === 'community') loadFeed(true); });
+  document.addEventListener('fv:auth', () => { ANN.items = []; ANN.unread = 0; ANN.admin = false; drawBadge(); loadAnn(); LV = null; myAcc = ''; myAv = 0; drawAvatar(); posts = []; loadedOnce = false; store.set('fv_lv_seen', ''); if(document.body.dataset.tab === 'me') loadLevel(); if(document.body.dataset.tab === 'community'){ chMsgs = []; chLast = 0; if(filter === 'chat') loadChat(true); else loadFeed(true); } });
 
-  drawStatic(); drawFeed();
+  drawStatic(); drawFeed(); applyChat();
   if(document.body.dataset.tab === 'me') loadLevel();
 })();
 </script>
