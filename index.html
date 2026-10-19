@@ -975,10 +975,14 @@ function renderDash(){
   } else {
     const total = latest.reduce((s,r) => s + r.count, 0);
     const top = latest.reduce((m,r) => Math.max(m, r.count), 0);
+    const mb = filterApp === 'MUBEAT', cur = curIcon(filterApp);
+    const tkTotal = latest.reduce((s,r) => s + (r.tickets || 0), 0);
+    $('stats').classList.toggle('four', mb);
     $('stats').innerHTML =
-      `<div class="stat"><b>${fmt(total)}</b><span>Total votes</span></div>` +
+      `<div class="stat"><b>${fmt(total)}</b><span>Total votes${cur}</span></div>` +
       `<div class="stat"><b>${fmt(latest.length)}</b><span>Participants</span></div>` +
-      `<div class="stat"><b>${fmt(top)}</b><span>Highest</span></div>`;
+      `<div class="stat"><b>${fmt(top)}</b><span>Highest${cur}</span></div>` +
+      (mb ? `<div class="stat"><b>${fmt(tkTotal)}</b><span>Total tickets${LB_TICKET}</span></div>` : '');
   }
 
   // overview / ranking
@@ -986,15 +990,16 @@ function renderDash(){
     $('p1').innerHTML = '<div class="cards">' + APPS.map(a => {
       const lr = D.latest.filter(r => r.app === a.name);
       const t = lr.reduce((s,r) => s + r.count, 0);
+      const tt = lr.reduce((s,r) => s + (r.tickets || 0), 0);
       return `<button class="appcard" data-app="${esc(a.name)}"><img class="ico" src="${a.icon}" alt="">
-        <div><div class="nm">${esc(a.name)}</div><div class="v">${fmt(t)}</div><div class="s">${fmt(lr.length)} participants</div></div></button>`;
+        <div><div class="nm">${esc(a.name)}</div><div class="v">${fmt(t)}${curIcon(a.name)}</div>${a.name === 'MUBEAT' ? `<div class="v tkv">${fmt(tt)}${LB_TICKET}</div>` : ''}<div class="s">${fmt(lr.length)} participants</div></div></button>`;
     }).join('') + '</div>';
     $('p1').querySelectorAll('.appcard').forEach(c => c.addEventListener('click', () => {
       filterApp = c.dataset.app; filterDD.set(filterApp); renderDash();
     }));
   } else {
     $('p1').innerHTML = `<div class="tools"><input class="search" id="rq" type="text" placeholder="Search Twitter account"></div>
-      <div class="tw" style="max-height:52vh"><table><thead><tr><th>#</th><th>Twitter</th><th class="n">Votes</th><th>Last updated</th>${fanMode?'':'<th></th>'}</tr></thead><tbody id="rankBody"></tbody></table></div>`;
+      <div class="tw" style="max-height:52vh"><table><thead><tr><th>#</th><th>Twitter</th><th class="n">Votes${curIcon(filterApp)}</th>${filterApp === 'MUBEAT' ? `<th class="n">Tickets${LB_TICKET}</th>` : ''}<th>Last updated</th>${fanMode?'':'<th></th>'}</tr></thead><tbody id="rankBody"></tbody></table></div>`;
     $('rq').value = ui.rq;
     const sorted = latest.slice().sort((a,b) => b.count - a.count);
     const drawRank = () => {
@@ -1002,8 +1007,8 @@ function renderDash(){
       const q = ui.rq.toLowerCase();
       const list = sorted.map((r,i) => ({r, rank:i+1})).filter(x => !q || x.r.account.toLowerCase().includes(q));
       $('rankBody').innerHTML = list.length ? list.map(x =>
-        `<tr><td>${x.rank}</td><td><a class="xl" href="https://x.com/${encodeURIComponent(x.r.account)}" target="_blank" rel="noopener noreferrer">@${esc(x.r.account)}</a></td><td class="n"><b>${fmt(x.r.count)}</b></td><td>${esc(x.r.ts)}</td>${actCell(x.r)}</tr>`).join('')
-        : `<tr><td colspan="${fanMode?4:5}" class="empty">No data</td></tr>`;
+        `<tr><td>${x.rank}</td><td><a class="xl" href="https://x.com/${encodeURIComponent(x.r.account)}" target="_blank" rel="noopener noreferrer">@${esc(x.r.account)}</a></td><td class="n"><b>${fmt(x.r.count)}</b></td>${filterApp === 'MUBEAT' ? `<td class="n">${x.r.tickets != null ? fmt(x.r.tickets) : '–'}</td>` : ''}<td>${esc(x.r.ts)}</td>${actCell(x.r)}</tr>`).join('')
+        : `<tr><td colspan="${(fanMode?4:5) + (filterApp === 'MUBEAT' ? 1 : 0)}" class="empty">No data</td></tr>`;
     };
     drawRank(); $('rq').addEventListener('input', drawRank);
   }
@@ -1018,7 +1023,7 @@ function renderDash(){
     const q = ui.q.toLowerCase();
     const list = D.rows.filter(r => (all || r.app === filterApp) && (!ui.only || r.latest) && (!q || r.account.toLowerCase().includes(q)));
     $('rowsBody').innerHTML = list.length ? list.map(r =>
-      `<tr class="${r.latest ? '' : 'old'}"><td>${esc(r.ts)}</td><td><a class="xl" href="https://x.com/${encodeURIComponent(r.account)}" target="_blank" rel="noopener noreferrer">@${esc(r.account)}</a></td><td>${appCell(r.app)}</td><td class="n">${fmt(r.count)}</td><td><span class="tag ${r.latest ? '' : 'old'}">${r.latest ? 'Counted' : 'History'}</span></td>${actCell(r)}</tr>`).join('')
+      `<tr class="${r.latest ? '' : 'old'}"><td>${esc(r.ts)}</td><td><a class="xl" href="https://x.com/${encodeURIComponent(r.account)}" target="_blank" rel="noopener noreferrer">@${esc(r.account)}</a></td><td>${appCell(r.app)}</td><td class="n">${fmt(r.count)}${curIcon(r.app)}${r.tickets != null ? `<div class="tkv">${fmt(r.tickets)}${LB_TICKET}</div>` : ''}</td><td><span class="tag ${r.latest ? '' : 'old'}">${r.latest ? 'Counted' : 'History'}</span></td>${actCell(r)}</tr>`).join('')
       : `<tr><td colspan="${fanMode?5:6}" class="empty">No data</td></tr>`;
   };
   draw(); $('q').addEventListener('input', draw); $('onlyLatest').addEventListener('change', draw);
@@ -3864,6 +3869,12 @@ html.chat-kb .ch-box{border-radius:0}
 </style>
 <style>
 #tkWrap[hidden]{display:none}
+.stats.four{grid-template-columns:repeat(2,1fr)}
+.stat .cur,.appcard .cur,#dashOv th .cur,#dashOv td .cur{display:inline-flex;width:1.15em;height:1.15em;vertical-align:-.22em;margin-left:4px;line-height:0}
+.stat .cur svg,.appcard .cur svg,#dashOv th .cur svg,#dashOv td .cur svg{width:100%;height:100%;display:block}
+.stat .lb-ic,.appcard .lb-ic,#dashOv th .lb-ic,#dashOv td .lb-ic{margin:0 0 0 4px}
+.appcard .tkv{font-size:.9em}
+#dashOv td .tkv{font-size:.9em;color:var(--muted);font-weight:700}
 #tkWrap > label{margin-top:16px}
 .lb-ic{display:inline-block;width:1.2em;height:1.2em;vertical-align:-.22em;margin-right:6px;line-height:0}
 .lb-ic svg{width:100%;height:100%;display:block}
