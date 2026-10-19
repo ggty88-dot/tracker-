@@ -6,6 +6,12 @@ const URL_ = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 
 const APPS = ['IDOLCHAMP', 'LINC / TIN', 'MUBEAT', 'COOGOONG', 'HIGHER', 'MUNIVERSE'];
+/* FOCUS APPS: only these apps are open for updates and count toward XP / levels.
+   Keep in sync with FOCUS_APPS in index.html. Leave [] to open every app again.
+   Old data for the other apps is kept (not deleted); it is just ignored until they open. */
+const FOCUS_APPS = ['IDOLCHAMP', 'MUBEAT', 'LINC / TIN'];
+const isFocus = a => !FOCUS_APPS.length || FOCUS_APPS.includes(a);
+const OPEN_APPS = APPS.filter(isFocus);
 const SPECIAL = '10694';
 const HASH = 'votes';
 const SEQ = 'votes:seq';
@@ -101,7 +107,7 @@ function summaryFor(list, account) {
   const byApp = Object.fromEntries(APPS.map(a => [a, 0]));
   let total = 0;
   for (const v of latestMap(list).values()) {
-    if (v.account.toLowerCase() !== account.toLowerCase()) continue;
+    if (v.account.toLowerCase() !== account.toLowerCase() || !isFocus(v.app)) continue;
     byApp[v.app] += v.count; total += v.count;
   }
   return { total, byApp };
@@ -198,7 +204,7 @@ async function appsByDay(account) {
   const acc = account.toLowerCase();
   const sets = {};
   for (const v of list) {
-    if (v.account.toLowerCase() !== acc) continue;
+    if (v.account.toLowerCase() !== acc || !isFocus(v.app)) continue;
     (sets[dayOf(v.t)] = sets[dayOf(v.t)] || new Set()).add(v.app);
   }
   const history = {};
@@ -243,7 +249,7 @@ async function levelsFor(accounts) {
   want.forEach(a => { per[a] = {}; });
   for (const v of list) {
     const a = lc(v.account);
-    if (!per[a]) continue;
+    if (!per[a] || !isFocus(v.app)) continue;          // apps that are not open yet give no XP
     const d = dayOf(v.t);
     (per[a][d] = per[a][d] || new Set()).add(v.app);        // an app counts once per day
   }
@@ -251,7 +257,7 @@ async function levelsFor(accounts) {
     let xp = (ci[i] || []).length * XP_RULES.checkin;
     for (const s of Object.values(per[a])) {
       xp += s.size * XP_RULES.app;
-      if (s.size >= APPS.length) xp += XP_RULES.full;
+      if (s.size >= OPEN_APPS.length) xp += XP_RULES.full;
     }
     out[a] = levelOf(xp);
   });
@@ -335,6 +341,7 @@ const actions = {
     }
     const err = checkEntry(account, app, count === undefined ? 1 : count);
     if (err) return bad(err);
+    if (!isFocus(app)) return bad('This app is not open for updates yet.');
 
     const list = await loadAll();
     const prevRec = latestMap(list).get(account.toLowerCase() + '|' + app);
@@ -363,7 +370,7 @@ const actions = {
   async getTodayFeed() {
     const today = dayOf(Date.now());
     const items = [...latestMap(await loadAll()).values()]
-      .filter(v => dayOf(v.t) === today)
+      .filter(v => dayOf(v.t) === today && isFocus(v.app))
       .sort((a, b) => a.t - b.t || a.id - b.id)
       .map(v => ({ id: v.id, account: v.account, app: v.app, time: timeOf(v.t) }));
     // community posts + admin announcements from today (shown in Recent Activity next to the vote updates)
@@ -393,10 +400,10 @@ const actions = {
     for (const v of list) {
       const a = v.account.toLowerCase();
       everyone.add(a);
-      if (dayOf(v.t) === days[0]) todayPeople.add(a);
+      if (dayOf(v.t) === days[0] && isFocus(v.app)) todayPeople.add(a);
     }
     const history = list
-      .filter(v => days.includes(dayOf(v.t)))
+      .filter(v => days.includes(dayOf(v.t)) && isFocus(v.app))
       .slice(0, 600)
       .map(v => ({ id: v.id, account: v.account, app: v.app, day: dayOf(v.t), time: timeOf(v.t) }));
     return { ok: true, today: todayPeople.size, total: everyone.size, days, history };
@@ -479,7 +486,7 @@ const actions = {
     const me = await sessionUser(token);
     if (!me) return AUTH_ERR;
     const [list, days] = await Promise.all([loadAll(), cmd('SMEMBERS', ciKey(me.account))]);
-    const mine = list.filter(v => lc(v.account) === lc(me.account));      // newest first
+    const mine = list.filter(v => lc(v.account) === lc(me.account) && isFocus(v.app));      // newest first (open apps only)
     const latest = [...latestMap(mine).values()].map(v => ({ app: v.app, count: v.count, ...(v.tickets != null ? { tickets: v.tickets } : {}), ts: fmtTs(v.t) }));
     return {
       ok: true,
