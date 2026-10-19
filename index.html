@@ -839,16 +839,19 @@ $('account').addEventListener('input', checkSpecial);
 function setMsg(el, text, type){ el.textContent = text; el.className = 'msg ' + (type || ''); }
 $('submit').addEventListener('click', () => {
   const acc = normAcc($('account').value), app = appDD.get();
-  const cnt = Math.floor(Number($('count').value));
+  let cnt = Math.floor(Number($('count').value));
   const msg = $('msg');
   if(!acc) return setMsg(msg, 'Please enter your Twitter account.', 'err');
   if(!app) return setMsg(msg, 'Please select an app.', 'err');
-  if(!isFinite(cnt) || cnt < 1) return setMsg(msg, 'Please enter a valid vote count.', 'err');
   let tk = null;
   if(app === 'MUBEAT'){
-    const raw = $('tickets').value.trim();
-    if(raw !== ''){ tk = Math.floor(Number(raw)); if(!isFinite(tk) || tk < 0) return setMsg(msg, 'Please enter a valid ticket count.', 'err'); }
-  }
+    // heartbeats and tickets are each optional, but at least one is needed (blank = keep the previous value)
+    const hb = $('count').value.trim(), tx = $('tickets').value.trim();
+    if(hb === '' && tx === '') return setMsg(msg, 'Please enter heartbeats or tickets.', 'err');
+    if(hb === '') cnt = null;
+    else if(!isFinite(cnt) || cnt < 1) return setMsg(msg, 'Please enter a valid heartbeat count.', 'err');
+    if(tx !== ''){ tk = Math.floor(Number(tx)); if(!isFinite(tk) || tk < 0) return setMsg(msg, 'Please enter a valid ticket count.', 'err'); }
+  } else if(!isFinite(cnt) || cnt < 1) return setMsg(msg, 'Please enter a valid vote count.', 'err');
 
   const btn = $('submit'); btn.disabled = true; btn.textContent = 'Submitting…';
   store.set('fv_account', acc);
@@ -857,10 +860,17 @@ $('submit').addEventListener('click', () => {
     .then(r => {
       done();
       if(!r || !r.ok) return setMsg(msg, (r && r.message) || 'Something went wrong. Please try again.', 'err');
-      setMsg(msg, (r.prev === null || r.prev === undefined)
-        ? `Saved  @${r.account} · ${r.app} · ${fmt(r.count)} votes`
-        : `Updated  @${r.account} · ${r.app} · ${fmt(r.prev)} → ${fmt(r.count)} votes`, 'ok');
-      if(r.tickets !== null && r.tickets !== undefined) $('msg').textContent += ' · ' + fmt(r.tickets) + ' tickets';
+      const none = v => v === null || v === undefined;
+      let txt;
+      if(cnt === null){            // MUBEAT, tickets only
+        txt = none(r.prevTickets) ? `Saved  @${r.account} · ${r.app} · ${fmt(r.tickets)} tickets`
+          : `Updated  @${r.account} · ${r.app} · ${fmt(r.prevTickets)} → ${fmt(r.tickets)} tickets`;
+      } else {
+        txt = none(r.prev) ? `Saved  @${r.account} · ${r.app} · ${fmt(r.count)} votes`
+          : `Updated  @${r.account} · ${r.app} · ${fmt(r.prev)} → ${fmt(r.count)} votes`;
+        if(tk !== null) txt += ' · ' + fmt(tk) + ' tickets';
+      }
+      setMsg(msg, txt, 'ok');
       $('count').value = ''; $('tickets').value = '';
       if(r.summary) showSummary(r.summary);
       if(window.pollFeed) pollFeed();
@@ -2336,7 +2346,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     'Enter your current total for this app. The latest entry replaces the previous one; it is not added up.':'กรอกยอดรวมปัจจุบันของแอปนี้ ยอดล่าสุดจะแทนที่ยอดเดิม ไม่ได้บวกเพิ่ม',
     'Submit':'ส่ง','Submitting…':'กำลังส่ง…','Total for this account':'ยอดรวมของบัญชีนี้','Select an app':'เลือกแอป','Select an app…':'เลือกแอป…',
     'Please enter your Twitter account.':'กรุณากรอกบัญชี Twitter','Please enter a Twitter account.':'กรุณากรอกบัญชี Twitter',
-    'Please select an app.':'กรุณาเลือกแอป','Please enter a valid vote count.':'กรุณากรอกยอดโหวตที่ถูกต้อง',
+    'Please select an app.':'กรุณาเลือกแอป','Please enter a valid vote count.':'กรุณากรอกยอดโหวตที่ถูกต้อง','Please enter heartbeats or tickets.':'กรุณากรอก Heartbeats หรือจำนวนตั๋ว','Please enter a valid heartbeat count.':'กรุณากรอกจำนวน Heartbeats ให้ถูกต้อง',
     'Something went wrong. Please try again.':'เกิดข้อผิดพลาด กรุณาลองใหม่','Something went wrong.':'เกิดข้อผิดพลาด','Server error':'เซิร์ฟเวอร์ผิดพลาด',
     'Admin access':'เข้าสู่ระบบแอดมิน','Fan access':'เข้าสู่ระบบแฟน',
     'Enter the admin password to view and manage all data.':'กรอกรหัสผ่านแอดมินเพื่อดูและจัดการข้อมูลทั้งหมด',
@@ -2381,6 +2391,8 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     [/^Saved\s+(.+) votes · ([\d,]+) tickets$/, 'บันทึกแล้ว $1 โหวต · ตั๋ว $2 ใบ'],
     [/^Updated\s+(.+) votes · ([\d,]+) tickets$/, 'อัปเดตแล้ว $1 โหวต · ตั๋ว $2 ใบ'],
     [/^Saved\s+(.+) votes$/, 'บันทึกแล้ว $1 โหวต'],
+    [/^Saved\s+(.+) tickets$/, 'บันทึกแล้ว $1 ตั๋ว'],
+    [/^Updated\s+(.+) tickets$/, 'อัปเดตแล้ว $1 ตั๋ว'],
     [/^Updated\s+(.+) votes$/, 'อัปเดตแล้ว $1 โหวต'],
     [/^(@.+ · .+ · [\d,]+) votes$/, '$1 โหวต'],
     [/^(.+) · (\d+) updates?$/, '$1 · $2 อัปเดต'],
@@ -3852,6 +3864,7 @@ html.chat-kb .ch-box{border-radius:0}
 </style>
 <style>
 #tkWrap[hidden]{display:none}
+#tkWrap > label{margin-top:16px}
 .lb-ic{display:inline-block;width:1.2em;height:1.2em;vertical-align:-.22em;margin-right:6px;line-height:0}
 .lb-ic svg{width:100%;height:100%;display:block}
 /* show pills inside the app info dialog (MUBEAT: Show K-POP / Show! Music Core) */
