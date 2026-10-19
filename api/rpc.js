@@ -61,9 +61,16 @@ const same = (a, b) => {
   const x = Buffer.from(String(a)), y = Buffer.from(String(b));
   return x.length === y.length && crypto.timingSafeEqual(x, y);
 };
-const roleOf = pw =>
-  same(pw, process.env.ADMIN_PASSWORD) ? 'admin' :
-  same(pw, process.env.FAN_PASSWORD) ? 'fan' : null;
+// 'tok:<session token>' -> signed-in admin ACCOUNT (no password needed); otherwise the admin / fan password
+const roleOf = async pw => {
+  const s = String(pw == null ? '' : pw);
+  if (s.startsWith('tok:')) {
+    const u = await sessionUser(s.slice(4));
+    return u && isAdminAcc(u.account) ? 'admin' : null;
+  }
+  return same(s, process.env.ADMIN_PASSWORD) ? 'admin' :
+    same(s, process.env.FAN_PASSWORD) ? 'fan' : null;
+};
 
 const fmtTs = t => new Date(t).toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' });
 const key = v => v.account.toLowerCase() + '|' + v.app;
@@ -732,7 +739,7 @@ const actions = {
 
   /* ----- admin: user management ----- */
   async adminListUsers(pw) {
-    if (roleOf(pw) !== 'admin') return bad('Incorrect password');
+    if ((await roleOf(pw)) !== 'admin') return bad('Incorrect password');
     const [list, usersFlat, ciKeys, failKeys] = await Promise.all([
       loadAll(), cmd('HGETALL', USERS), scanKeys('checkin:*'), scanKeys('pinfail:*'),
     ]);
@@ -761,7 +768,7 @@ const actions = {
   },
 
   async adminGetUser(pw, acc) {
-    if (roleOf(pw) !== 'admin') return bad('Incorrect password');
+    if ((await roleOf(pw)) !== 'admin') return bad('Incorrect password');
     const account = cleanAcc(acc);
     if (!ACC_RE.test(account)) return bad('Invalid Twitter account.');
     const [u, list, days, left] = await Promise.all([
@@ -784,7 +791,7 @@ const actions = {
 
   // pin = 4 digits -> set it; pin = '' / null -> clear it (the fan picks a new one at next sign-in)
   async adminSetPin(pw, acc, pin) {
-    if (roleOf(pw) !== 'admin') return bad('Incorrect password');
+    if ((await roleOf(pw)) !== 'admin') return bad('Incorrect password');
     const account = cleanAcc(acc);
     if (!ACC_RE.test(account)) return bad('Invalid Twitter account.');
     const clear = pin === null || pin === undefined || pin === '';
@@ -797,7 +804,7 @@ const actions = {
   },
 
   async adminDeleteUser(pw, acc, purge) {
-    if (roleOf(pw) !== 'admin') return bad('Incorrect password');
+    if ((await roleOf(pw)) !== 'admin') return bad('Incorrect password');
     const account = cleanAcc(acc);
     if (!ACC_RE.test(account)) return bad('Invalid Twitter account.');
     await cmd('HDEL', USERS, lc(account));
@@ -812,12 +819,12 @@ const actions = {
   },
 
   async getAdminData(pw) {
-    const role = roleOf(pw);
+    const role = await roleOf(pw);
     return role ? adminData(role) : bad('Incorrect password');
   },
 
   async adminEditRow(pw, ref, next) {
-    if (roleOf(pw) !== 'admin') return bad('Incorrect password');
+    if ((await roleOf(pw)) !== 'admin') return bad('Incorrect password');
     const raw = await cmd('HGET', HASH, ref && ref.row);
     if (!raw) return bad('Entry not found. Please refresh.');
     const cur = JSON.parse(raw);
@@ -832,7 +839,7 @@ const actions = {
   },
 
   async adminDeleteRow(pw, ref) {
-    if (roleOf(pw) !== 'admin') return bad('Incorrect password');
+    if ((await roleOf(pw)) !== 'admin') return bad('Incorrect password');
     await cmd('HDEL', HASH, ref && ref.row);
     return adminData('admin');
   },
