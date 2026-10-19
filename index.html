@@ -2212,14 +2212,14 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     },
     'MUBEAT': {
       en: [
-        ['How to collect votes', '', ['Watch ads: Watch 15 ads/day', 'Mission: Play games and complete missions', 'Quiz: Complete the quiz', 'Star Beat: Can be purchased to use for dice rolls or roulette spins']],
-        ['Voting details', '', ['Pre-vote: Unlimited votes', 'Live-vote: Use 150 💗 to exchange for 5 tickets']],
-        ['Expires', '', ['Heartbeats 💗: Expires in 60 days']]
+        ['How to collect votes', '', ['Watch ads: Watch up to 50 ads/day (5 ads = 1 ticket, max 10 tickets/day)', 'Mission: Play games and complete missions to earn tickets', 'Star Beat: Buy Star Beats, then exchange them for tickets (10 = 1, 100 = 10, 300 = 30, 500 = 50)', 'Note: Ad rewards can take up to 24 hours to arrive and mission rewards may be delayed. Tickets not credited before voting closes cannot be used and are not compensated']],
+        ['Voting details', '', ['Pre-vote: Unlimited votes, uses SHOW K-POP Voting Tickets', 'Live-vote: Top 2 only, uses SHOW K-POP Live Voting Tickets (up to 50 tickets/day)', 'Note: Voting is only possible with tickets. Heartbeats \uD83D\uDC97 and Star Beats cannot be used to vote directly', 'Event: You can also apply for SHOW K-POP Audience Tickets in the app (Vote > SHOW K-POP > Enter the Event)']],
+        ['Expires', '', ['SHOW K-POP Voting Ticket: Expires 90 days after charge (all remaining tickets expire on Dec 31, 2026)', 'Live Voting Ticket: Expires 30 days after charge (all remaining tickets expire on Dec 31, 2026)']]
       ],
       th: [
-        ['วิธีสะสมโหวต', '', ['ดูโฆษณา: ดู 15 โฆษณา/วัน', 'ภารกิจ: เล่นเกมและทำภารกิจให้สำเร็จ', 'ควิซ: ตอบควิซให้สำเร็จ', 'Star Beat: ซื้อเพื่อใช้ทอยลูกเต๋าหรือหมุนรูเล็ตได้']],
-        ['รายละเอียดการโหวต', '', ['Pre-vote: โหวตได้ไม่จำกัด', 'Live-vote: ใช้ 150 💗 แลกตั๋ว 5 ใบ']],
-        ['วันหมดอายุ', '', ['Heartbeats 💗: หมดอายุใน 60 วัน']]
+        ['วิธีสะสมโหวต', '', ['ดูโฆษณา: ดูได้สูงสุด 50 โฆษณา/วัน (5 โฆษณา = 1 ตั๋ว สูงสุด 10 ตั๋ว/วัน)', 'ภารกิจ: เล่นเกมและทำภารกิจเพื่อรับตั๋วโหวต', 'Star Beat: ซื้อ Star Beat แล้วนำไปแลกตั๋ว (10 = 1 ใบ, 100 = 10 ใบ, 300 = 30 ใบ, 500 = 50 ใบ)', 'หมายเหตุ: รางวัลจากโฆษณาอาจเข้าช้าได้ถึง 24 ชม. และรางวัลจากภารกิจอาจเข้าช้าตามผู้ให้บริการ ตั๋วที่ยังไม่เข้าก่อนปิดโหวตจะใช้ไม่ได้และไม่มีการชดเชย']],
+        ['รายละเอียดการโหวต', '', ['Pre-vote: โหวตได้ไม่จำกัด ใช้ตั๋วโหวต SHOW K-POP', 'Live-vote: เฉพาะ 2 อันดับแรก ใช้ตั๋ว Live Voting ของ SHOW K-POP (ใช้ได้สูงสุด 50 ใบ/วัน)', 'หมายเหตุ: โหวตได้ด้วยตั๋วเท่านั้น ใช้ Heartbeats \uD83D\uDC97 และ Star Beat โหวตโดยตรงไม่ได้', 'กิจกรรม: สมัครรับบัตรผู้ชม SHOW K-POP ได้ในแอป (หน้า Vote > SHOW K-POP > Enter the Event)']],
+        ['วันหมดอายุ', '', ['ตั๋วโหวต SHOW K-POP: หมดอายุ 90 วันนับจากวันที่ได้รับ (ตั๋วที่เหลือหมดอายุพร้อมกัน 31 ธ.ค. 2026)', 'ตั๋ว Live Voting: หมดอายุ 30 วันนับจากวันที่ได้รับ (ตั๋วที่เหลือหมดอายุพร้อมกัน 31 ธ.ค. 2026)']]
       ]
     },
     'HIGHER': {
@@ -2580,7 +2580,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   /* ---------- broadcast show + criteria (EDIT HERE) ---------- */
   const BROADCAST = {
     'IDOLCHAMP':  'Show Champion',
-    'MUBEAT':     'Show! Music Core',
+    'MUBEAT':     {en: 'SHOW K-POP on ARIRANG TV: every Monday 18:00 (starts Oct 19, 2026)', th: 'SHOW K-POP ทาง ARIRANG TV: ทุกวันจันทร์ 18:00 น. (เริ่ม 19 ต.ค. 2026)'},
     'MUNIVERSE':  'Show! Music Core',
     'COOGOONG':   'Music Bank',
     'HIGHER':     'Inkigayo',
@@ -2589,7 +2589,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   };
   const CRITERIA = {
     'IDOLCHAMP':  [['Pre-vote', '20%']],
-    'MUBEAT':     [['Pre-vote', '5%'], ['Live-vote', '3%']],
+    'MUBEAT':     [['Digital', '40%'], ['Physical', '10%'], ['SNS', '10%'], ['Broadcast', '10%'], ['Pre-vote', '15%'], ['Live-vote', '15% (Top 2 only)']],
     'MUNIVERSE':  [['Pre-vote', '5%'], ['Live-vote', '3%']],
     'COOGOONG':   [['Pre-vote', '10%']],
     'LINC / TIN': [['Pre-vote', '5%']],
@@ -2599,7 +2599,8 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   const EXTRA_TITLE = { en: ['Broadcast', 'Criteria'], th: ['รายการที่ออกอากาศ', 'เกณฑ์คะแนน'] };
   function extraSecs(name){
     const t = EXTRA_TITLE[LANG] || EXTRA_TITLE.en, out = [];
-    if(BROADCAST[name]) out.push([t[0], '', [BROADCAST[name]], 'tv']);
+    const bc = BROADCAST[name], bcT = bc && typeof bc === 'object' ? (bc[LANG] || bc.en) : bc;
+    if(bcT) out.push([t[0], '', [bcT], 'tv']);
     if(CRITERIA[name])  out.push([t[1], '', CRITERIA[name].map(c => c[0] + ': ' + c[1]), 'pct']);
     return out;
   }
