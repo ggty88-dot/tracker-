@@ -2635,7 +2635,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     parts.push({title: t[1], by: splitShows(CRITERIA[name])});
     const last = parts.length - 1;
     return '<div class="hv-sc"><h3>' + esc(t[0]) + '</h3></div>' + ['k', 'm'].map(k =>
-      '<div class="hv-show"><span class="hv-tag ' + k + '">' + SHOWN[k] + '</span>' +
+      '<div class="hv-show"><div class="hv-sh"><span class="hv-em">' + EM('', name, 'tv') + '</span><span class="hv-tag ' + k + '">' + SHOWN[k] + '</span></div>' +
       parts.map((p, i) => '<div class="hv-sc"><h4>' + esc(p.title) + '</h4><ul>' +
         p.by[k].map(x => liHtml(x, name, i === 0 ? 'collect' : i === last ? 'pct' : '', bold)).join('') + '</ul></div>').join('') +
       '</div>').join('');
@@ -3825,7 +3825,8 @@ html.chat-kb .ch-box{border-radius:0}
 /* show pills inside the app info dialog (MUBEAT: Show K-POP / Show! Music Core) */
 .hv-show{margin-top:14px}
 .hv-show + .hv-show{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
-.hv-show > .hv-tag{font-size:.78rem}
+.hv-sh{display:flex;align-items:center;gap:11px}
+.hv-sh .hv-tag{font-size:.78rem}
 .hv-show h4{margin:0 0 2px;font-family:var(--display);font-weight:400;font-size:1rem;color:var(--blue)}
 .hv-tag{flex:none;display:inline-block;font-size:.68rem;font-weight:800;line-height:1.5;padding:1px 9px 2px;border-radius:99px;white-space:nowrap}
 .hv-tag.k{background:var(--blue-l);color:var(--blue)}
