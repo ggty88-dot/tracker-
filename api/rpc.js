@@ -708,13 +708,11 @@ const actions = {
     // community posts newer than the last visit to the Community tab. Own posts and announcement posts are not counted
     // here (announcements keep their own unread count until the bell is opened).
     let pseen = Number(sn) || 0, pnew = 0;
-    if (!pseen) { pseen = Date.now(); await cmd('HSET', C_SEEN, acc, pseen); }       // first time: start counting from now
-    else {
-      const ids = (await cmd('ZRANGEBYSCORE', C_FEED, '(' + pseen, '+inf', 'LIMIT', 0, 100)) || [];
-      if (ids.length) {
-        const raws = (await cmd('HMGET', C_POSTS, ...ids)) || [];
-        pnew = raws.filter(Boolean).map(r => JSON.parse(r)).filter(p => p.kind !== 'ann' && lc(p.account) !== acc).length;
-      }
+    if (!pseen) { pseen = Date.now() - 24 * 3600 * 1000; await cmd('HSET', C_SEEN, acc, pseen); }   // first time: count the last 24 h
+    const ids = (await cmd('ZRANGEBYSCORE', C_FEED, '(' + pseen, '+inf', 'LIMIT', 0, 100)) || [];
+    if (ids.length) {
+      const raws = (await cmd('HMGET', C_POSTS, ...ids)) || [];
+      pnew = raws.filter(Boolean).map(r => JSON.parse(r)).filter(p => p.kind !== 'ann' && lc(p.account) !== acc).length;
     }
     return { ok: true, admin: isAdminAcc(me.account), last, unread: list.filter(x => x.id > last).length, items: list, pnew, pseen };
   },
