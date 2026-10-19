@@ -269,6 +269,8 @@ const IMG_MAX = 450000;          // base64 characters (~330 KB jpeg)
 const PAGE = 12;
 const ANN = 'cann', ANN_SEQ = 'cann:seq', ANN_READ = 'cann:read';   // announcements: id -> JSON, counter, account -> last id read
 const ANN_MAX = 500, ANN_KEEP = 50;
+const CHAT = 'cchat', CHAT_M = 'cchat:m', CHAT_SEQ = 'cchat:seq';   // chat room: ids (zset), id -> JSON, counter
+const CHAT_MAX = 300, CHAT_KEEP = 500, CHAT_FIRST = 50;
 const REPORT_HIDE = 3;           // this many different reports hide a post from the feed
 // admin accounts (lower-case). Edit this list, or set ADMIN_ACCOUNTS=name1,name2 in Vercel.
 const ADMINS = (process.env.ADMIN_ACCOUNTS || 'markleevotingth').split(',').map(x => x.trim().toLowerCase()).filter(Boolean);
@@ -630,6 +632,58 @@ const actions = {
     const hidden = n >= REPORT_HIDE;
     if (hidden) await pipe([['ZREM', C_FEED, id], ['ZREM', C_FEED + ':' + p.kind, id]]);
     return { ok: true, hidden };
+  },
+
+  /* ----- chat room: short live messages, newest at the bottom ----- */
+  async chatList(token, after) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    const a = Math.max(0, Math.floor(Number(after)) || 0);
+    let ids;
+    if (a > 0) ids = (await cmd('ZRANGEBYSCORE', CHAT, '(' + a, '+inf', 'LIMIT', 0, 100)) || [];
+    else ids = ((await cmd('ZREVRANGE', CHAT, 0, CHAT_FIRST - 1)) || []).reverse();
+    if (!ids.length) return { ok: true, messages: [] };
+    const raws = (await cmd('HMGET', CHAT_M, ...ids)) || [];
+    const rows = raws.filter(Boolean).map(r => JSON.parse(r));
+    const lv = await levelsFor(rows.map(m => m.account));
+    const av = await avatarsFor(rows.map(m => m.account));
+    const meAdmin = isAdminAcc(me.account);
+    return {
+      ok: true,
+      messages: rows.map(m => ({
+        id: m.id, account: m.account, text: m.text, t: m.t,
+        mine: lc(m.account) === lc(me.account),
+        admin: isAdminAcc(m.account),
+        canDel: lc(m.account) === lc(me.account) || meAdmin,
+        lv: (lv[lc(m.account)] || levelOf(0)).level,
+        av: av[lc(m.account)] || 0,
+      })),
+    };
+  },
+
+  async chatSend(token, text) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    text = String(text || '').replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+    if (!text) return bad('Write something first.');
+    if (text.length > CHAT_MAX) return bad('Message is too long.');
+    if (!(await rateOk(me.account, 'chat', 20, 60))) return bad('You are sending too fast. Please wait a moment.');
+    const id = Number(await cmd('INCR', CHAT_SEQ));
+    const rec = { id, account: me.account, text, t: Date.now() };
+    await pipe([['HSET', CHAT_M, id, JSON.stringify(rec)], ['ZADD', CHAT, id, id], ['HDEL', CHAT_M, id - CHAT_KEEP], ['ZREM', CHAT, id - CHAT_KEEP]]);
+    const m = (await actions.chatList(token, id - 1)).messages || [];
+    return { ok: true, message: m.find(x => x.id === id) || null };
+  },
+
+  async chatDelete(token, id) {
+    const me = await sessionUser(token);
+    if (!me) return AUTH_ERR;
+    if (!isId(id)) return bad('Not found.');
+    const raw = await cmd('HGET', CHAT_M, id);
+    if (!raw) return { ok: true };
+    if (lc(JSON.parse(raw).account) !== lc(me.account) && !isAdminAcc(me.account)) return MISMATCH;
+    await pipe([['HDEL', CHAT_M, id], ['ZREM', CHAT, id]]);
+    return { ok: true };
   },
 
   /* ----- announcements: admins post, everyone reads ----- */
