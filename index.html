@@ -2556,7 +2556,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
       return '';
     }
     const tv = () => svg('<rect x="4" y="9" width="24" height="16.5" rx="4.5" fill="#cdd9ff"/><rect x="7.6" y="12.4" width="12.2" height="9.6" rx="2" fill="#fff" stroke-width="1.4"/><path d="M12 4.5l4 4.5 4-4.5M9.5 25.5v2M22.5 25.5v2"/><circle cx="24" cy="15" r="1.2" fill="#ee5a3a" stroke="none"/><circle cx="24" cy="19.2" r="1.2" fill="#141414" stroke="none"/>');
-    const pct = () => svg('<circle cx="16" cy="16" r="12.5" fill="#ffd84d"/><path d="M21 11l-10 10"/><circle cx="11.6" cy="11.6" r="2.3" fill="#fff"/><circle cx="20.4" cy="20.4" r="2.3" fill="#fff"/>');
+    const pct = () => svg('<path d="M5 25.3L9.65 11.05L15.2 18.75L18.6 13.9L22.7 16.2L27 6.5" stroke="#ffc93c" stroke-width="2.6"/>');
     return function(label, app, force){
       const k = force || kind(label, app), p = PAL[app] || {};
       switch(k){
