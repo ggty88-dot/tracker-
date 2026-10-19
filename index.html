@@ -3390,34 +3390,63 @@ body[data-tab="community"] .cm-fab{display:flex}
   g('cmMore').addEventListener('click', () => loadFeed(false));
 
   /* ---------- post detail + comments ---------- */
+  const BACK_SVG = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
   const detOv = el('<div class="ov" id="cmDetOv"><div class="modal ci cm-det">' +
-    '<div class="ci-head"><h2 id="cmDetT"></h2><button class="xbtn" type="button" id="cmDetX" aria-label="Close">' + X_SVG + '</button></div>' +
+    '<div class="ci-head cm-dh"><button class="xbtn" type="button" id="cmDetX" aria-label="Back">' + BACK_SVG + '</button><h2 id="cmDetT"></h2></div>' +
     '<div id="cmDetBody"></div>' +
-    '<div class="cm-cbox"><input type="text" id="cmCIn" maxlength="300" autocomplete="off"><button type="button" class="btn sm" id="cmCSend"></button></div>' +
+    '<div class="cm-cbar">' +
+      '<div class="cm-cprev" id="cmCPrev" hidden><img alt=""><button type="button" id="cmCPrevX" aria-label="Remove">' + X_SVG + '</button></div>' +
+      '<div class="cm-cbox"><button type="button" class="cm-cph" id="cmCPhoto">' + ICN.photo + '</button>' +
+      '<input type="text" id="cmCIn" maxlength="300" autocomplete="off"><button type="button" class="btn sm" id="cmCSend"></button>' +
+      '<input type="file" id="cmCFile" accept="image/*" hidden></div>' +
+    '</div>' +
     '</div></div>');
   document.body.appendChild(detOv);
-  let curPost = null, curCms = [];
+  let curPost = null, curCms = [], cImg = '', sending = false;
   g('cmDetX').addEventListener('click', () => detOv.classList.remove('show'));
-  detOv.addEventListener('click', e => { if(e.target === detOv) detOv.classList.remove('show'); });
+
+  // keep the page (and the comment bar) exactly on the visible area, also while the keyboard is open
+  function fitDet(){
+    const m = detOv.querySelector('.modal'), vv = window.visualViewport;
+    if(!vv || !detOv.classList.contains('show')){ m.style.height = ''; m.style.transform = ''; m.classList.remove('kb'); return; }
+    m.style.height = vv.height + 'px';
+    m.style.transform = vv.offsetTop ? 'translateY(' + vv.offsetTop + 'px)' : '';
+    m.classList.toggle('kb', vv.height < window.innerHeight - 120);
+  }
+  if(window.visualViewport){ window.visualViewport.addEventListener('resize', fitDet); window.visualViewport.addEventListener('scroll', fitDet); }
+  new MutationObserver(fitDet).observe(detOv, {attributes:true, attributeFilter:['class']});
 
   function cmHtml(c){
     return '<div class="cm-cm" data-cid="' + c.id + '">' + avOf(c.account, c.av) +
-      '<div class="b"><div class="n">@' + esc(c.account) + tagOf(c) + '<em>' + ago(c.t) + '</em></div><p>' + esc(c.text) + '</p></div>' +
+      '<div class="b"><div class="n">@' + esc(c.account) + tagOf(c) + '<em>' + ago(c.t) + '</em></div>' +
+      (c.text ? '<p>' + esc(c.text) + '</p>' : '') +
+      (c.img ? '<img class="cm-cimg" loading="lazy" alt="" src="/api/img?id=' + c.id + '">' : '') + '</div>' +
       ((c.canDel || c.mine) ? '<button type="button" class="x" data-del="' + c.id + '" aria-label="Delete">' + ICN.trash + '</button>' : '') + '</div>';
   }
   function drawDetail(){
     if(!curPost || !detOv.classList.contains('show')) return;
+    const body = g('cmDetBody'), st = body.scrollTop;
     g('cmDetT').innerHTML = L('<mark>Post</mark>', '<mark>โพสต์</mark>');
+    g('cmDetX').setAttribute('aria-label', L('Back', 'กลับ'));
     g('cmCIn').placeholder = L('Write a comment…', 'เขียนความคิดเห็น…');
-    g('cmCSend').textContent = L('Send', 'ส่ง');
-    g('cmDetBody').innerHTML = postHtml(curPost, true) +
+    g('cmCPhoto').setAttribute('aria-label', L('Add photo', 'เพิ่มรูปภาพ'));
+    g('cmCSend').textContent = sending ? '…' : L('Send', 'ส่ง');
+    body.innerHTML = postHtml(curPost, true) +
+      '<h3 class="cm-ch">' + L('Comments', 'ความคิดเห็น') + ' · ' + curCms.length + '</h3>' +
       '<div class="cm-cl">' + (curCms.length ? curCms.map(cmHtml).join('') :
       '<div class="cm-empty" style="padding:16px 0 6px">' + L('No comments yet', 'ยังไม่มีความคิดเห็น') + '</div>') + '</div>';
+    body.scrollTop = st;
+  }
+  function setCImg(d){
+    cImg = d || '';
+    g('cmCPrev').hidden = !cImg;
+    g('cmCPrev').querySelector('img').src = cImg || '';
   }
   function openDetail(id){
     const p = findPost(id); if(!p) return;
     curPost = Object.assign({}, p); curCms = [];
-    detOv.classList.add('show'); drawDetail();
+    setCImg(''); g('cmCIn').value = ''; g('cmCFile').value = '';
+    detOv.classList.add('show'); fitDet(); drawDetail(); g('cmDetBody').scrollTop = 0;
     rpc('communityGet', id).then(r => {
       if(r && r.ok && curPost && String(curPost.id) === String(id)){ curPost = r.post; curCms = r.comments; drawDetail(); }
     }).catch(() => {});
@@ -3440,19 +3469,32 @@ body[data-tab="community"] .cm-fab{display:flex}
     curPost.comments = curCms.length;
     const p = findPost(curPost.id); if(p){ p.comments = curCms.length; drawFeed(); }
   }
-  let sending = false;
+  function busy(on){ sending = on; const b = g('cmCSend'); b.disabled = on; b.textContent = on ? '…' : L('Send', 'ส่ง'); }
   function sendComment(){
     const inp = g('cmCIn'), text = inp.value.trim();
-    if(!text || sending || !curPost) return;
-    sending = true;
-    rpc('communityComment', curPost.id, text).then(r => {
-      sending = false;
-      if(r && r.ok){ inp.value = ''; curCms.push(r.comment); syncCount(); drawDetail(); const bd = detOv.querySelector('.modal'); bd.scrollTop = bd.scrollHeight; }
-      else toast((r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ'));
-    }).catch(() => { sending = false; });
+    if((!text && !cImg) || sending || !curPost) return;
+    const pid = curPost.id;
+    busy(true);
+    rpc('communityComment', pid, text, cImg).then(r => {
+      busy(false);
+      if(r && r.ok){
+        if(!curPost || String(curPost.id) !== String(pid)) return;
+        inp.value = ''; setCImg(''); curCms.push(r.comment); syncCount(); drawDetail();
+        const bd = g('cmDetBody'); bd.scrollTop = bd.scrollHeight;
+      } else toast((r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ'));
+    }).catch(() => { busy(false); toast(L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ')); });
   }
+  g('cmCSend').addEventListener('pointerdown', e => e.preventDefault());   // keep the keyboard open
   g('cmCSend').addEventListener('click', sendComment);
-  g('cmCIn').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); sendComment(); } });
+  g('cmCIn').addEventListener('keydown', e => { if(e.key === 'Enter' && !e.isComposing){ e.preventDefault(); sendComment(); } });
+  g('cmCPhoto').addEventListener('click', () => g('cmCFile').click());
+  g('cmCPrevX').addEventListener('click', () => { setCImg(''); g('cmCFile').value = ''; });
+  g('cmCFile').addEventListener('change', () => {
+    const f = g('cmCFile').files && g('cmCFile').files[0]; if(!f) return;
+    compress(f).then(d => setCImg(d))
+      .catch(() => toast(L('Could not use that image. Try another one.', 'ใช้รูปนี้ไม่ได้ ลองรูปอื่นนะ')));
+    g('cmCFile').value = '';
+  });
 
   /* ---------- new post ---------- */
   const newOv = el('<div class="ov" id="cmNewOv"><div class="modal ci">' +
@@ -3465,8 +3507,8 @@ body[data-tab="community"] .cm-fab{display:flex}
     '<input type="file" id="cmFile" accept="image/*" hidden><button type="button" class="btn sm" id="cmPost"></button></div>' +
     '</div></div>');
   document.body.appendChild(newOv);
-  const PKINDS = ['ask', 'share'];
-  let nKind = 'ask', nImg = '', posting = false;
+  const PKINDS = ['share', 'ask'];
+  let nKind = 'share', nImg = '', posting = false;
   const PH = () => ({chat: L('Say something to the fans…', 'พูดคุยกับเพื่อนๆ แฟนคลับ…'), ask: L('Ask a question…', 'ถามเรื่องที่สงสัยได้เลย…'), share: L('Share a tip or news…', 'แชร์เคล็ดลับหรือข่าวสาร…')})[nKind];
   function drawNew(){
     g('cmNewT').innerHTML = L('New <mark>post</mark>', '<mark>โพสต์</mark>ใหม่');
@@ -3477,7 +3519,7 @@ body[data-tab="community"] .cm-fab{display:flex}
   }
   const newMsg = t => { const m = g('cmNewMsg'); m.className = t ? 'msg err' : 'msg'; m.textContent = t || ''; };
   function openNew(){
-    nKind = PKINDS.indexOf(filter) >= 0 ? filter : 'ask'; nImg = ''; posting = false;
+    nKind = 'share'; nImg = ''; posting = false;
     g('cmTa').value = ''; g('cmCnt').textContent = '0 / 1000'; g('cmPrev').hidden = true; g('cmFile').value = ''; newMsg('');
     drawNew(); newOv.classList.add('show');
     setTimeout(() => g('cmTa').focus({preventScroll:true}), 80);
@@ -3579,10 +3621,23 @@ body[data-tab="community"] .cm-fab{display:flex}
     rpc('chatDelete', id).then(r => { if(r && r.ok){ chMsgs = chMsgs.filter(x => x.id !== id); drawChat(false); } else toast((r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ')); }).catch(() => {});
   });
   function fitChat(){
-    const root = document.documentElement;
-    if(!chatMode()){ root.classList.remove('chat-lock'); chatBox.style.height = ''; return; }
-    const h = Math.floor(nav.getBoundingClientRect().top - chatBox.getBoundingClientRect().top - 8);
-    if(h >= 260){ chatBox.style.height = h + 'px'; root.classList.add('chat-lock'); if(window.scrollY) window.scrollTo(0, 0); }
+    const root = document.documentElement, vv = window.visualViewport;
+    if(!chatMode()){ root.classList.remove('chat-lock', 'chat-kb'); chatBox.style.cssText = ''; return; }
+    const kb = !!vv && vv.height < window.innerHeight - 150 && document.activeElement === chIn;
+    root.classList.add('chat-lock');
+    if(kb){
+      // keyboard open: the chat fills exactly the visible area above the keyboard (no page scrolling, no tab bar in the way)
+      const stick = chList.scrollHeight - chList.scrollTop - chList.clientHeight < 90;
+      root.classList.add('chat-kb');
+      chatBox.style.cssText = 'position:fixed;left:0;right:0;max-width:440px;margin:0 auto;z-index:30;background:#fff;padding:8px 12px;box-sizing:border-box;top:' + Math.round(vv.offsetTop) + 'px;height:' + Math.floor(vv.height) + 'px';
+      if(stick) chList.scrollTop = chList.scrollHeight;
+    } else {
+      root.classList.remove('chat-kb');
+      chatBox.style.cssText = '';
+      if(window.scrollY) window.scrollTo(0, 0);
+      const h = Math.floor(nav.getBoundingClientRect().top - chatBox.getBoundingClientRect().top - 8);
+      if(h >= 260) chatBox.style.height = h + 'px';
+    }
   }
   function applyChat(){
     const on = chatMode();
@@ -3593,7 +3648,9 @@ body[data-tab="community"] .cm-fab{display:flex}
     fitChat(); if(on){ setTimeout(fitChat, 150); setTimeout(fitChat, 600); }
   }
   window.addEventListener('resize', fitChat);
-  if(window.visualViewport) window.visualViewport.addEventListener('resize', fitChat);
+  if(window.visualViewport){ window.visualViewport.addEventListener('resize', fitChat); window.visualViewport.addEventListener('scroll', fitChat); }
+  const refitSoon = () => { [60, 250, 600].forEach(ms => setTimeout(fitChat, ms)); };   // iOS reports the keyboard size a little late
+  chIn.addEventListener('focus', refitSoon); chIn.addEventListener('blur', refitSoon);
 
   /* ---------- Announcements (admin -> everyone) ---------- */
   const ANN = {items: [], unread: 0, last: 0, admin: false, pnew: 0, ready: false};
@@ -3709,3 +3766,30 @@ body[data-tab="community"] .cm-fab{display:flex}
   if(document.body.dataset.tab === 'me') loadLevel();
 })();
 </script>
+
+<style>
+/* ===== Post detail as a full page (not a popup) + photos in comments ===== */
+#cmDetOv{padding:0;background:#fff;backdrop-filter:none;-webkit-backdrop-filter:none;align-items:stretch;justify-content:stretch;z-index:55}
+#cmDetOv .modal.cm-det{max-width:none;width:100%;height:100%;max-height:none;border-radius:0;border:0;box-shadow:none;padding:0;display:flex;flex-direction:column;overflow:hidden;background:#fff}
+#cmDetOv .cm-dh{flex:none;justify-content:flex-start;gap:12px;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;border-bottom:1px solid var(--line)}
+#cmDetOv .cm-dh h2{margin:0;min-width:0}
+#cmDetBody{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:14px max(16px,calc((100% - 680px)/2)) 24px}
+#cmDetOv .cm-text{font-size:1rem}
+#cmDetOv .cm-ch{margin:18px 0 0;font-family:var(--display);font-weight:400;font-size:1rem;color:var(--blue)}
+#cmDetOv .cm-cbar{flex:none;border-top:1px solid var(--line);background:#fff;padding:8px max(14px,calc((100% - 680px)/2)) calc(10px + env(safe-area-inset-bottom,0px))}
+#cmDetOv .modal.kb .cm-cbar{padding-bottom:8px}
+#cmDetOv .cm-cbox{margin-top:0}
+.cm-cph{flex:none;width:42px;height:42px;border-radius:50%;border:1px dashed var(--ink);background:#fff;color:var(--blue);display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.cm-cph .hv-ic{width:20px;height:20px}
+.cm-cprev{position:relative;display:inline-block;margin:0 0 8px}
+.cm-cprev[hidden]{display:none}
+.cm-cprev img{display:block;height:72px;width:auto;max-width:160px;object-fit:cover;border-radius:12px;border:1px solid var(--line)}
+.cm-cprev button{position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:1px solid var(--line-2);background:#fff;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.cm-cprev button svg{width:12px;height:12px;fill:none;stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+.cm-cimg{display:block;max-width:100%;max-height:320px;margin-top:6px;border-radius:14px;border:1px solid var(--line);background:var(--blue-l)}
+</style>
+<style>
+/* chat: keyboard open -> hide the tab bar, chat fills the visible area */
+html.chat-kb .hv-tabs{display:none}
+html.chat-kb .ch-box{border-radius:0}
+</style>
