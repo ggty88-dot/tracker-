@@ -2119,13 +2119,7 @@ img.stamp{display:block;object-fit:contain}
 .hv-app .hv-open.btn.sm{padding:4px 14px 5px;font-size:.82rem;border-width:1.5px}
 #hvInfoOv .hv-iopen.btn{width:auto;min-width:120px;align-self:center;padding:6px 18px 7px;font-size:.92rem;border-width:1.5px;margin-top:10px!important}
 /* ===== store icon buttons (App Store / Google Play) ===== */
-.hv-st svg,.hv-iopen svg{display:block;fill:currentColor;stroke:none;flex:none}
-.hv-sts{display:flex;align-items:center;gap:5px;flex:none}
-#hvApps .hv-act .hv-st.btn.sm{display:inline-flex;align-items:center;justify-content:center;padding:5px 12px;border-width:1px;line-height:0}
-#hvApps .hv-act .hv-st svg.ap{width:17px;height:17px}
-#hvApps .hv-act .hv-st svg.an{width:15px;height:18px}
-#hvApps .hv-act .hv-more{min-width:0;gap:2px}
-#hvApps .hv-act .hv-more span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.68rem}
+.hv-iopen svg{display:block;fill:currentColor;stroke:none;flex:none}
 .hv-iacts{display:flex;justify-content:center;align-items:center;gap:12px;flex:none;margin-top:10px}
 #hvInfoOv .hv-iacts .hv-iopen.btn{display:inline-flex;align-items:center;justify-content:center;width:auto;min-width:84px;margin:0!important;padding:8px 24px;border-width:1px;line-height:0;align-self:auto}
 #hvInfoOv .hv-iacts .hv-iopen svg.ap{width:22px;height:22px}
@@ -2192,12 +2186,6 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   const ST_APPLE = '<svg class="ap" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>';
   const ST_ANDROID = '<svg class="an" viewBox="0 0 960 1130" aria-hidden="true"><g fill="currentColor"><path fill-rule="evenodd" d="M183 362A297 274 0 0 1 777 362ZM313 228a30 30 0 1 0 60 0a30 30 0 1 0-60 0ZM587 228a30 30 0 1 0 60 0a30 30 0 1 0-60 0Z"/><path d="M183 385H777V817A71 71 0 0 1 706 888H254A71 71 0 0 1 183 817Z"/><path d="M302 860H435V1035A66.5 66.5 0 0 1 302 1035ZM524 860H657V1035A66.5 66.5 0 0 1 524 1035Z"/><path d="M24 441A67 67 0 0 1 158 441V718A67 67 0 0 1 24 718ZM801 441A67 67 0 0 1 935 441V718A67 67 0 0 1 801 718Z"/><path fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" d="M296 36L342 118M664 36L618 118"/></g></svg>';
   const isUrl = u => !!u && /^https?:\/\//.test(u);
-  const storeBtns = name => {
-    const one = (url, cls, label, ico) => isUrl(url)
-      ? '<a class="btn sm hv-open hv-st ' + cls + '" href="' + esc(url) + '" target="_blank" rel="noopener" aria-label="' + label + '" title="' + label + '">' + ico + '</a>'
-      : '<button class="btn sm hv-open hv-st ' + cls + '" type="button" disabled aria-label="' + label + '" title="' + label + '">' + ico + '</button>';
-    return '<div class="hv-sts">' + one(APP_LINKS[name], 'ios', 'App Store', ST_APPLE) + one(PLAY_LINKS[name], 'and', 'Google Play', ST_ANDROID) + '</div>';
-  };
   // Voting info per app. Each section: [title, note, [items]]; an item "Label: text" shows the label in bold.
   const INFO = {
     'IDOLCHAMP': {
@@ -2510,9 +2498,8 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   function drawApps(){
     const done = mineToday(), box = $('hvApps');
     const card = (a, tagHtml, wide) => {
-      const btn = storeBtns(a.name);
       return '<div class="hv-app' + (wide ? ' wide' : '') + '" data-app="' + esc(a.name) + '" role="button" tabindex="0"><div class="r"><img class="ico" src="' + a.icon + '" alt=""><div class="x"><b>' + esc(a.name) + '</b>' + tagHtml + '</div></div>' +
-        '<div class="hv-act">' + btn + '<div class="hv-more"><span>Voting info</span>' + IC.chev + '</div></div></div>';
+        '<div class="hv-act"><div class="hv-more"><span>Voting info</span>' + IC.chev + '</div></div></div>';
     };
     box.innerHTML = APPS.map(a => { const d = done.has(a.name);
       return card(a, '<span class="tag ' + (d ? 'ok' : 'old') + '">' + (d ? 'Updated today ✓' : 'Not updated today') + '</span>', false); }).join('') +
