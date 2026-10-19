@@ -2293,12 +2293,12 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     'MUBEAT': {
       en: [
         ['How to collect votes', '', ['#k', 'Watch ads: Watch 50 ads/day (5 ads = 1 ticket)', 'Mission: Play games and complete missions', 'Star Beat: Can be purchased to exchange for voting tickets', '#m', 'Watch ads: Watch 15 ads/day', 'Mission: Play games and complete missions', 'Quiz: Complete the quiz', 'Star Beat: Can be purchased to use for dice rolls or roulette spins']],
-        ['Voting details', '', ['{k}Pre-vote: Unlimited votes|Live-vote: Max 50 votes|Show stage: Show stage trophy is 100% based on votes, using Show K-POP tickets to vote', '{m}Pre-vote: Unlimited votes|Live-vote: Use 150 💗 to exchange for 5 tickets']],
+        ['Voting details', '', ['{k}Pre-vote: Unlimited votes|Live-vote: Max 50 votes|Show stage: Trophy is 100% based on votes, using Show K-POP tickets to vote', '{m}Pre-vote: Unlimited votes|Live-vote: Use 150 💗 to exchange for 5 tickets']],
         ['Expires', '', ['{k}Voting Ticket: Expires in 90 days|Live Voting Ticket: Expires in 30 days', '{m}Heartbeats 💗: Expires in 90 days']]
       ],
       th: [
         ['วิธีสะสมโหวต', '', ['#k', 'ดูโฆษณา: ดู 50 โฆษณา/วัน (5 โฆษณา = 1 ตั๋ว)', 'ภารกิจ: เล่นเกมและทำภารกิจให้สำเร็จ', 'Star Beat: ซื้อเพื่อนำไปแลกตั๋วโหวตได้', '#m', 'ดูโฆษณา: ดู 15 โฆษณา/วัน', 'ภารกิจ: เล่นเกมและทำภารกิจให้สำเร็จ', 'ควิซ: ตอบควิซให้สำเร็จ', 'Star Beat: ซื้อเพื่อใช้ทอยลูกเต๋าหรือหมุนรูเล็ตได้']],
-        ['รายละเอียดการโหวต', '', ['{k}Pre-vote: โหวตได้ไม่จำกัด|Live-vote: สูงสุด 50 โหวต|Show stage: ถ้วยรางวัล Show stage ตัดสินจากคะแนนโหวต 100% ใช้ตั๋วของรายการ Show K-POP ในการโหวต', '{m}Pre-vote: โหวตได้ไม่จำกัด|Live-vote: ใช้ 150 💗 แลกตั๋ว 5 ใบ']],
+        ['รายละเอียดการโหวต', '', ['{k}Pre-vote: โหวตได้ไม่จำกัด|Live-vote: สูงสุด 50 โหวต|Show stage: ถ้วยรางวัลตัดสินจากคะแนนโหวต 100% ใช้ตั๋วของรายการ Show K-POP ในการโหวต', '{m}Pre-vote: โหวตได้ไม่จำกัด|Live-vote: ใช้ 150 💗 แลกตั๋ว 5 ใบ']],
         ['วันหมดอายุ', '', ['{k}ตั๋วโหวต: หมดอายุใน 90 วัน|ตั๋ว Live Voting: หมดอายุใน 30 วัน', '{m}Heartbeats 💗: หมดอายุใน 90 วัน']]
       ]
     },
@@ -2720,7 +2720,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     const parts = base.map(sc => ({title: sc[0], by: splitShows(sc[2])}));
     parts.push({title: t[1], by: splitShows(CRITERIA[name])});
     const last = parts.length - 1;
-    return '<div class="hv-sc"><h3>' + esc(t[0]) + '</h3></div>' + ['k', 'm'].map(k =>
+    return ['k', 'm'].map(k =>
       '<div class="hv-show"><div class="hv-sh"><span class="hv-em">' + EM('', name, 'tv') + '</span><span class="hv-tag ' + k + '">' + SHOWN[k] + '</span></div>' +
       parts.map((p, i) => '<div class="hv-sc"><h4>' + esc(p.title) + '</h4><ul>' +
         p.by[k].map(x => liHtml(x, name, i === 0 ? 'collect' : i === last ? 'pct' : '', bold)).join('') + '</ul></div>').join('') +
