@@ -787,7 +787,7 @@ const store = {
 /* ---------- API (Vercel) ---------- */
 function showWho(){ const w = document.getElementById('ciWho'), i = document.getElementById('ciAcc'); if(!w || !i) return; const a = String(i.value || '').trim().replace(/^@+/, ''); w.textContent = a ? '@' + a : ''; w.hidden = !a; }
 // actions that act "as me" carry this device's session token as first argument
-const AUTHED = ['submitVote','getAccountSummary','checkIn','getCheckins','whoami','logout','changePin','getMyProfile','getMyLevel','communityList','communityPost','communityGet','communityComment','communityLike','communityDelete','communityReport','communitySeen','setAvatar','getLeaderboard','annList','annRead','annPost','annDelete','chatList','chatSend','chatDelete'];
+const AUTHED = ['submitVote','getAccountSummary','checkIn','getCheckins','whoami','logout','changePin','getMyProfile','getMyLevel','communityList','communityPost','communityGet','communityComment','communityLike','communityLikers','communityDelete','communityReport','communitySeen','setAvatar','getLeaderboard','annList','annRead','annPost','annDelete','chatList','chatSend','chatDelete'];
 function rpc(action, ...args){
   if(AUTHED.indexOf(action) >= 0) args = [store.get('fv_token') || ''].concat(args);
   return fetch('/api/rpc', {
@@ -3144,6 +3144,8 @@ html.chat-lock,html.chat-lock body{overflow:hidden;overscroll-behavior:none}
 .cm-act.on{color:var(--red)}
 .cm-act.on .hv-ic{fill:var(--red)}
 .cm-act.sp{margin-left:auto}
+.cm-lk{font-size:.74rem;text-decoration:underline;text-underline-offset:2px}
+.cm-lk[hidden]{display:none}
 .cm-empty{padding:34px 10px;text-align:center;color:var(--muted);font-weight:700;font-size:.88rem}
 .cm-empty b{display:block;margin-bottom:4px;font-family:var(--display);font-weight:400;font-size:1.1rem;color:var(--ink)}
 .cm-more{display:block;margin:6px auto 0;width:auto!important;padding:8px 22px 9px!important}
@@ -3333,6 +3335,7 @@ body[data-tab="community"] .cm-fab{display:flex}
 
   /* ---------- profile photo ---------- */
   const hvAv = g('hvAv'), avWrap = hvAv && hvAv.parentNode, MASCOT = hvAv ? hvAv.src : '';
+  if(hvAv) hvAv.addEventListener('error', () => { if(hvAv.src !== MASCOT){ hvAv.src = MASCOT; avWrap.classList.remove('has-photo'); } });
   let myAcc = '', myAv = 0;
   function drawAvatar(){
     if(!hvAv) return;
@@ -3413,7 +3416,15 @@ body[data-tab="community"] .cm-fab{display:flex}
   const KINDS = ['chat', 'ask', 'share'];
   const kindLbl = k => ({all: L('All','ทั้งหมด'), chat: L('Chat','คุยเล่น'), ask: L('Question','ถามตอบ'), share: L('Share','แชร์'), ann: L('Announcement','ประกาศ')})[k];
   const AVC = ['#dde5ff', '#fff1b3', '#dcf5e1', '#ffe3ef', '#ece3ff'];
-  const avOf = (a, v) => { if(v) return '<span class="cm-av img"><img alt="" loading="lazy" src="/api/img?u=' + encodeURIComponent(a) + '&v=' + v + '"></span>'; let h = 0; for(let i = 0; i < a.length; i++) h = (h * 31 + a.charCodeAt(i)) >>> 0; return '<span class="cm-av" style="background:' + AVC[h % AVC.length] + '">' + esc(a.charAt(0).toUpperCase()) + '</span>'; };
+  const avLetter = a => { let h = 0; for(let i = 0; i < a.length; i++) h = (h * 31 + a.charCodeAt(i)) >>> 0; return '<span class="cm-av" style="background:' + AVC[h % AVC.length] + '">' + esc(a.charAt(0).toUpperCase()) + '</span>'; };
+  const avOf = (a, v) => v ? '<span class="cm-av img" data-acc="' + esc(a) + '"><img alt="" loading="lazy" src="/api/img?u=' + encodeURIComponent(a) + '&v=' + v + '"></span>' : avLetter(a);
+  // a profile photo that fails to load falls back to the letter circle (instead of the broken "?" icon)
+  document.addEventListener('error', e => {
+    const im = e.target; if(!im || im.tagName !== 'IMG') return;
+    const sp = im.closest && im.closest('.cm-av.img'); if(!sp) return;
+    const t = document.createElement('div'); t.innerHTML = avLetter(sp.dataset.acc || '?');
+    sp.replaceWith(t.firstChild);
+  }, true);
 
   let filter = 'all', posts = [], next = 0, more = false, loading = false, loadedOnce = false;
 
@@ -3433,15 +3444,20 @@ body[data-tab="community"] .cm-fab{display:flex}
         '<div class="cm-who"><div class="n"><b>@' + esc(p.account) + '</b>' + tagOf(p) + '</div>' +
         '<small>' + ago(p.t) + '<span class="cm-kind ' + p.kind + '">' + kindLbl(p.kind) + '</span></small></div></div>' +
       (p.text ? '<p class="cm-text">' + esc(p.text) + '</p>' : '') +
-      (p.img ? '<img class="cm-img" loading="lazy" alt="" src="/api/img?id=' + p.id + '">' : '') +
+      (p.img ? '<img class="cm-img" loading="lazy" alt="" onerror="this.style.display=\'none\'" src="/api/img?id=' + p.id + '">' : '') +
       '<div class="cm-foot">' +
         '<button type="button" class="cm-act' + (p.liked ? ' on' : '') + '" data-a="like" aria-label="Like">' + ICN.heart + '<span>' + p.likes + '</span></button>' +
         '<button type="button" class="cm-act" data-a="open" aria-label="Comments">' + ICN.bubble + '<span>' + p.comments + '</span></button>' +
+        (ANN.admin ? '<button type="button" class="cm-act cm-lk" data-a="likers" aria-label="Who liked"' + (p.likes > 0 ? '' : ' hidden') + '>' + L('Who liked', 'ใครไลก์') + '</button>' : '') +
         '<button type="button" class="cm-act sp" data-a="' + (mine ? 'del' : 'rep') + '" aria-label="' + (mine ? 'Delete' : 'Report') + '">' + (mine ? ICN.trash : ICN.flag) + '</button>' +
       '</div></article>';
   }
   function drawFeed(){
-    const box = g('cmFeed');
+    const box = g('cmFeed'), sy = window.scrollY;
+    drawFeedInner(box);
+    if(!chatMode() && Math.abs(window.scrollY - sy) > 2) window.scrollTo(0, sy);
+  }
+  function drawFeedInner(box){
     if(loading && !posts.length){ box.innerHTML = '<div class="cm-empty">' + L('Loading…', 'กำลังโหลด…') + '</div>'; }
     else if(!posts.length){
       box.innerHTML = '<div class="cm-empty"><b>' + L('No posts yet', 'ยังไม่มีโพสต์') + '</b>' + L('Tap + to start the conversation!', 'กด + เพื่อเริ่มคุยเป็นคนแรกกันเลย!') + '</div>';
@@ -3455,7 +3471,18 @@ body[data-tab="community"] .cm-fab{display:flex}
     drawFeed();
     rpc('communityList', filter, reset ? 0 : next).then(r => {
       loading = false; loadedOnce = true;
-      if(r && r.ok){ posts = reset ? r.posts : posts.concat(r.posts); next = r.next; more = r.more; }
+      if(r && r.ok){
+        if(reset && posts.length > r.posts.length){
+          // refresh: keep the older pages the person already loaded so the page does not jump to the top
+          const ids = new Set(r.posts.map(p => String(p.id))), edge = r.posts.length ? r.posts[r.posts.length - 1].t : Infinity;
+          const keep = posts.filter(p => !ids.has(String(p.id)) && p.t < edge);
+          posts = r.posts.concat(keep); next = posts.length; more = more || r.more;
+        } else if(reset){ posts = r.posts; next = r.next; more = r.more; }
+        else {
+          const have = new Set(posts.map(p => String(p.id)));
+          posts = posts.concat(r.posts.filter(p => !have.has(String(p.id)))); next = r.next; more = r.more;
+        }
+      }
       drawFeed();
     }).catch(() => { loading = false; drawFeed(); });
   }
@@ -3465,11 +3492,21 @@ body[data-tab="community"] .cm-fab{display:flex}
     const p = findPost(id); if(p){ p.liked = res.liked; p.likes = res.likes; }
     if(curPost && String(curPost.id) === String(id)){ curPost.liked = res.liked; curPost.likes = res.likes; }
   }
+  // update only the heart buttons of this post (rebuilding the whole feed made photos reload and the page jump)
+  function paintLike(id){
+    const p = findPost(id) || curPost; if(!p) return;
+    [].forEach.call(document.querySelectorAll('.cm-post[data-id="' + id + '"] [data-a="like"]'), b => {
+      b.classList.toggle('on', !!p.liked);
+      const s = b.querySelector('span'); if(s) s.textContent = p.likes;
+    });
+    [].forEach.call(document.querySelectorAll('.cm-post[data-id="' + id + '"] .cm-lk'), b => { b.hidden = !(p.likes > 0); });
+  }
   function toggleLike(id){
     const p = findPost(id) || curPost; if(!p) return;
     p.liked = !p.liked; p.likes += p.liked ? 1 : -1;          // optimistic
-    drawFeed(); drawDetail();
-    rpc('communityLike', id).then(r => { if(r && r.ok){ setLike(id, r); drawFeed(); drawDetail(); } }).catch(() => {});
+    if(curPost && String(curPost.id) === String(id) && p !== curPost){ curPost.liked = p.liked; curPost.likes = p.likes; }
+    paintLike(id);
+    rpc('communityLike', id).then(r => { if(r && r.ok){ setLike(id, r); paintLike(id); } }).catch(() => {});
   }
   function removePost(id){
     if(!confirm(L('Delete this post?', 'ลบโพสต์นี้ไหม?'))) return;
@@ -3492,6 +3529,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     else if(a === 'open') openDetail(id);
     else if(a === 'del') removePost(id);
     else if(a === 'rep') reportPost(id);
+    else if(a === 'likers') showLikers(id);
   }
   g('cmFeed').addEventListener('click', e => {
     const card = e.target.closest('.cm-post'); if(!card) return;
@@ -3504,6 +3542,30 @@ body[data-tab="community"] .cm-fab{display:flex}
     if(filter === 'chat') loadChat(true); else loadFeed(true);
   });
   g('cmMore').addEventListener('click', () => loadFeed(false));
+
+
+  /* ---------- who liked (admins) ---------- */
+  const lkOv = el('<div class="ov" id="cmLkOv"><div class="modal ci">' +
+    '<div class="ci-head"><h2 id="cmLkT"></h2><button class="xbtn" type="button" id="cmLkX" aria-label="Close">' + X_SVG + '</button></div>' +
+    '<div id="cmLkList" style="max-height:55vh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain"></div>' +
+    '</div></div>');
+  document.body.appendChild(lkOv);
+  g('cmLkX').addEventListener('click', () => lkOv.classList.remove('show'));
+  lkOv.addEventListener('click', e => { if(e.target === lkOv) lkOv.classList.remove('show'); });
+  function showLikers(id){
+    g('cmLkT').innerHTML = L('<mark>Likes</mark>', '<mark>คนที่กดไลก์</mark>');
+    g('cmLkList').innerHTML = '<div class="cm-empty" style="padding:16px 0">' + L('Loading…', 'กำลังโหลด…') + '</div>';
+    lkOv.classList.add('show');
+    rpc('communityLikers', id).then(r => {
+      if(!lkOv.classList.contains('show')) return;
+      if(r && r.ok){
+        g('cmLkT').innerHTML = L('<mark>Likes</mark>', '<mark>คนที่กดไลก์</mark>') + ' · ' + r.count;
+        g('cmLkList').innerHTML = r.users.length
+          ? r.users.map(u => '<div class="cm-cm" style="align-items:center;padding:6px 0">' + avLetter(u) + '<div class="b"><div class="n" style="margin:0">@' + esc(u) + '</div></div></div>').join('')
+          : '<div class="cm-empty" style="padding:16px 0">' + L('No likes yet', 'ยังไม่มีคนกดไลก์') + '</div>';
+      } else { lkOv.classList.remove('show'); toast((r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ')); }
+    }).catch(() => { lkOv.classList.remove('show'); });
+  }
 
   /* ---------- post detail + comments ---------- */
   const BACK_SVG = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
@@ -3536,7 +3598,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     return '<div class="cm-cm" data-cid="' + c.id + '">' + avOf(c.account, c.av) +
       '<div class="b"><div class="n">@' + esc(c.account) + tagOf(c) + '<em>' + ago(c.t) + '</em></div>' +
       (c.text ? '<p>' + esc(c.text) + '</p>' : '') +
-      (c.img ? '<img class="cm-cimg" loading="lazy" alt="" src="/api/img?id=' + c.id + '">' : '') + '</div>' +
+      (c.img ? '<img class="cm-cimg" loading="lazy" alt="" onerror="this.style.display=\'none\'" src="/api/img?id=' + c.id + '">' : '') + '</div>' +
       ((c.canDel || c.mine) ? '<button type="button" class="x" data-del="' + c.id + '" aria-label="Delete">' + ICN.trash + '</button>' : '') + '</div>';
   }
   function drawDetail(){
@@ -3580,6 +3642,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     if(b.dataset.a === 'like') toggleLike(curPost.id);
     else if(b.dataset.a === 'del') removePost(curPost.id);
     else if(b.dataset.a === 'rep') reportPost(curPost.id);
+    else if(b.dataset.a === 'likers') showLikers(curPost.id);
   });
   function syncCount(){
     curPost.comments = curCms.length;
