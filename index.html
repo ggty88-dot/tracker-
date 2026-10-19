@@ -489,10 +489,12 @@ html[lang="th"] .hv-qb b{font-size:.9rem!important}
 .dd-list li.off .ico{filter:grayscale(1);opacity:.45}
 .chip.off{color:#9a9caa;border-color:#c9cad3}.chip.off img{filter:grayscale(1);opacity:.45;border-color:#c9cad3}
 .ci-app.lock{cursor:not-allowed}.ci-app.lock img{opacity:.22}
-.hv-focus{margin-top:8px;background:#fbefbd;border:1px solid var(--ink);border-radius:20px;padding:8px 10px}
+.hv-focus{margin-top:8px;background:var(--sun-l);border:1px solid var(--line);border-radius:20px;padding:8px 10px}
 .hv-focus .fh{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-family:var(--display);font-weight:400;font-size:.95rem;line-height:1.2}
 .hv-focus .fc{display:flex;flex-wrap:nowrap;gap:5px;overflow:hidden}
-.hv-focus .fchip{display:flex;align-items:center;gap:4px;padding:3px 8px;border:1.5px solid var(--ink);border-radius:999px;background:#fff;font-weight:800;font-size:.72rem;line-height:1.3;white-space:nowrap;flex:0 1 auto;min-width:0}
+.hv-focus .fchip{display:flex;align-items:center;gap:4px;padding:3px 8px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-family:'Nunito',sans-serif;font-weight:800;font-size:.72rem;line-height:1.3;white-space:nowrap;flex:0 1 auto;min-width:0;cursor:pointer;transition:transform .15s}
+.hv-focus .fchip:active{transform:scale(.9)}
+@media(prefers-reduced-motion:reduce){.hv-focus .fchip{transition:none}}
 .hv-focus .fchip i{width:7px;height:7px;border-radius:50%;display:block;flex:none}
 body[data-tab="home"] .hv-sec{margin:8px 2px 6px}
 body[data-tab="home"] .hv-tile{padding:7px 10px}
@@ -2291,12 +2293,12 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
       en: [
         ['How to collect votes', '', ['#k', 'Watch ads: Watch 50 ads/day (5 ads = 1 ticket)', 'Mission: Play games and complete missions', 'Star Beat: Can be purchased to exchange for voting tickets', '#m', 'Watch ads: Watch 15 ads/day', 'Mission: Play games and complete missions', 'Quiz: Complete the quiz', 'Star Beat: Can be purchased to use for dice rolls or roulette spins']],
         ['Voting details', '', ['{k}Pre-vote: Unlimited votes|Live-vote: Max 50 votes|Show stage: Show stage trophy is 100% based on votes, using Show K-POP tickets to vote', '{m}Pre-vote: Unlimited votes|Live-vote: Use 150 💗 to exchange for 5 tickets']],
-        ['Expires', '', ['{k}Voting Ticket: Expires in 90 days|Live Voting Ticket: Expires in 30 days', '{m}Heartbeats 💗: Expires in 60 days']]
+        ['Expires', '', ['{k}Voting Ticket: Expires in 90 days|Live Voting Ticket: Expires in 30 days', '{m}Heartbeats 💗: Expires in 90 days']]
       ],
       th: [
         ['วิธีสะสมโหวต', '', ['#k', 'ดูโฆษณา: ดู 50 โฆษณา/วัน (5 โฆษณา = 1 ตั๋ว)', 'ภารกิจ: เล่นเกมและทำภารกิจให้สำเร็จ', 'Star Beat: ซื้อเพื่อนำไปแลกตั๋วโหวตได้', '#m', 'ดูโฆษณา: ดู 15 โฆษณา/วัน', 'ภารกิจ: เล่นเกมและทำภารกิจให้สำเร็จ', 'ควิซ: ตอบควิซให้สำเร็จ', 'Star Beat: ซื้อเพื่อใช้ทอยลูกเต๋าหรือหมุนรูเล็ตได้']],
         ['รายละเอียดการโหวต', '', ['{k}Pre-vote: โหวตได้ไม่จำกัด|Live-vote: สูงสุด 50 โหวต|Show stage: ถ้วยรางวัล Show stage ตัดสินจากคะแนนโหวต 100% ใช้ตั๋วของรายการ Show K-POP ในการโหวต', '{m}Pre-vote: โหวตได้ไม่จำกัด|Live-vote: ใช้ 150 💗 แลกตั๋ว 5 ใบ']],
-        ['วันหมดอายุ', '', ['{k}ตั๋วโหวต: หมดอายุใน 90 วัน|ตั๋ว Live Voting: หมดอายุใน 30 วัน', '{m}Heartbeats 💗: หมดอายุใน 60 วัน']]
+        ['วันหมดอายุ', '', ['{k}ตั๋วโหวต: หมดอายุใน 90 วัน|ตั๋ว Live Voting: หมดอายุใน 30 วัน', '{m}Heartbeats 💗: หมดอายุใน 90 วัน']]
       ]
     },
     'HIGHER': {
@@ -2528,8 +2530,8 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
       qb('ci', IC.cal, 'Daily Check-in', 'Check in for the day') +
       qb('upd', IC.bolt, 'Quick Update', 'Update your totals') +
     '</div>' +
-    (FOCUS_APPS.length ? '<div class="hv-focus"><div class="fh"><svg class="hv-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg><span>Focus apps this month</span></div><div class="fc">' +
-      FOCUS_APPS.map(n => '<span class="fchip"><i style="background:' + (FOCUS_DOT[n] || '#2447d6') + '"></i>' + esc(n) + '</span>').join('') + '</div></div>' : '') +
+    (FOCUS_APPS.length ? '<div class="hv-focus"><div class="fh"><svg class="hv-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4.5l-4 4l-4 1.5l-1.5 1.5l7 7l1.5-1.5l1.5-4l4-4"/><path d="M9 15l-4.5 4.5"/><path d="M14.5 4l5.5 5.5"/></svg><span>Focus apps this month</span></div><div class="fc">' +
+      FOCUS_APPS.map(n => '<button type="button" class="fchip" data-focus="' + esc(n) + '"><i style="background:' + (FOCUS_DOT[n] || '#2447d6') + '"></i>' + esc(n) + '</button>').join('') + '</div></div>' : '') +
   '</div>' +
   '<div class="hv-view" data-v="vote" hidden><h2 class="hv-h">App <mark>Vote</mark></h2><p class="hv-s">Tap an app to see how to collect</p><div id="hvApps"></div></div>' +
   '<div class="hv-view" data-v="history" hidden><h2 class="hv-h"><mark>History</mark></h2><p class="hv-s">Everyone’s updates from the last 3 days</p>' +
@@ -2863,6 +2865,8 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   app.addEventListener('click', e => {
     const ap = e.target.closest('.hv-app'); if(ap && !e.target.closest('.hv-open')) return openInfo(ap.dataset.app);
     const g = e.target.closest('[data-go]'); if(g) return go(g.dataset.go);
+    const fo = e.target.closest('[data-focus]');
+    if(fo){ const nm = fo.dataset.focus; try{ appDD.set(nm); store.set('fv_app', nm); }catch(err){} ACT.upd(); setTimeout(() => { const c = $('count'); if(c) c.focus({preventScroll:true}); }, 60); return; }
     const q = e.target.closest('[data-q]'); if(q) return ACT[q.dataset.q]();
     const m = e.target.closest('[data-m]'); if(m) return ACT[m.dataset.m]();
   });
