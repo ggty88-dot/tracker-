@@ -90,12 +90,40 @@ function checkEntry(account, app, count) {
   return null;
 }
 
-async function loadAll() {
-  const flat = (await cmd('HGETALL', HASH)) || [];
-  const list = [];
-  for (let i = 1; i < flat.length; i += 2) list.push(JSON.parse(flat[i]));
-  return list.sort((a, b) => b.t - a.t || b.id - a.id); // newest first
+/* In-memory cache (lives as long as the warm serverless instance, shared by concurrent requests).
+   loadAll() reads + parses EVERY vote record, so without this each poll from each open tab repeats it.
+   Callers must treat the returned list as read-only. Writes use loadAll(true) / dropAll(). */
+const ALL_TTL = 8000;                       // ms
+let _all = null, _allAt = 0, _allP = null;
+async function loadAll(fresh) {
+  if (!fresh) {
+    if (_all && Date.now() - _allAt < ALL_TTL) return _all;
+    if (_allP) return _allP;                // another request is already loading it: wait for the same read
+  }
+  const p = (async () => {
+    const flat = (await cmd('HGETALL', HASH)) || [];
+    const list = [];
+    for (let i = 1; i < flat.length; i += 2) list.push(JSON.parse(flat[i]));
+    list.sort((a, b) => b.t - a.t || b.id - a.id); // newest first
+    _all = list; _allAt = Date.now();
+    return list;
+  })();
+  if (!fresh) _allP = p;
+  try { return await p; } finally { if (_allP === p) _allP = null; }
 }
+const dropAll = () => { _all = null; _allP = null; memoDrop(); };
+
+// tiny result cache for read-only actions that are the same for everybody
+const _memo = new Map();
+async function memo(name, ttl, fn) {
+  const hit = _memo.get(name);
+  if (hit && Date.now() - hit.at < ttl) return hit.v;
+  if (hit && hit.p) return hit.p;
+  const p = fn().then(v => { _memo.set(name, { at: Date.now(), v }); return v; }, e => { _memo.delete(name); throw e; });
+  _memo.set(name, { at: hit ? hit.at : 0, v: hit ? hit.v : undefined, p });
+  return p;
+}
+const memoDrop = () => _memo.clear();
 
 function latestMap(list) {
   const m = new Map();
@@ -114,7 +142,7 @@ function summaryFor(list, account) {
 }
 
 async function adminData(role) {
-  const list = await loadAll();
+  const list = await loadAll(true);
   const lm = latestMap(list);
   const shape = v => ({ row: v.id, account: v.account, app: v.app, count: v.count, ...(v.tickets != null ? { tickets: v.tickets } : {}), ts: fmtTs(v.t) });
   return {
@@ -344,7 +372,7 @@ const actions = {
     if (err) return bad(err);
     if (!isFocus(app)) return bad('This app is not open for updates yet.');
 
-    const list = await loadAll();
+    const list = await loadAll(true);
     const prevRec = latestMap(list).get(account.toLowerCase() + '|' + app);
     if (isMB) {
       if (count === undefined) count = prevRec ? prevRec.count : 0;
@@ -354,6 +382,7 @@ const actions = {
     const rec = { id, account, app, count, t: Date.now() };
     if (tickets !== undefined) rec.tickets = tickets;
     await cmd('HSET', HASH, id, JSON.stringify(rec));
+    if (_all) _all = [rec, ..._all]; memoDrop();
 
     const res = { ok: true, account, app, count, tickets: tickets === undefined ? null : tickets, prev: prevRec ? prevRec.count : null, prevTickets: prevRec && prevRec.tickets != null ? prevRec.tickets : null };
     if (account === SPECIAL) res.summary = summaryFor([rec, ...list], account);
@@ -368,7 +397,9 @@ const actions = {
     return { ok: true, summary: summaryFor(await loadAll(), account) };
   },
 
-  async getTodayFeed() {
+  getTodayFeed() { return memo('feed', 10000, () => this._feed()); },
+
+  async _feed() {
     const today = dayOf(Date.now());
     const items = [...latestMap(await loadAll()).values()]
       .filter(v => dayOf(v.t) === today && isFocus(v.app))
@@ -393,7 +424,9 @@ const actions = {
     return { ok: true, items, community };
   },
 
-  async getOverview() {
+  getOverview() { return memo('overview', 20000, () => this._overview()); },
+
+  async _overview() {
     const list = await loadAll(); // newest first
     const now = Date.now();
     const days = [0, 1, 2].map(i => dayOf(now - i * 86400000)); // today, yesterday, 2 days ago
@@ -531,16 +564,19 @@ const actions = {
   async getLeaderboard(token) {
     const me = await sessionUser(token);
     if (!me) return AUTH_ERR;
-    const flat = (await cmd('HGETALL', USERS)) || [];
-    const accs = [];
-    for (let i = 1; i < flat.length; i += 2) accs.push(JSON.parse(flat[i]).account);
-    const [lv, av] = await Promise.all([levelsFor(accs), avatarsFor(accs)]);
-    const rows = accs.filter(a => !isAdminAcc(a))
-      .map(a => ({ account: a, xp: lv[lc(a)].xp, level: lv[lc(a)].level, av: av[lc(a)] || 0, me: lc(a) === lc(me.account) }))
-      .filter(r => r.xp > 0)
-      .sort((a, b) => b.xp - a.xp || a.account.localeCompare(b.account));
-    const idx = rows.findIndex(r => r.me);
-    return { ok: true, top: rows.slice(0, 20), rank: idx >= 0 ? idx + 1 : 0, total: rows.length };
+    const rows = await memo('leaderboard', 60000, async () => {
+      const flat = (await cmd('HGETALL', USERS)) || [];
+      const accs = [];
+      for (let i = 1; i < flat.length; i += 2) accs.push(JSON.parse(flat[i]).account);
+      const [lv, av] = await Promise.all([levelsFor(accs), avatarsFor(accs)]);
+      return accs.filter(a => !isAdminAcc(a))
+        .map(a => ({ account: a, xp: lv[lc(a)].xp, level: lv[lc(a)].level, av: av[lc(a)] || 0 }))
+        .filter(r => r.xp > 0)
+        .sort((a, b) => b.xp - a.xp || a.account.localeCompare(b.account));
+    });
+    const mine = lc(me.account);
+    const idx = rows.findIndex(r => lc(r.account) === mine);
+    return { ok: true, top: rows.slice(0, 20).map(r => ({ ...r, me: lc(r.account) === mine })), rank: idx >= 0 ? idx + 1 : 0, total: rows.length };
   },
 
   /* ----- community ----- */
@@ -896,8 +932,9 @@ const actions = {
     await cmd('DEL', 'pinfail:' + lc(account));
     if (purge) {
       await cmd('DEL', ciKey(account));
-      const ids = (await loadAll()).filter(v => lc(v.account) === lc(account)).map(v => v.id);
+      const ids = (await loadAll(true)).filter(v => lc(v.account) === lc(account)).map(v => v.id);
       for (let i = 0; i < ids.length; i += 200) await cmd('HDEL', HASH, ...ids.slice(i, i + 200));
+      dropAll();
     }
     return { ok: true };
   },
@@ -921,12 +958,14 @@ const actions = {
     const upd = { ...cur, account, app: next.app, count };
     if (upd.app !== 'MUBEAT') delete upd.tickets;           // tickets only exist for MUBEAT
     await cmd('HSET', HASH, cur.id, JSON.stringify(upd));
+    dropAll();
     return adminData('admin');
   },
 
   async adminDeleteRow(pw, ref) {
     if ((await roleOf(pw)) !== 'admin') return bad('Incorrect password');
     await cmd('HDEL', HASH, ref && ref.row);
+    dropAll();
     return adminData('admin');
   },
 };
@@ -937,7 +976,7 @@ module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json(bad('Method not allowed'));
   try {
     const { action, args } = req.body || {};
-    if (!Object.prototype.hasOwnProperty.call(actions, action)) return res.status(400).json(bad('Unknown action'));
+    if (typeof action !== 'string' || action[0] === '_' || !Object.prototype.hasOwnProperty.call(actions, action)) return res.status(400).json(bad('Unknown action'));
     const out = await actions[action](...(Array.isArray(args) ? args : []));
     return res.status(200).json(out);
   } catch (e) {
