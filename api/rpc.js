@@ -78,7 +78,7 @@ const roleOf = async pw => {
     same(s, process.env.FAN_PASSWORD) ? 'fan' : null;
 };
 
-const fmtTs = t => new Date(t).toLocaleString('sv-SE', { timeZone: 'Asia/Bangkok' });
+const fmtTs = t => new Date(t + 7 * 36e5).toISOString().replace('T', ' ').slice(0, 19);   // Thai time, same text as before, no Intl (saves CPU)
 const key = v => v.account.toLowerCase() + '|' + v.app;
 const bad = message => ({ ok: false, message });
 const cleanAcc = v => String(v || '').trim().replace(/^@+/, '');
@@ -93,7 +93,7 @@ function checkEntry(account, app, count) {
 /* In-memory cache (lives as long as the warm serverless instance, shared by concurrent requests).
    loadAll() reads + parses EVERY vote record, so without this each poll from each open tab repeats it.
    Callers must treat the returned list as read-only. Writes use loadAll(true) / dropAll(). */
-const ALL_TTL = 8000;                       // ms
+const ALL_TTL = 30000;                       // ms
 let _all = null, _allAt = 0, _allP = null;
 async function loadAll(fresh) {
   if (!fresh) {
@@ -123,7 +123,8 @@ async function memo(name, ttl, fn) {
   _memo.set(name, { at: hit ? hit.at : 0, v: hit ? hit.v : undefined, p });
   return p;
 }
-const memoDrop = () => _memo.clear();
+const _lv = new Map();                                  // account -> { at, v }  (XP / level cache)
+const memoDrop = () => { _memo.clear(); _lv.clear(); };
 
 function latestMap(list) {
   const m = new Map();
@@ -222,8 +223,8 @@ async function hasData(acc) {                                      // account us
 /* ---------- today feed + check-in helpers ---------- */
 const TZ = 'Asia/Bangkok';                  // clock shown to people (Thai time)
 const DAY_TZ = 'Asia/Seoul';                // a "day" starts at midnight Korea time = 22:00 Thai, like the voting apps
-const dayOf = t => new Date(t).toLocaleDateString('sv-SE', { timeZone: DAY_TZ });
-const timeOf = t => new Date(t).toLocaleTimeString('sv-SE', { timeZone: TZ, hour: '2-digit', minute: '2-digit' });
+const dayOf = t => new Date(t + 9 * 36e5).toISOString().slice(0, 10);       // Korea day (UTC+9), no Intl (saves CPU)
+const timeOf = t => new Date(t + 7 * 36e5).toISOString().slice(11, 16);     // Thai HH:MM, no Intl (saves CPU)
 const ciKey = a => 'checkin:' + a.toLowerCase();
 
 // apps this account has updated, grouped by day (YYYY-MM-DD, Korea time)
@@ -269,6 +270,19 @@ function levelOf(xp) {
 
 // XP for several accounts at once (one read of the votes, one pipeline for the check-in sets)
 async function levelsFor(accounts) {
+  const all = [...new Set(accounts.map(lc))];
+  const out = {}, miss = [], now = Date.now();
+  for (const a of all) {
+    const h = _lv.get(a);
+    if (h && now - h.at < 60000) out[a] = h.v; else miss.push(a);
+  }
+  if (miss.length) {
+    const fresh = await levelsCompute(miss);
+    for (const a of miss) { out[a] = fresh[a]; _lv.set(a, { at: now, v: fresh[a] }); }
+  }
+  return out;
+}
+async function levelsCompute(accounts) {
   const want = [...new Set(accounts.map(lc))];
   const out = {};
   if (!want.length) return out;
@@ -304,6 +318,7 @@ async function avatarsFor(accounts) {
 const AV_MAX = 80000;            // base64 characters (~60 KB jpeg)
 
 /* ---------- community ---------- */
+const CHAT_ON = false;            // chat room switched off (saves CPU). Set true to open it again (also CHAT_ON in index.html)
 const KINDS = ['chat', 'ask', 'share'];
 const C_POSTS = 'cposts', C_SEQ = 'cposts:seq', C_FEED = 'cfeed';
 const POST_MAX = 1000, CMT_MAX = 300;
@@ -327,6 +342,14 @@ async function rateOk(acc, what, max, sec) {
   if (n === 1) await cmd('EXPIRE', k, sec);
   return n <= max;
 }
+
+// all announcements, newest first (cached 30 s per instance; annPost / annDelete clear it)
+const annAll = () => memo('annAll', 30000, async () => {
+  const flat = (await cmd('HGETALL', ANN)) || [];
+  const items = [];
+  for (let i = 1; i < flat.length; i += 2) { try { items.push(JSON.parse(flat[i])); } catch (e) { /* skip bad row */ } }
+  return items.sort((x, y) => y.id - x.id);
+});
 
 async function shapePosts(ids, me) {
   if (!ids.length) return [];
@@ -397,7 +420,7 @@ const actions = {
     return { ok: true, summary: summaryFor(await loadAll(), account) };
   },
 
-  getTodayFeed() { return memo('feed', 10000, () => this._feed()); },
+  getTodayFeed() { return memo('feed', 30000, () => this._feed()); },
 
   async _feed() {
     const today = dayOf(Date.now());
@@ -424,7 +447,7 @@ const actions = {
     return { ok: true, items, community };
   },
 
-  getOverview() { return memo('overview', 20000, () => this._overview()); },
+  getOverview() { return memo('overview', 60000, () => this._overview()); },
 
   async _overview() {
     const list = await loadAll(); // newest first
@@ -449,6 +472,7 @@ const actions = {
     if (lc(cleanAcc(acc)) !== lc(me.account)) return MISMATCH;
     const account = me.account;
     const added = Number(await cmd('SADD', ciKey(account), dayOf(Date.now())));
+    _lv.clear();
     return checkinData(account, added === 1);
   },
 
@@ -732,6 +756,7 @@ const actions = {
 
   /* ----- chat room: short live messages, newest at the bottom ----- */
   async chatList(token, after) {
+    if (!CHAT_ON) return bad('Chat is not available yet.');
     const me = await sessionUser(token);
     if (!me) return AUTH_ERR;
     const a = Math.max(0, Math.floor(Number(after)) || 0);
@@ -758,6 +783,7 @@ const actions = {
   },
 
   async chatSend(token, text) {
+    if (!CHAT_ON) return bad('Chat is not available yet.');
     const me = await sessionUser(token);
     if (!me) return AUTH_ERR;
     text = String(text || '').replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
@@ -787,10 +813,7 @@ const actions = {
     const me = await sessionUser(token);
     if (!me) return AUTH_ERR;
     const acc = lc(me.account);
-    const [flat, rd, sn] = await Promise.all([cmd('HGETALL', ANN), cmd('HGET', ANN_READ, acc), cmd('HGET', C_SEEN, acc)]);
-    const items = [];
-    for (let i = 1; i < (flat || []).length; i += 2) { try { items.push(JSON.parse(flat[i])); } catch (e) { /* skip bad row */ } }
-    items.sort((x, y) => y.id - x.id);
+    const [items, rd, sn] = await Promise.all([annAll(), cmd('HGET', ANN_READ, acc), cmd('HGET', C_SEEN, acc)]);
     const list = items.slice(0, ANN_KEEP);
     const last = Number(rd) || 0;
     // community posts newer than the last visit to the Community tab. Own posts and announcement posts are not counted
@@ -838,6 +861,7 @@ const actions = {
       ['HSET', ANN, id, JSON.stringify(item)], ['HSET', ANN_READ, lc(me.account), id], ['HDEL', ANN, id - ANN_KEEP],
       ['HSET', C_POSTS, pid, JSON.stringify(post)], ['ZADD', C_FEED, t, pid], ['ZADD', C_FEED + ':ann', t, pid],
     ]);
+    memoDrop();
     return { ok: true, item };
   },
 
@@ -854,6 +878,7 @@ const actions = {
       ['HDEL', C_POSTS, pid], ['ZREM', C_FEED, pid], ['ZREM', C_FEED + ':ann', pid],
       ['DEL', 'cimg:' + pid], ['DEL', 'clikes:' + pid], ['DEL', 'ccm:' + pid], ['DEL', 'crep:' + pid],
     ]);
+    memoDrop();
     return { ok: true };
   },
 
