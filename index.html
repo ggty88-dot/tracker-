@@ -3086,7 +3086,10 @@ html.chat-lock,html.chat-lock body{overflow:hidden;overscroll-behavior:none}
 .ann-meta .dl .hv-ic{width:17px;height:17px}
 .ann-empty{padding:26px 10px;text-align:center;color:var(--muted);font-weight:700;font-size:.88rem}
 .ann-new{margin-top:6px}
-.ann-new .cm-ta{min-height:52px;height:52px}
+.ann-new .cm-ta{min-height:52px;height:52px;max-height:40vh;overflow-y:auto;transition:height .15s}
+.ann-new.open .cm-ta{min-height:150px}
+#annOv.kb .modal{max-height:calc(var(--vvh,86vh) - 24px)}
+#annOv.kb .ann-list{max-height:90px}
 .ann-new .row2{display:flex;align-items:center;gap:8px;margin-top:6px}
 .ann-new .row2 .cm-cnt{margin:0 auto 0 0}
 
@@ -3902,7 +3905,13 @@ body[data-tab="community"] .cm-fab{display:flex}
   bell.addEventListener('click', () => openAnn(false));
   g('annX').addEventListener('click', () => annOv.classList.remove('show'));
   annOv.addEventListener('click', e => { if(e.target === annOv) annOv.classList.remove('show'); });
-  g('annTa').addEventListener('input', () => { g('annCnt').textContent = g('annTa').value.length + ' / 500'; });
+  const annTa = g('annTa');
+  function annGrow(){ annTa.style.height = 'auto'; annTa.style.height = Math.min(annTa.scrollHeight + 2, Math.round(window.innerHeight * .4)) + 'px'; }
+  function annVV(){ const v = window.visualViewport; if(v) annOv.style.setProperty('--vvh', v.height + 'px'); }
+  annTa.addEventListener('focus', () => { g('annNew').classList.add('open'); annOv.classList.add('kb'); annVV(); annGrow(); setTimeout(() => annTa.scrollIntoView({block: 'nearest'}), 300); });
+  annTa.addEventListener('blur', () => { if(!annTa.value.trim()){ g('annNew').classList.remove('open'); annTa.style.height = ''; } annOv.classList.remove('kb'); });
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', () => { annVV(); if(annOv.classList.contains('kb')) setTimeout(() => annTa.scrollIntoView({block: 'nearest'}), 50); });
+  annTa.addEventListener('input', () => { g('annCnt').textContent = annTa.value.length + ' / 500'; annGrow(); });
   g('annPost').addEventListener('click', () => {
     const text = g('annTa').value.trim(), msg = g('annMsg');
     if(!text || annBusy) return;
@@ -3911,7 +3920,7 @@ body[data-tab="community"] .cm-fab{display:flex}
       annBusy = false;
       if(r && r.ok){
         ANN.items.unshift(r.item); ANN.last = r.item.id; annSeen = Math.max(annSeen, r.item.id);
-        g('annTa').value = ''; g('annCnt').textContent = '0 / 500'; drawAnn(); toast(L('Announcement sent', 'ส่งประกาศแล้ว'));
+        g('annTa').value = ''; g('annTa').style.height = ''; g('annNew').classList.remove('open'); g('annCnt').textContent = '0 / 500'; drawAnn(); toast(L('Announcement sent', 'ส่งประกาศแล้ว'));
         if(!chatMode()) loadFeed(true);                      // the announcement is also a Community post now
       } else { drawAnn(); msg.className = 'msg err'; msg.textContent = (r && r.message) || L('Something went wrong. Try again.', 'เกิดข้อผิดพลาด ลองอีกครั้งนะ'); }
     }).catch(() => { annBusy = false; drawAnn(); });
