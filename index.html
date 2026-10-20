@@ -799,9 +799,9 @@ function rpc(action, ...args){
 }
 /* ---- polling gate: only poll while the tab is visible AND the person is active (saves server calls) ---- */
 let fvLastAct = Date.now();
-const fvOn = () => !document.hidden && Date.now() - fvLastAct < 300000;
+const fvOn = () => !document.hidden && Date.now() - fvLastAct < 120000;
 ['pointerdown','keydown','touchstart','scroll'].forEach(ev => window.addEventListener(ev, () => {
-  const was = Date.now() - fvLastAct >= 300000; fvLastAct = Date.now();
+  const was = Date.now() - fvLastAct >= 120000; fvLastAct = Date.now();
   if(was && !document.hidden && window.pollFeed) window.pollFeed();
 }, {passive:true, capture:true}));
 const normAcc = v => String(v||'').trim().replace(/^@+/, '');
@@ -1339,7 +1339,7 @@ $('dOk').addEventListener('click', () => {
   box.addEventListener('touchend', () => setTimeout(() => paused = false, 1200), {passive:true});
   let lastPoll = 0; const _poll = poll; poll = function(){ if(Date.now() - lastPoll < 15000) return; lastPoll = Date.now(); _poll(); };
   document.addEventListener('visibilitychange', () => { if(!document.hidden) poll(); });
-  setInterval(() => { if(fvOn()) poll(); }, 60000);
+  setInterval(() => { if(fvOn()) poll(); }, 120000);
   window.pollFeed = poll;
   poll();
 })();
@@ -2882,7 +2882,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   window.pollFeed = function(){ if(pf) pf(); load(); };
   let lastLoad = 0; const _load = load; load = function(){ if(Date.now() - lastLoad < 15000) return; lastLoad = Date.now(); _load(); };
   document.addEventListener('visibilitychange', () => { if(!document.hidden) load(); });
-  setInterval(() => { if(fvOn()) load(); }, 90000);
+  setInterval(() => { if(fvOn()) load(); }, 180000);
   load();
   setLang(LANG);
 })();
@@ -3128,6 +3128,7 @@ html.chat-lock,html.chat-lock body{overflow:hidden;overscroll-behavior:none}
 .cm-chips::-webkit-scrollbar{display:none}
 .cm-chip{flex:none;padding:6px 14px 7px;border-radius:99px;border:1px solid var(--line);background:#fff;font:inherit;font-weight:800;font-size:.8rem;color:#3c3f4d;cursor:pointer}
 .cm-chip.on{background:var(--blue-l);border-color:rgba(36,71,214,.3);color:var(--blue)}
+.cm-chip.off{background:#f4f5f8;color:#9aa0b2;cursor:not-allowed;pointer-events:none}
 .cm-post{background:#fff;border:1px solid var(--line);border-radius:22px;padding:12px 14px 10px;margin-bottom:10px;cursor:pointer}
 .cm-head{display:flex;align-items:center;gap:10px}
 .cm-av{flex:none;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:1rem;color:var(--blue);border:1px solid var(--line)}
@@ -3419,6 +3420,7 @@ body[data-tab="community"] .cm-fab{display:flex}
   const fab = el('<button type="button" class="cm-fab" id="cmFab" aria-label="New post"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>');
   document.body.appendChild(fab);
 
+  const CHAT_ON = false;   // chat room switched off (saves CPU). Set true to open it again (also CHAT_ON in api/rpc.js)
   const KINDS = ['chat', 'ask', 'share'];
   const kindLbl = k => ({all: L('All','ทั้งหมด'), chat: L('Chat','คุยเล่น'), ask: L('Question','ถามตอบ'), share: L('Share','แชร์'), ann: L('Announcement','ประกาศ')})[k];
   const AVC = ['#dde5ff', '#fff1b3', '#dcf5e1', '#ffe3ef', '#ece3ff'];
@@ -3438,7 +3440,9 @@ body[data-tab="community"] .cm-fab{display:flex}
     g('cmH').innerHTML = '<mark>' + L('Community', 'คอมมูนิตี้') + '</mark>';
     g('cmS').textContent = L('Chat, ask and share with fellow fans', 'พูดคุย ถามตอบ และแชร์กับเพื่อนแฟนคลับ');
     g('cmTabLbl').textContent = L('Community', 'คอมมูนิตี้');
-    g('cmChips').innerHTML = ['all'].concat(KINDS).map(k => '<button type="button" class="cm-chip' + (k === filter ? ' on' : '') + '" data-k="' + k + '">' + kindLbl(k) + '</button>').join('');
+    g('cmChips').innerHTML = ['all'].concat(KINDS).map(k => (k === 'chat' && !CHAT_ON)
+      ? '<button type="button" class="cm-chip off" disabled aria-disabled="true">' + kindLbl(k) + ' · ' + L('Not available yet', 'ยังไม่เปิดใช้งาน') + '</button>'
+      : '<button type="button" class="cm-chip' + (k === filter ? ' on' : '') + '" data-k="' + k + '">' + kindLbl(k) + '</button>').join('');
     g('cmMore').textContent = L('Load more', 'ดูเพิ่มเติม');
     fab.setAttribute('aria-label', L('New post', 'โพสต์ใหม่'));
   }
@@ -3544,6 +3548,7 @@ body[data-tab="community"] .cm-fab{display:flex}
   });
   g('cmChips').addEventListener('click', e => {
     const b = e.target.closest('[data-k]'); if(!b || b.dataset.k === filter) return;
+    if(b.dataset.k === 'chat' && !CHAT_ON) return;
     filter = b.dataset.k; posts = []; loadedOnce = false; drawStatic(); applyChat();
     if(filter === 'chat') loadChat(true); else loadFeed(true);
   });
@@ -3757,7 +3762,7 @@ body[data-tab="community"] .cm-fab{display:flex}
   /* ---------- Chat room (the Chat tab) ---------- */
   const chatBox = g('cmChat'), chList = g('chList'), chIn = g('chIn');
   let chMsgs = [], chLast = 0, chBusy = false, chSending = false, chTimer = 0, chTick = 0;
-  function chatMode(){ return document.body.dataset.tab === 'community' && filter === 'chat'; }
+  function chatMode(){ return CHAT_ON && document.body.dataset.tab === 'community' && filter === 'chat'; }
   const fmtT = t => { const d = new Date(t), n = new Date(), p = v => String(v).padStart(2, '0'), hm = p(d.getHours()) + ':' + p(d.getMinutes()); return d.toDateString() === n.toDateString() ? hm : d.getDate() + '/' + (d.getMonth() + 1) + ' ' + hm; };
   function chHtml(m){
     return '<div class="ch-m' + (m.mine ? ' mine' : '') + '" data-id="' + m.id + '">' + (m.mine ? '' : avOf(m.account, m.av)) +
@@ -3773,7 +3778,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     chList.scrollTop = stick ? chList.scrollHeight : keep;
   }
   function loadChat(reset){
-    if(chBusy) return; chBusy = true;
+    if(!CHAT_ON || chBusy) return; chBusy = true;
     rpc('chatList', reset ? 0 : chLast).then(r => {
       chBusy = false;
       if(!(r && r.ok)) return;
@@ -3935,7 +3940,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     rpc('annDelete', id).then(r => { if(r && r.ok){ ANN.items = ANN.items.filter(x => x.id !== id); drawAnn(); } }).catch(() => {});
   });
   new MutationObserver(() => { if(annOv.classList.contains('show')) drawAnn(); }).observe(document.documentElement, {attributes:true, attributeFilter:['lang']});
-  setInterval(() => { if(fvOn()) loadAnn(); }, 180000);
+  setInterval(() => { if(fvOn()) loadAnn(); }, 300000);
   document.addEventListener('visibilitychange', () => { if(!document.hidden) loadAnn(); });
   loadAnn();
 
