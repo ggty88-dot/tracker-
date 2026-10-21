@@ -246,6 +246,7 @@ input:focus,.dd-btn:focus,.dd.open .dd-btn{box-shadow:none!important}
 .lh{display:flex;align-items:center;gap:8px;margin:0 4px 6px;font-family:var(--display);font-weight:400;font-size:.98rem}
 .lh .dot{width:9px;height:9px;border-radius:50%;background:#2fb457;animation:livepulse 1.8s infinite}
 .lh .cnt{margin-left:auto;font-family:'Nunito',sans-serif;font-weight:800;font-size:.75rem;color:var(--muted)}
+.lnote{margin:5px 6px 0;font-size:.66rem;line-height:1.35;color:var(--muted);opacity:.8;text-align:center}
 @keyframes livepulse{0%{box-shadow:0 0 0 0 rgba(47,180,87,.5)}70%,100%{box-shadow:0 0 0 7px rgba(47,180,87,0)}}
 .lv{position:relative;height:120px;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(transparent,#000 12%,#000 88%,transparent)}
 .lv.manual{overflow-y:auto}
@@ -545,6 +546,7 @@ body[data-tab="home"] body,body[data-tab="home"]{padding-top:8px}
     <div class="live" aria-label="Recent activity">
       <div class="lh"><span class="dot"></span><span>Recent Activity</span><span class="cnt" id="liveCnt"></span></div>
       <div class="lv empty" id="liveBox" aria-live="off"><div class="tk" id="liveTrack"></div><div class="none">No updates yet today.<br>Be the first to update!</div></div>
+      <div class="lnote">Updates about every 10 min. If yours does not show, refresh the page.</div>
     </div>
   </section>
 
@@ -922,7 +924,7 @@ $('submit').addEventListener('click', () => {
       setMsg(msg, txt, 'ok');
       $('count').value = ''; $('tickets').value = '';
       if(r.summary) showSummary(r.summary);
-      if(window.pollFeed) pollFeed();
+      if(window.pollFeed) pollFeed(true);
       if(window.ciRefresh) ciRefresh(r.account);
     })
     .catch(e => { done(); setMsg(msg, 'Connection error: ' + (e && e.message ? e.message : e), 'err'); });
@@ -1314,15 +1316,15 @@ $('dOk').addEventListener('click', () => {
       track.innerHTML = items.map(r => rowHtml(r, freshIds.has(r.id))).join('');
     }
   }
-  function apply(votes, comm){
+  function apply(votes, comm, stats){
     // vote updates + community posts/announcements, ordered by time of day (counts below use votes only)
     const recs = (votes || []).concat(comm || []).map((r, i) => ({r, i})).sort((a, b) => (a.r.time < b.r.time ? -1 : a.r.time > b.r.time ? 1 : a.i - b.i)).map(x => x.r);
     const fresh = first ? [] : recs.filter(r => seen.get(k(r)) !== r.id);
     const was = scrolling() && track.children.length > 0;
     items = recs; seen = new Map(recs.map(r => [k(r), r.id])); first = false;
     cnt.textContent = recs.length ? recs.length + (recs.length === 1 ? ' update' : ' updates') : '';
-    $('stUpd').textContent = (votes || []).length;
-    const done = new Set((votes || []).map(r => r.app)); $('stApps').textContent = done.size;
+    $('stUpd').textContent = stats ? stats.u : (votes || []).length;
+    const done = new Set((votes || []).map(r => r.app)); $('stApps').textContent = stats ? stats.a : done.size;
     box.classList.toggle('empty', !recs.length);
     box.classList.toggle('manual', reduce);
     if(!recs.length){ stop(); track.innerHTML = ''; return; }
@@ -1337,7 +1339,7 @@ $('dOk').addEventListener('click', () => {
   function poll(){
     if(busy) return; busy = true;
     rpc('getTodayFeed')
-      .then(r => { if(r && r.ok){ apply(r.items || [], r.community || []); document.dispatchEvent(new CustomEvent('fv:feed', {detail:r})); } })
+      .then(r => { if(r && r.ok){ apply(r.items || [], r.community || [], r.stats); document.dispatchEvent(new CustomEvent('fv:feed', {detail:r})); } })
       .catch(() => {})
       .then(() => { busy = false; });
   }
@@ -1345,9 +1347,9 @@ $('dOk').addEventListener('click', () => {
   box.addEventListener('mouseleave', () => paused = false);
   box.addEventListener('touchstart', () => paused = true, {passive:true});
   box.addEventListener('touchend', () => setTimeout(() => paused = false, 1200), {passive:true});
-  let lastPoll = 0; const _poll = poll; poll = function(){ if(Date.now() - lastPoll < 15000) return; lastPoll = Date.now(); _poll(); };
+  let lastPoll = 0; const _poll = poll; poll = function(force){ if(force !== true && Date.now() - lastPoll < 300000) return; lastPoll = Date.now(); _poll(); };   // min gap 5 min (CPU saving); force=true after the user's own update
   document.addEventListener('visibilitychange', () => { if(!document.hidden) poll(); });
-  setInterval(() => { if(fvOn()) poll(); }, 120000);
+  setInterval(() => { if(fvOn()) poll(); }, 600000);   // every 10 min
   window.pollFeed = poll;
   poll();
 })();
@@ -1905,6 +1907,7 @@ input:focus,.dd-btn:focus,.dd.open .dd-btn{border-color:var(--blue)!important}
 
   function use(r){
       if(!r || !r.ok) return;
+      if(r.top){ rank.clear(); r.top.forEach((a, i) => rank.set(a, i + 1)); decorate(); return; }
       const m = new Map();
       (r.items || []).forEach(i => {
         const k = i.account.toLowerCase(), o = m.get(k) || {n:0, t:''};
@@ -2386,7 +2389,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
     'Participants today':'ผู้เข้าร่วมวันนี้','All-time participants':'ผู้เข้าร่วมทั้งหมด',
     'Quick Access':'เมนูลัด','Open voting apps':'เปิดแอปโหวต','Voting Guide':'คู่มือการโหวต','How to collect':'วิธีสะสมโหวต',
     'Daily Check-in':'เช็คอินประจำวัน','Check in for the day':'เช็คอินประจำวัน','Quick Update':'อัปเดตด่วน','Update your totals':'อัปเดตยอดโหวต',
-    'Community':'คอมมูนิตี้','Announcement':'ประกาศ','Recent Activity':'กิจกรรมล่าสุด','No updates yet today.':'วันนี้ยังไม่มีการอัปเดต','Be the first to update!':'มาเป็นคนแรกกันเลย!',
+    'Community':'คอมมูนิตี้','Announcement':'ประกาศ','Recent Activity':'กิจกรรมล่าสุด','Updates about every 10 min. If yours does not show, refresh the page.':'อัปเดตทุกประมาณ 10 นาที ถ้ายอดของคุณยังไม่ขึ้น ลองรีเฟรชหน้าเว็บ','No updates yet today.':'วันนี้ยังไม่มีการอัปเดต','Be the first to update!':'มาเป็นคนแรกกันเลย!',
     'No need to collect':'ไม่ต้องสะสมโหวต','Go to':'ไปที่','Updated today ✓':'อัปเดตวันนี้แล้ว ✓','Not updated today':'วันนี้ยังไม่อัปเดต','Voting info':'วิธีสะสมโหวต',
     'Tap an app to see how to collect':'แตะที่แอปเพื่อดูวิธีสะสมโหวต',
     'Everyone’s updates from the last 3 days':'การอัปเดตของทุกคนย้อนหลัง 3 วัน',
@@ -2889,10 +2892,10 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
 
   /* ---------- refresh ---------- */
   const pf = window.pollFeed;
-  window.pollFeed = function(){ if(pf) pf(); load(); };
-  let lastLoad = 0; const _load = load; load = function(){ if(Date.now() - lastLoad < 15000) return; lastLoad = Date.now(); _load(); };
+  window.pollFeed = function(f){ if(pf) pf(f); load(f); };
+  let lastLoad = 0; const _load = load; load = function(force){ if(force !== true && Date.now() - lastLoad < 300000) return; lastLoad = Date.now(); _load(); };
   document.addEventListener('visibilitychange', () => { if(!document.hidden) load(); });
-  setInterval(() => { if(fvOn()) load(); }, 180000);
+  setInterval(() => { if(fvOn()) load(); }, 600000);   // every 10 min
   load();
   setLang(LANG);
 })();
@@ -3902,8 +3905,10 @@ body[data-tab="community"] .cm-fab{display:flex}
     g('annTa').placeholder = L('Write an announcement for the fans…', 'เขียนประกาศถึงแฟน ๆ…');
     g('annPost').textContent = annBusy ? L('Posting…', 'กำลังส่ง…') : L('Announce', 'ประกาศ');
   }
+  var lastAnn = 0;
   function loadAnn(){
     if(!store.get('fv_token')) return;
+    lastAnn = Date.now();
     rpc('annList').then(r => {
       if(r && r.ok){ const first = !ANN.ready || (ySince === null && inCm());
         ANN.items = r.items; ANN.unread = r.unread; ANN.last = r.last; ANN.admin = r.admin; ANN.ready = true;
@@ -3950,8 +3955,8 @@ body[data-tab="community"] .cm-fab{display:flex}
     rpc('annDelete', id).then(r => { if(r && r.ok){ ANN.items = ANN.items.filter(x => x.id !== id); drawAnn(); } }).catch(() => {});
   });
   new MutationObserver(() => { if(annOv.classList.contains('show')) drawAnn(); }).observe(document.documentElement, {attributes:true, attributeFilter:['lang']});
-  setInterval(() => { if(fvOn()) loadAnn(); }, 300000);
-  document.addEventListener('visibilitychange', () => { if(!document.hidden) loadAnn(); });
+  setInterval(() => { if(fvOn()) loadAnn(); }, 1800000);   // every 30 min
+  document.addEventListener('visibilitychange', () => { if(!document.hidden && Date.now() - lastAnn > 900000) loadAnn(); });
   loadAnn();
 
   /* ---------- wiring: tab changes, language, sign-in ---------- */
