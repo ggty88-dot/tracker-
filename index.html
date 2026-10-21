@@ -573,6 +573,10 @@ body[data-tab="home"] body,body[data-tab="home"]{padding-top:8px}
       <label for="tickets" id="tkLb">Latest total tickets</label>
       <input id="tickets" type="number" inputmode="numeric" min="0" step="1" placeholder="e.g. 20">
     </div>
+    <div id="blWrap" hidden>
+      <label for="blueHeart" id="blLb">Latest total blue hearts</label>
+      <input id="blueHeart" type="text" disabled aria-disabled="true" autocomplete="off" placeholder="Not available">
+    </div>
     <div class="hint" id="countHint">Enter your current total for this app. The latest entry replaces the previous one; it is not added up.</div>
 
     <button class="btn" id="submit">Submit</button>
@@ -845,17 +849,21 @@ const appDD = makeDD($('dd'), APPS.map(a => ({value:a.name, label:a.name, icon:a
 /* MUBEAT has two numbers to record: heartbeats + tickets (other apps: one number) */
 const LB_HEART = '<span class="lb-ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M12 20.5S3.5 15 3.5 9.2A4.7 4.7 0 0 1 12 6.8a4.7 4.7 0 0 1 8.5 2.4C20.5 15 12 20.5 12 20.5z" fill="#ff6eb4"/><path d="M7 9.6a2.5 2.5 0 0 1 2-2.1" stroke="#fff" stroke-width="1.5"/></svg></span>';
 const LB_TICKET = '<span class="lb-ic"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M3.5 8.5A1.5 1.5 0 0 1 5 7h14a1.5 1.5 0 0 1 1.5 1.5v2a2 2 0 0 0 0 4v2A1.5 1.5 0 0 1 19 17H5a1.5 1.5 0 0 1-1.5-1.5v-2a2 2 0 0 0 0-4z" fill="#ffd84d"/><path d="M14.5 7v10" stroke-dasharray="1.6 2.2"/></svg></span>';
+const LB_BLUE = LB_HEART.replace('#ff6eb4', '#5aa9ff');
+const HINT_STD = 'Enter your current total for this app. The latest entry replaces the previous one; it is not added up.';
+const HINT_MB = 'Enter your current totals for this app. The latest entry replaces the previous one; it is not added up.';
+const HINT_IC = 'Blue hearts are not available. Enter pink hearts only, as some people entered combined totals. The latest entry replaces the previous one; it is not added up.';
 let syncMode = '';
 function syncApp(){
-  const mb = appDD.get() === 'MUBEAT', mode = mb ? 'mb' : 'std';
+  const ap = appDD.get(), mb = ap === 'MUBEAT', ic = ap === 'IDOLCHAMP', mode = mb ? 'mb' : ic ? 'ic' : 'std';
   if(mode === syncMode) return;
   syncMode = mode;
   $('tkWrap').hidden = !mb;
-  $('countLb').innerHTML = mb ? LB_HEART + 'Latest total heartbeats' : 'Latest total votes';
+  $('blWrap').hidden = !ic;
+  $('countLb').innerHTML = mb ? LB_HEART + 'Latest total heartbeats' : ic ? LB_HEART + 'Latest total pink hearts' : 'Latest total votes';
   $('tkLb').innerHTML = LB_TICKET + 'Latest total tickets';
-  $('countHint').textContent = mb
-    ? 'Enter your current totals for this app. The latest entry replaces the previous one; it is not added up.'
-    : 'Enter your current total for this app. The latest entry replaces the previous one; it is not added up.';
+  $('blLb').innerHTML = LB_BLUE + 'Latest total blue hearts';
+  $('countHint').textContent = mb ? HINT_MB : ic ? HINT_IC : HINT_STD;
   if(!mb) $('tickets').value = '';
 }
 
@@ -2371,6 +2379,8 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
 
   /* ---------- Thai dictionary ---------- */
   const TH = {
+    'Latest total pink hearts':'ยอดใจชมพูรวมล่าสุด','Latest total blue hearts':'ยอดใจฟ้ารวมล่าสุด','Not available':'ยังไม่เปิดให้กรอก',
+    'Blue hearts are not available. Enter pink hearts only, as some people entered combined totals. The latest entry replaces the previous one; it is not added up.':'ใจฟ้ายังไม่เปิดให้กรอก กรอกเฉพาะใจชมพูเท่านั้น เพราะมีบางคนกรอกยอดรวมของทั้งสองสีมา ยอดล่าสุดจะแทนที่ยอดเดิม ไม่ได้บวกเพิ่ม',
     'Vote · Check-in · Certificate':'โหวต · เช็คอิน · ใบประกาศ',
     'Home':'หน้าหลัก','More on X':'เพิ่มเติมบน X','Create yours today':'สร้างของคุณวันนี้','How to use':'วิธีใช้งาน','Steps for using this page':'ขั้นตอนการใช้งานหน้านี้','App Vote':'โหวตแอป','History':'ประวัติ','My':'ของฉัน','App':'แอป','Vote':'โหวต',
     'Participants today':'ผู้เข้าร่วมวันนี้','All-time participants':'ผู้เข้าร่วมทั้งหมด',
@@ -3990,7 +4000,10 @@ html.chat-kb .hv-tabs{display:none}
 html.chat-kb .ch-box{border-radius:0}
 </style>
 <style>
-#tkWrap[hidden]{display:none}
+#tkWrap[hidden],#blWrap[hidden]{display:none}
+#blWrap > label{margin-top:16px}
+#blueHeart:disabled{background:rgba(20,20,20,.05);color:#9a9dab;-webkit-text-fill-color:#9a9dab;opacity:1;cursor:not-allowed;border-color:rgba(20,20,20,.18)!important;box-shadow:none}
+#blueHeart:disabled::placeholder{color:#9a9dab}
 .stats.four{grid-template-columns:repeat(2,1fr)}
 .stat .cur,.appcard .cur,#dashOv th .cur,#dashOv td .cur{display:inline-flex;width:1.15em;height:1.15em;vertical-align:-.22em;margin-left:4px;line-height:0}
 .stat .cur svg,.appcard .cur svg,#dashOv th .cur svg,#dashOv td .cur svg{width:100%;height:100%;display:block}
