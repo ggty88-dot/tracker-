@@ -3454,7 +3454,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     g('cmS').textContent = L('Chat, ask and share with fellow fans', 'พูดคุย ถามตอบ และแชร์กับเพื่อนแฟนคลับ');
     g('cmTabLbl').textContent = L('Community', 'คอมมูนิตี้');
     g('cmChips').innerHTML = ['all'].concat(KINDS).map(k => (k === 'chat' && !CHAT_ON)
-      ? '<button type="button" class="cm-chip off" disabled aria-disabled="true">' + kindLbl(k) + ' · ' + L('Not available yet', 'ยังไม่เปิดใช้งาน') + '</button>'
+      ? '<button type="button" class="cm-chip off" disabled aria-disabled="true">' + kindLbl(k) + ' · ' + L('Not available', 'ยังไม่เปิดใช้งาน') + '</button>'
       : '<button type="button" class="cm-chip' + (k === filter ? ' on' : '') + '" data-k="' + k + '">' + kindLbl(k) + '</button>').join('');
     g('cmMore').textContent = L('Load more', 'ดูเพิ่มเติม');
     fab.setAttribute('aria-label', L('New post', 'โพสต์ใหม่'));
