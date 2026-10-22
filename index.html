@@ -439,7 +439,6 @@ body[data-tab="home"] .sub-line{margin:0 0 16px!important;font-size:.85rem!impor
 .pill{height:38px!important;gap:9px;padding:0 14px 0 6px!important;font-size:.85rem!important}
 .pill .ico{width:26px!important;height:26px!important}
 .pill .ap,.pill .tm{font-size:.72rem!important}
-.pill .crown{left:39px!important;top:2px!important}
 
 /* My page: link row */
 a.hv-li{text-decoration:none;color:var(--ink)}
@@ -507,6 +506,82 @@ body[data-tab="home"] #hvHome .lv{min-height:70px}
 body[data-tab="home"] h1{margin-bottom:6px}
 body[data-tab="home"] body,body[data-tab="home"]{padding-top:8px}
 @media(max-width:340px){.hv-focus .fchip{font-size:.64rem;padding:3px 6px}}
+</style>
+<style>
+/* ===== level badges: medal chip (A), ring avatar + corner medal (B), My page ring ===== */
+.ft1,[data-tier="1"]{--r:#c3c8d4;--f:#f5c842;--mb:#fff;--mbd:#c3c8d4;--cb:#eef0f5;--cbd:#cdd2de;--cc:#4f5568}
+.ft2,[data-tier="2"]{--r:#cd8b4a;--f:#f0a35c;--mb:#fff;--mbd:#cd8b4a;--cb:#fde6cf;--cbd:#cd8b4a;--cc:#6e3f0e}
+.ft3,[data-tier="3"]{--r:linear-gradient(135deg,#f9dc6a,#e0a812);--f:#ffd23f;--mb:#fff6cc;--mbd:#e0a812;--cb:linear-gradient(#fff4c2,#ffe27a);--cbd:#e0a812;--cc:#5e4400}
+.ft4,[data-tier="4"]{--r:linear-gradient(135deg,#6f8cf5,#2447d6);--f:#ffd23f;--mb:#fff;--mbd:#2447d6;--cb:linear-gradient(135deg,#2447d6,#5b7bf0);--cbd:#1b38b3;--cc:#fff}
+.ft5,[data-tier="5"]{--r:conic-gradient(#19c6a7,#ffd23f,#ff5fa2,#6a7cff,#19c6a7);--f:#ffd23f;--mb:#1a1a38;--mbd:#ffd23f;--cb:linear-gradient(135deg,#141428,#2b2060);--cbd:#e6b422;--cc:#ffd54a}
+.fvm{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;flex:none;border-radius:50%;box-sizing:border-box;background:var(--mb);border:1.5px solid var(--mbd);position:relative;font-style:normal}
+.fvm svg{width:12px;height:12px;fill:var(--f);stroke:#141414;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.ft4 .fvm{box-shadow:0 0 6px rgba(36,71,214,.6)}
+.fvc{display:inline-flex;align-items:center;height:20px;box-sizing:border-box;flex:none;border-radius:99px;padding:0 8px;background:var(--cb);border:1px solid var(--cbd);color:var(--cc);font-family:'Nunito',sans-serif;font-weight:800;font-size:.66rem;line-height:1;letter-spacing:.02em;white-space:nowrap}
+.fvc.fw{padding:0 9px 0 0;border-width:1.5px}
+.fvc .fvm{margin:-1.5px 6px -1.5px -1.5px}
+.lvm .lvm-top .fvc{height:28px;font-size:.9rem}.lvm .lvm-top .fvc .fvm{width:28px;height:28px}
+.fva{position:relative;width:46px;height:46px;flex:none;display:inline-block}
+.fva.big{width:58px;height:58px;margin:4px 6px 4px 4px}
+.fva::before{content:"";position:absolute;inset:-3px;border-radius:50%;background:var(--r)}
+.fva.n::before{display:none}
+.fva.ft4::before{box-shadow:0 0 10px rgba(36,71,214,.55)}.fva.ft5::before{box-shadow:0 0 10px rgba(255,95,162,.45)}
+.fvp{position:absolute;inset:0;border-radius:50%;overflow:hidden;border:2px solid #fff;background:#d9e0ff}
+.fva.n .fvp{border:0}
+.fvp::before{content:"";position:absolute;left:30%;top:18%;width:40%;height:40%;border-radius:50%;background:#fff}
+.fvp::after{content:"";position:absolute;left:14%;top:62%;width:72%;height:60%;border-radius:50% 50% 0 0;background:#fff}
+.fvp img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+.fvp.p1{background:#d9e0ff}.fvp.p2{background:#fbe7a1}.fvp.p3{background:#c4e4fb}.fvp.p4{background:#f6cde3}.fvp.p5{background:#d3efd8}
+.fvm.c{position:absolute;right:-6px;bottom:-6px;z-index:2;border:2px solid var(--mbd);outline:2px solid #fff}
+.fvsp{position:absolute;width:12px;height:12px;right:-9px;top:-6px;fill:#ffd23f;stroke:#b8860b;stroke-width:1;z-index:2}
+.fvh{display:flex;align-items:center;gap:12px;min-width:0}
+.fvhn{min-width:0}.fvhn b{display:block;font-weight:400;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Recent Activity rows */
+#liveTrack .tr{height:60px!important;padding:6px 0!important}
+#liveTrack .pill.fvrow{height:48px!important;gap:12px;padding:0 4px!important;background:none!important;border:0!important;border-bottom:1px solid #e6e8f0!important;border-radius:0!important;box-shadow:none!important}
+#liveTrack .pill.fvrow .fva{width:38px;height:38px}
+#liveTrack .fvin{min-width:0;flex:1}
+#liveTrack .fvn{display:flex;align-items:center;gap:8px;min-width:0}
+#liveTrack .fvn .who{flex:0 1 auto;color:var(--ink);font-size:.86rem}
+#liveTrack .fvs{margin-top:0;font-size:.68rem;font-weight:800;color:#4f5568;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#liveTrack .fvs .ap,#liveTrack .fvs .tm{font-size:inherit!important;color:inherit}
+/* My page: ring around the photo, chip on its own line (replaces "Your account") */
+.hv-av{isolation:isolate}
+.hv-av[data-tier]{border:0!important;box-shadow:0 0 0 2px #fff}
+.hv-av[data-tier]::before{content:"";position:absolute;inset:-5px;border-radius:50%;background:var(--r);z-index:-1;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4.5px),#000 calc(100% - 4px));mask:radial-gradient(farthest-side,transparent calc(100% - 4.5px),#000 calc(100% - 4px))}
+.hv-av[data-tier="4"]{filter:drop-shadow(0 0 5px rgba(36,71,214,.55))}
+.hv-av[data-tier="5"]{filter:drop-shadow(0 0 5px rgba(255,95,162,.5))}
+.hv-me .lv-line{margin-top:4px;line-height:0}
+/* v2: no photo in Recent Activity; one logo per level; LV.10 = gold laurel */
+.ft5,[data-tier="5"]{--r:conic-gradient(#ffe58f,#e0a812,#ffd23f,#fff3b8,#e0a812,#ffe58f)}
+.l4{--mb:#dfe5ff;--mbd:#4a67e0}.l6{--mbd:#e8b310}.l8{--mb:#dfe5ff}
+.fvm.l10{width:26px;height:26px;border:3px solid #f7c948;background:#262a6e;box-shadow:inset 0 0 0 1px #fff3b8}
+.fvm.l10 svg{width:92%;height:92%}
+.fvc.l10{background:linear-gradient(135deg,#141432,#2b2060);border:1.5px solid #e6b422;color:#ffd54a;box-shadow:none}
+.fvc.fw.l10{padding-right:11px}.fvc.l10 .fvm{margin:-4px 6px -4px -4px}
+.fvm .fvsp,.fva .fvsp{width:15px;height:15px;stroke-width:.6}
+.fvm .fvsp{right:auto;left:-10px;top:-12px}
+.fvm.c.l10{width:24px;height:24px;right:-8px;bottom:-8px}
+#liveTrack .tr{height:50px!important;padding:4px 0!important}
+#liveTrack .pill.fvrow{height:42px!important;padding:0 6px!important}
+#liveTrack .pill.fvrow .crown{position:relative;left:auto;top:auto;width:18px;height:18px;margin:0 -3px 0 0;transform:rotate(-12deg);flex:none}
+#liveTrack .pill.fvrow .crown svg{position:static;width:100%;height:100%}
+/* Recent Activity rows: pill + app icon + @name + small neutral LV chip + app/time on the right */
+#liveTrack .tr{height:50px!important;padding:6px 0!important}
+#liveTrack .pill.fvrow{height:38px!important;gap:9px!important;padding:0 14px 0 6px!important;background:#fff!important;border:1px solid rgba(20,20,20,.14)!important;border-radius:99px!important;box-shadow:none!important}
+#liveTrack .pill.fvrow img.ico{width:26px!important;height:26px!important;flex:none;border-radius:8px!important;border:1px solid rgba(20,20,20,.1)!important;background:#fff!important;object-fit:contain;padding:3px;box-sizing:border-box}
+#liveTrack .pill.fvrow img.ico.cm{padding:4px}
+#liveTrack .pill.fvrow .wn{flex:1;min-width:0;display:flex;align-items:center;gap:6px}
+#liveTrack .pill.fvrow .who{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--blue);font-size:.85rem}
+#liveTrack .pill.fvrow .ap{color:#3c3f4d;font-weight:800;white-space:nowrap}
+#liveTrack .pill.fvrow .crown{left:auto!important;top:auto!important;margin:0 -2px 0 0!important;width:16px;height:16px}
+/* LV chip: small, no tier colours, same colour as the app name */
+#liveTrack .fvc{height:12px!important;max-height:12px;padding:0 6px 0 0!important;font-size:7.5px!important;line-height:1!important;background:#fff!important;border:1px solid rgba(60,63,77,.4)!important;color:#3c3f4d!important;box-shadow:none!important}
+#liveTrack .fvc .fvm{width:12px!important;height:12px!important;margin:-1px 3px -1px -1px!important;background:#fff!important;border:1px solid rgba(60,63,77,.4)!important;box-shadow:none!important;outline:0!important;filter:grayscale(1)}
+#liveTrack .fvc .fvm svg{width:8px!important;height:8px!important}
+#liveTrack .fvc .fvsp{display:none!important}
+#liveTrack .lv-b.adm{font-size:.5rem;padding:0 6px 1px}
+#hvHome .lv{-webkit-mask-image:linear-gradient(transparent,#000 6%,#000 94%,transparent)!important;mask-image:linear-gradient(transparent,#000 6%,#000 94%,transparent)!important}
 </style>
 </head>
 <body>
@@ -1124,6 +1199,7 @@ function openUser(acc){
 function loadUser(){
   rpc('adminGetUser', adminPw, uAcc).then(r => {
     if(!r || !r.ok){ $('uBody').innerHTML = '<div class="empty">' + esc((r && r.message) || 'Something went wrong.') + '</div>'; return; }
+    $('uTitle').innerHTML = FVL.head(r.account || uAcc, r.av, r.lv, true);
     drawUser(r);
   }).catch(() => { $('uBody').innerHTML = '<div class="empty">Connection error</div>'; });
 }
@@ -1181,7 +1257,7 @@ window.fvOpenMine = function(){
   $('uBody').innerHTML = '<div class="empty">Loading…</div>'; uOv.classList.add('show');
   rpc('getMyProfile').then(r => {
     if(!r || !r.ok){ $('uBody').innerHTML = '<div class="empty">' + esc((r && r.message) || 'Something went wrong.') + '</div>'; return; }
-    $('uTitle').textContent = '@' + r.account;
+    $('uTitle').innerHTML = FVL.head(r.account, r.av, r.lv);
     const byApp = {}; r.latest.forEach(v => { byApp[v.app] = v; });
     const chips = APPS.map(a => {
       if(!isFocus(a.name)) return '<div class="chip off"><img src="' + a.icon + '" alt="">' + esc(a.name) + ': -</div>';   // not open yet
@@ -1265,9 +1341,32 @@ $('dOk').addEventListener('click', () => {
 });
 
 
+/* ---------- level badges (medal chip / ring avatar) ---------- */
+window.FVL = (function(){
+  const tier = n => Math.min(5, Math.ceil(Math.max(1, n) / 2));
+  const L = n => Math.min(10, Math.max(1, Number(n) || 1));
+  const ico = n => '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#L' + L(n) + '"/></svg>';
+  const SPK = '<svg class="fvsp" viewBox="0 0 24 24" aria-hidden="true"><use href="#fv-spk"/></svg>';
+  const PH = ['p1','p2','p3','p4','p5'];
+  const phOf = a => { let x = 0; a = String(a || ''); for(let i = 0; i < a.length; i++) x = (x * 31 + a.charCodeAt(i)) >>> 0; return PH[x % PH.length]; };
+  document.body.insertAdjacentHTML('afterbegin', '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="L1" viewBox="0 0 24 24"><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-4 3.5V17H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" fill="#fff" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="8.5" cy="11" r="1" fill="#141414"/><circle cx="12" cy="11" r="1" fill="#141414"/><circle cx="15.5" cy="11" r="1" fill="#141414"/></symbol><symbol id="L2" viewBox="0 0 24 24"><path d="M4 18l-1.5-10 5.5 4.5L12 5l4 7.5L21.5 8 20 18z" fill="#f5c842" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol><symbol id="L3" viewBox="0 0 24 24"><rect x="5.5" y="4.5" width="13" height="16" rx="2.5" fill="#fff" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><rect x="9" y="2.8" width="6" height="3.4" rx="1.2" fill="#dfe5ff" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><path d="M9 13.2l2.3 2.3 4-4.3" fill="none" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol><symbol id="L4" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.6 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z" fill="#ff7ab5" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol><symbol id="L5" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" fill="#ffd23f" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol><symbol id="L6" viewBox="0 0 24 24"><path d="M11 4l2.5 5.2 5.6.8-4 4 1 5.6L11 16.9l-5.1 2.7 1-5.6-4-4 5.6-.8z" fill="#8a97ff" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><path d="M19 2.5v4M17 4.5h4" fill="none" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol><symbol id="L7" viewBox="0 0 24 24"><path d="M7 4h10l4.5 5L12 20.5 2.5 9z" fill="#5fd3f0" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/><path d="M2.5 9h19M9 9l3 11.5L15 9M7 4l2 5M17 4l-2 5" fill="none" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol><symbol id="L8" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5v2a3 3 0 0 0 3 3M16 6h3v2a3 3 0 0 1-3 3M12 13v4M8 20h8M10 17h4" fill="#ffd23f" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol><symbol id="L9" viewBox="0 0 24 24"><path d="M4 18l-1.5-10 5.5 4.5L12 5l4 7.5L21.5 8 20 18z" fill="#ffd23f" stroke="#141414" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></symbol><symbol id="L10" viewBox="0 0 48 48"><g id="lw"><ellipse cx="21.05" cy="42.24" rx="3.90" ry="1.65" transform="rotate(155 21.05 42.24)" fill="#ffd23f"/><ellipse cx="21.92" cy="37.32" rx="3.90" ry="1.65" transform="rotate(225 21.92 37.32)" fill="#ffe99a"/><ellipse cx="16.28" cy="40.65" rx="3.78" ry="1.65" transform="rotate(172 16.28 40.65)" fill="#ffd23f"/><ellipse cx="18.55" cy="36.19" rx="3.78" ry="1.65" transform="rotate(242 18.55 36.19)" fill="#ffe99a"/><ellipse cx="12.19" cy="37.73" rx="3.66" ry="1.65" transform="rotate(189 12.19 37.73)" fill="#ffd23f"/><ellipse cx="15.66" cy="34.13" rx="3.66" ry="1.65" transform="rotate(259 15.66 34.13)" fill="#ffe99a"/><ellipse cx="9.13" cy="33.74" rx="3.54" ry="1.65" transform="rotate(206 9.13 33.74)" fill="#ffd23f"/><ellipse cx="13.50" cy="31.32" rx="3.54" ry="1.65" transform="rotate(276 13.50 31.32)" fill="#ffe99a"/><ellipse cx="7.37" cy="29.03" rx="3.42" ry="1.65" transform="rotate(223 7.37 29.03)" fill="#ffd23f"/><ellipse cx="12.26" cy="27.99" rx="3.42" ry="1.65" transform="rotate(293 12.26 27.99)" fill="#ffe99a"/><ellipse cx="7.06" cy="24.02" rx="3.30" ry="1.65" transform="rotate(240 7.06 24.02)" fill="#ffd23f"/><ellipse cx="12.05" cy="24.45" rx="3.30" ry="1.65" transform="rotate(310 12.05 24.45)" fill="#ffe99a"/><ellipse cx="8.24" cy="19.13" rx="3.18" ry="1.65" transform="rotate(257 8.24 19.13)" fill="#ffd23f"/><ellipse cx="12.87" cy="21.00" rx="3.18" ry="1.65" transform="rotate(327 12.87 21.00)" fill="#ffe99a"/><ellipse cx="10.79" cy="14.80" rx="3.06" ry="1.65" transform="rotate(274 10.79 14.80)" fill="#ffd23f"/><ellipse cx="14.67" cy="17.95" rx="3.06" ry="1.65" transform="rotate(344 14.67 17.95)" fill="#ffe99a"/><polyline points="21.5,39.8 17.4,38.4 13.9,35.9 11.3,32.5 9.8,28.5 9.6,24.2 10.6,20.1 12.7,16.4" fill="none" stroke="#e0a812" stroke-width="1.1" stroke-linecap="round"/></g><use href="#lw" transform="translate(48 0) scale(-1 1)"/><polygon points="24.00,17.80 25.59,22.02 30.09,22.22 26.57,25.03 27.76,29.38 24.00,26.90 20.24,29.38 21.43,25.03 17.91,22.22 22.41,22.02" fill="#ffe99a" stroke="#ffd23f" stroke-width=".8" stroke-linejoin="round"/></symbol><symbol id="fv-spk" viewBox="0 0 24 24"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="#ffd23f" stroke="#b8860b" stroke-width="1"/></symbol></defs></svg>');
+  /* LV chip: one logo per level 1-10. plain = no medal inside (used next to a ring avatar) */
+  const chip = (n, plain) => { n = L(n); return '<span class="fvc ft' + tier(n) + ' l' + n + (plain ? '' : ' fw') + '">' + (plain ? '' : '<i class="fvm l' + n + '">' + ico(n) + (n === 10 ? SPK : '') + '</i>') + 'LV.' + n + '</span>'; };
+  /* photo with tier ring + corner medal */
+  const avatar = (acc, v, n, big) => { n = L(n); const k = tier(n);
+    return '<span class="fva ft' + k + (big ? ' big' : '') + '"><span class="fvp ' + phOf(acc) + '">' +
+      (v ? '<img alt="" src="/api/img?u=' + encodeURIComponent(acc) + '&v=' + v + '" onerror="this.remove()">' : '') + '</span>' +
+      '<i class="fvm c l' + n + '">' + ico(n) + '</i>' + (n === 10 ? SPK : '') + '</span>'; };
+  const flat = (acc, v) => '<span class="fva n"><span class="fvp ' + phOf(acc) + '">' + (v ? '<img alt="" src="/api/img?u=' + encodeURIComponent(acc) + '&v=' + v + '" onerror="this.remove()">' : '') + '</span></span>';
+  /* modal header: ring avatar + name + plain chip */
+  const head = (acc, v, n, link) => '<span class="fvh">' + avatar(acc, v, n, true) + '<span class="fvhn"><b>' +
+    (link ? '<a class="xl" href="https://x.com/' + encodeURIComponent(acc) + '" target="_blank" rel="noopener noreferrer">@' + esc(acc) + '</a>' : '@' + esc(acc)) + '</b>' + chip(n, true) + '</span></span>';
+  return { tier, chip, avatar, flat, head };
+})();
+
 /* ---------- "Updated today" ticker ---------- */
 (function(){
-  const ROW = 48, SPEED = 22; // px per second
+  const ROW = 50, SPEED = 22; // px per second
   let VIEW = 120, SHOW = VIEW / ROW, NEED = Math.ceil(SHOW) + 2;
   const box = $('liveBox'), track = $('liveTrack'), cnt = $('liveCnt');
   function measure(){
@@ -1285,7 +1384,7 @@ $('dOk').addEventListener('click', () => {
     ann: 'data:image/svg+xml;utf8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2447d6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 15 6 10z"/><path d="M10 19.5a2 2 0 0 0 4 0"/></svg>')
   };
   const CM_LBL = {post: 'Community', ann: 'Announcement'};
-  const rowHtml = (r, isNew) => `<div class="tr"><div class="pill${isNew ? ' new' : ''}"${r.c ? ' data-c="1"' : ''}><img class="ico${r.c ? ' cm' : ''}" src="${r.c ? CM_ICO[r.c] : iconOf(r.app)}" alt=""><span class="who">@${esc(r.account)}</span><span class="ap">${esc(r.c ? CM_LBL[r.c] : r.app)}</span><span class="tm">${esc(r.time)}</span></div></div>`;
+  const rowHtml = (r, isNew) => `<div class="tr"><div class="pill fvrow${isNew ? ' new' : ''}"${r.c ? ' data-c="1"' : ''}><img class="ico${r.c ? ' cm' : ''}" src="${r.c ? CM_ICO[r.c] : iconOf(r.app)}" alt=""><div class="wn"><span class="who">@${esc(r.account)}</span>${r.admin ? '<span class="lv-b adm" data-tier="5">ADMIN</span>' : ''}</div><span class="ap">${esc(r.c ? CM_LBL[r.c] : r.app)}</span><span class="tm">${esc(r.time)}</span></div></div>`;
   const rowEl = (r, isNew) => { const d = document.createElement('div'); d.innerHTML = rowHtml(r, isNew); return d.firstChild; };
 
   function fill(){
@@ -2553,7 +2652,7 @@ body[data-tab="vote"] .wrap{padding-bottom:0!important;min-height:0!important}
   '<div class="hv-view" data-v="history" hidden><h2 class="hv-h"><mark>History</mark></h2><p class="hv-s">Everyone’s updates from the last 3 days</p>' +
     '<input class="hv-search" id="hvSearch" type="text" placeholder="Search Twitter account" autocomplete="off" autocapitalize="none" spellcheck="false"><div id="hvHist"></div></div>' +
   '<div class="hv-view" data-v="me" hidden>' +
-    '<div class="hv-me"><span class="hv-av"><img id="hvAv" alt=""></span><div><b id="hvMeName">Not set yet</b><small>Your account</small></div></div>' +
+    '<div class="hv-me"><span class="hv-av"><img id="hvAv" alt=""></span><div><b id="hvMeName">Not set yet</b></div></div>' +
     '<div class="hv-tiles"><div class="ov-tile sun"><b id="hvMeApps">0/3</b><span>Updated today</span></div><div class="ov-tile blue"><b id="hvMeCi">0</b><span>Check-ins this month</span></div></div>' +
     '<div class="hv-list">' +
       li('upd', IC.bolt, 'Update votes', 'Update your totals') +
@@ -3273,7 +3372,7 @@ body[data-tab="community"] .cm-fab{display:flex}
   ];
   const lvName = n => { const x = LV_NAMES[Math.min(Math.max(n, 1), LV_NAMES.length) - 1]; return isTh() ? x[1] : x[0]; };
   const tierOf = n => Math.min(5, Math.ceil(Math.max(1, n) / 2));
-  const badge = n => '<span class="lv-b" data-tier="' + tierOf(n) + '">LV.' + n + '</span>';
+  const badge = n => FVL.chip(n);
   const tagOf = x => x.admin ? '<span class="lv-b adm" data-tier="5">ADMIN</span>' : badge(x.lv);
   let LV = null;                                  // last level payload for me
   let LB = null;                                  // leaderboard payload
@@ -3286,7 +3385,7 @@ body[data-tab="community"] .cm-fab{display:flex}
     const row = el('<div class="lv-name"></div>');
     info.insertBefore(row, nameEl);
     row.appendChild(nameEl);
-    row.insertAdjacentHTML('beforeend', '<span class="lv-b" id="lvBadge" hidden></span>');
+    row.insertAdjacentHTML('afterend', '<div class="lv-line"><span id="lvBadge" hidden></span></div>');
     info.insertAdjacentHTML('beforeend',
       '<button type="button" class="lv-tap" id="lvTap" hidden>' +
         '<span class="lv-bar"><i id="lvFill"></i></span>' +
@@ -3303,7 +3402,7 @@ body[data-tab="community"] .cm-fab{display:flex}
 
   function drawLevel(){
     if(!LV || !g('lvBadge')) return;
-    const b = g('lvBadge'); b.hidden = false; b.textContent = 'LV.' + LV.level; b.dataset.tier = tierOf(LV.level);
+    const b = g('lvBadge'); b.hidden = false; b.innerHTML = FVL.chip(LV.level); if(avWrap) avWrap.dataset.tier = tierOf(LV.level);
     g('lvTap').hidden = false;
     g('lvFill').style.width = Math.max(LV.max ? 100 : 4, LV.pct) + '%';
     g('lvXp').innerHTML = '<b>' + fmt(LV.xp) + '</b>' + (LV.max ? ' XP' : ' / ' + fmt(LV.to) + ' XP');
