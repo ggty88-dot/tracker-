@@ -93,7 +93,7 @@ function checkEntry(account, app, count) {
 /* In-memory cache (lives as long as the warm serverless instance, shared by concurrent requests).
    loadAll() reads + parses EVERY vote record, so without this each poll from each open tab repeats it.
    Callers must treat the returned list as read-only. Writes use loadAll(true) / dropAll(). */
-const ALL_TTL = 60000;                       // ms
+const ALL_TTL = 30000;                       // ms
 let _all = null, _allAt = 0, _allP = null;
 async function loadAll(fresh) {
   if (!fresh) {
@@ -344,7 +344,7 @@ async function rateOk(acc, what, max, sec) {
 }
 
 // all announcements, newest first (cached 30 s per instance; annPost / annDelete clear it)
-const annAll = () => memo('annAll', 120000, async () => {
+const annAll = () => memo('annAll', 30000, async () => {
   const flat = (await cmd('HGETALL', ANN)) || [];
   const items = [];
   for (let i = 1; i < flat.length; i += 2) { try { items.push(JSON.parse(flat[i])); } catch (e) { /* skip bad row */ } }
@@ -420,22 +420,14 @@ const actions = {
     return { ok: true, summary: summaryFor(await loadAll(), account) };
   },
 
-  getTodayFeed() { return memo('feed', 60000, () => this._feed()); },
+  getTodayFeed() { return memo('feed', 30000, () => this._feed()); },
 
   async _feed() {
     const today = dayOf(Date.now());
-    const FEED_MS = 2 * 3600 * 1000;                 // an entry leaves the feed 2 h after its last update (room for new people)
-    const cut = Date.now() - FEED_MS;
-    const todayAll = [...latestMap(await loadAll()).values()]
+    const items = [...latestMap(await loadAll()).values()]
       .filter(v => dayOf(v.t) === today && isFocus(v.app))
-      .sort((a, b) => a.t - b.t || a.id - b.id);
-    const items = todayAll.filter(v => v.t >= cut)
+      .sort((a, b) => a.t - b.t || a.id - b.id)
       .map(v => ({ id: v.id, account: v.account, app: v.app, time: timeOf(v.t) }));
-    // numbers + crowns still count everybody today (not just the last 2 h)
-    const stats = { u: todayAll.length, a: new Set(todayAll.map(v => v.app)).size };
-    const per = new Map();
-    for (const v of todayAll) { const k = lc(v.account), o = per.get(k) || { n: 0, t: '' }, tm = timeOf(v.t); o.n++; if (tm > o.t) o.t = tm; per.set(k, o); }
-    const top = [...per.entries()].sort((a, b) => b[1].n - a[1].n || a[1].t.localeCompare(b[1].t)).slice(0, 3).map(e => e[0]);
     // community posts + admin announcements from today (shown in Recent Activity next to the vote updates)
     const community = [];
     try {
@@ -443,19 +435,25 @@ const actions = {
       const raws = ids.length ? ((await cmd('HMGET', C_POSTS, ...ids)) || []) : [];
       raws.filter(Boolean).forEach(r => {
         const p = JSON.parse(r);
-        if (p.kind !== 'ann' && dayOf(p.t) === today && p.t >= cut) community.push({ id: 'p' + p.id, c: 'post', account: p.account, time: timeOf(p.t), ts: p.t });
+        if (p.kind !== 'ann' && dayOf(p.t) === today) community.push({ id: 'p' + p.id, c: 'post', account: p.account, time: timeOf(p.t), ts: p.t });
       });
       const flat = (await cmd('HGETALL', ANN)) || [];
       for (let i = 1; i < flat.length; i += 2) {
         const a = JSON.parse(flat[i]);
-        if (dayOf(a.t) === today && a.t >= cut) community.push({ id: 'a' + a.id, c: 'ann', account: a.account, time: timeOf(a.t), ts: a.t });
+        if (dayOf(a.t) === today) community.push({ id: 'a' + a.id, c: 'ann', account: a.account, time: timeOf(a.t), ts: a.t });
       }
       community.sort((x, y) => x.ts - y.ts);
     } catch (e) { console.error(e); }
-    return { ok: true, items, community, stats, top };
+    try {   // level + photo for every account shown in Recent Activity
+      const all = [...items, ...community];
+      const accs = [...new Set(all.map(x => x.account))];
+      const [lvs, avs] = await Promise.all([levelsFor(accs), avatarsFor(accs)]);
+      all.forEach(x => { x.lv = (lvs[lc(x.account)] || levelOf(0)).level; x.av = avs[lc(x.account)] || 0; if (x.c === 'ann') x.admin = isAdminAcc(x.account); });
+    } catch (e) { console.error(e); }
+    return { ok: true, items, community };
   },
 
-  getOverview() { return memo('overview', 180000, () => this._overview()); },
+  getOverview() { return memo('overview', 60000, () => this._overview()); },
 
   async _overview() {
     const list = await loadAll(); // newest first
@@ -554,8 +552,11 @@ const actions = {
     const [list, days] = await Promise.all([loadAll(), cmd('SMEMBERS', ciKey(me.account))]);
     const mine = list.filter(v => lc(v.account) === lc(me.account) && isFocus(v.app));      // newest first (open apps only)
     const latest = [...latestMap(mine).values()].map(v => ({ app: v.app, count: v.count, ...(v.tickets != null ? { tickets: v.tickets } : {}), ts: fmtTs(v.t) }));
+    const _lv = (await levelsFor([me.account]))[lc(me.account)], _av = (await avatarsFor([me.account]))[lc(me.account)];
     return {
       ok: true,
+      lv: (_lv || levelOf(0)).level,
+      av: _av || 0,
       account: me.account,
       created: me.created ? fmtTs(me.created) : '',
       latest,
@@ -929,8 +930,11 @@ const actions = {
     ]);
     const mine = list.filter(v => lc(v.account) === lc(account));       // newest first
     const latest = [...latestMap(mine).values()].map(v => ({ app: v.app, count: v.count, ...(v.tickets != null ? { tickets: v.tickets } : {}), ts: fmtTs(v.t) }));
+    const _lv2 = (await levelsFor([account]))[lc(account)], _av2 = (await avatarsFor([account]))[lc(account)];
     return {
       ok: true,
+      lv: (_lv2 || levelOf(0)).level,
+      av: _av2 || 0,
       account: u ? u.account : (mine[0] ? mine[0].account : account),
       hasPin: !!u,
       created: u ? fmtTs(u.created) : '',
